@@ -6,6 +6,9 @@ import psycopg2
 def win2epoch(x):
     return x-11644473600
 
+def dbsanecolname(x):
+    return x.replace("-","_")
+
 class DBNormalization(object):
     db_coltype = None
     db_place = "%s"
@@ -50,7 +53,8 @@ class Records:
         ("RecId", "DNT_col", BigInt()),
         ("ParentRecId", "PDNT_col", BigInt()),
         ("RecordTime", "time_col", Timestamp()),
-        ("LDAPDisplayName", "ATTm131532", Text()),
+# OBJ_col RDNtyp_col cnt_col ab_cnt_col NCDNT_col IsVisibleInAB recycle_time_col Ancestors_col
+        ("lDAPDisplayName", "ATTm131532", Text()),
         ("attributeID", "ATTc131102", BigInt()),
 #        ("attributeTypes", "ATTc1572869", Text()),
         ("attributeSyntax", "ATTc131104", Text()),
@@ -62,6 +66,23 @@ class Records:
         ("refcount", "sd_refcount", BigInt()),
         ("value", "sd_value", Text())
         ]
+
+ATTRIBUTE_ID="ATTc131102"
+ATTRIBUTE_SYNTAX="ATTc131104"
+LDAP_DISPLAY_NAME="ATTm131532"
+
+attsyntax2type = {
+#    524290: BigInt, #ID
+    524293: Text, #printable name
+    524298: Text, # GUID
+#    524297: BigInt,
+    524299: Timestamp, #timestamp
+    524300: Text, #names
+    524304: Timestamp, # time
+}
+
+def syntax_to_type(s):
+    return attsyntax2type.get(s, Text)
 
 
 
@@ -75,43 +96,76 @@ class PostGreSQL(Backend):
         self.cnx = psycopg2.connect(self.cnxstr)
         self.c = self.cnx.cursor()
         self.table = options.tablename
-        self.records = options.records
+        self.records = options.records[:]
         self.rnum = len(self.records)
-        self.create_table()
-        self.sqlinsert = "insert into %s values (%s)" % (self.table, ",".join([x[2].db_place for x in self.records]))
-
 
     def commit(self):
         self.cnx.commit()
         
+    def add_col(self, coldef):
+        self.records.append(coldef)
+
     def create_table(self):
         s = []
-        for col,_,dbt in self.records:
+        for col,_,dbt in self.records[:1600]:
             s.append("%s %s" % (col, dbt.db_coltype))
 
         sql = "create table %s ( %s )" % (self.table, ",".join(s))
         self.c.execute(sql)
+        self.sqlinsert = "insert into %s values (%s)" % (self.table, ",".join([x[2].db_place for x in self.records[:1600]]))
+
 
     def insert(self, values):
-        self.c.execute(self.sqlinsert, values)
+        self.c.execute(self.sqlinsert, values[:1600])
         
 
 
 def parse_header(options, head):
     nrec = len(options.records)
-    n = 0
-    fmt = [-1]*nrec
+    fmt = [None]*nrec
     h2pos = dict([(x[1],(i,x[2])) for i,x in enumerate(options.records)])
     
-    for i,h in enumerate(head.strip().split("\t")):
+    split_head = head.strip().split("\t")
+    unk_col = []
+    for i,h in enumerate(split_head):
         if h in h2pos:
             pos,typ = h2pos[h]
             fmt[pos] = i,typ
-            n += 1
-            if n == nrec:
-                break
-    else:
+        else:
+            unk_col.append((i,h))
+    
+    if None in fmt:        
         raise Exception("Did not find some headers: fmt=%r" % fmt)
+
+    if unk_col:
+        print "Resolving %i unknown columns" % len(unk_col)
+        f = open(options.datatable)
+        f.readline() # seek after header
+        unkcd = dict([(h[4:],(i,h)) for i,h in unk_col if h.startswith("ATT")])
+        aid = split_head.index(ATTRIBUTE_ID)
+        asy = split_head.index(ATTRIBUTE_SYNTAX)
+        ldn = split_head.index(LDAP_DISPLAY_NAME)
+        if aid < 0 or asy < 0 or ldn < 0:
+            raise Exception("Did not find %s or %s or %s" % (ATTRIBUTE_ID, ATTRIBUTE_SYNTAX, LDAP_DISPLAY_NAME))
+        while unkcd:
+            l = f.readline()
+            if not l:
+                break
+            sl = l.strip().split("\t")
+            pos,att = unkcd.pop(sl[aid], (None,None))
+            if att is not None:
+                typ = syntax_to_type(int(sl[asy]))()
+                nam = dbsanecolname(sl[ldn])
+                options.db.add_col((nam, att, typ))
+                fmt.append((pos,typ))
+        if unkcd:
+            print "Still %i unresolved cols" % len(unkcd)
+            for pos,att in unkcd.itervalues():
+                typ = Text()
+                options.db.add_col((dbsanecolname(att), att, typ))
+                fmt.append((pos, typ))
+        else:
+            print "All cols resolved"
     return fmt
 
 def extract(fmt, line):
@@ -126,9 +180,10 @@ def parse_table(options):
     print "Parsing header line"
     fmt = parse_header(options, head)
 
+    options.db.create_table()
+
     print "Parsing table lines"
     while True:
-#    for i in range(50):
         l = f.readline()
         if not l:
             break
