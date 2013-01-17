@@ -87,11 +87,34 @@ def syntax_to_type(s):
 
 
 class Backend(object):
-    pass
+    backends={}
+    @classmethod
+    def register(cls, name):
+        def doreg(c):
+            cls.backends[name.lower()] = c
+            return c
+        return doreg
+    @classmethod
+    def get_backend(cls, name):
+        return cls.backends[name.lower()]
+
+    def __init__(self, options):
+        self.records = options.records[:]
+
+    def commit(self):
+        pass
+        
+    def create_table(self):
+        pass
+
+    def add_col(self, coldef):
+        self.records.append(coldef)
 
 
+@Backend.register("postgresql")
 class PostGreSQL(Backend):
     def __init__(self, options):
+        Backend.__init__(self, options)
         self.cnxstr = options.connection
         self.cnx = psycopg2.connect(self.cnxstr)
         self.c = self.cnx.cursor()
@@ -101,9 +124,6 @@ class PostGreSQL(Backend):
 
     def commit(self):
         self.cnx.commit()
-        
-    def add_col(self, coldef):
-        self.records.append(coldef)
 
     def create_table(self):
         s = []
