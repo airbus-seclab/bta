@@ -211,7 +211,8 @@ def parse_header(options, head):
 
 def extract(fmt, line):
     sl = line.split("\t")
-    return [typ.to_db(sl[i]) for i,typ in fmt]
+#    return [typ.to_db(sl[i]) for i,typ in fmt]
+    return [sl[i] for i,typ in fmt]
 
 def parse_table(options):
 
