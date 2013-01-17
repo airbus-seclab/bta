@@ -2,6 +2,8 @@
 
 import sys
 import psycopg2
+import pymongo
+import itertools
 
 def win2epoch(x):
     return x-11644473600
@@ -134,11 +136,30 @@ class PostGreSQL(Backend):
         self.c.execute(sql)
         self.sqlinsert = "insert into %s values (%s)" % (self.table, ",".join([x[2].db_place for x in self.records[:1600]]))
 
-
     def insert(self, values):
         self.c.execute(self.sqlinsert, values[:1600])
         
 
+@Backend.register("mongo")
+class Mongo(Backend):
+    def __init__(self, options):
+        Backend.__init__(self, options)
+        self.colname = options.tablename
+        ip,port,self.dbname,_ = (options.connection+":::").split(":",3)
+        ip = ip if ip else "127.0.0.1"
+        port = int(port) if port else 27017
+        self.cnxstr = (ip,port)
+        self.cnx = pymongo.Connection(*self.cnxstr)
+        self.db = self.cnx[self.dbname]
+    def create_table(self):
+        self.fields = [x[0] for x in self.records]
+        self.col = self.db.create_collection(self.colname)
+    def insert(self, values):
+        d = dict(itertools.compress(zip(self.fields, values), values))
+        id = self.col.insert(d)
+    def count(self):
+        return self.col.count()
+    
 
 def parse_header(options, head):
     nrec = len(options.records)
