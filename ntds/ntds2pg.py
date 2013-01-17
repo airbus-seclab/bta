@@ -238,10 +238,11 @@ def main():
     parser = optparse.OptionParser()
     
     parser.add_option("-C", dest="connection",
-                      help="PostGreSQL connection string. Ex: 'dbname=test user=john')", metavar="CNX")
+                      help="PostGreSQL connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
     parser.add_option("-f", dest="datatable",
                       help="datatable extracted by libesedb from ntds.dit", metavar="FNAME")
-
+    parser.add_option("-B", dest="backend", default="mongo",
+                      help="database backend (amongst mongo, postgresql)")
     parser.add_option("-t", dest="tablename",
                       help="table name to create in database", metavar="TABLENAME")
     parser.add_option("-T", dest="tabletype", default="datatable",
@@ -256,10 +257,15 @@ def main():
     if options.tablename is None:
         parser.error("Missing table name (-t)")
     if options.connection is None:
-        parser.error("Missing PostGreSQL connection string (-C)")
+        parser.error("Missing connection string (-C)")
+    
+
+    db_backend = Backend.get_backend(options.backend)
+                     
+
 
     options.records = Records.get(options.tabletype)
-    options.db = PostGreSQL(options)
+    options.db = db_backend(options)
     
     parse_table(options)
 
