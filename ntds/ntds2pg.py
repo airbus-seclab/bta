@@ -225,14 +225,21 @@ def parse_table(options):
     options.db.create_table()
 
     print "Parsing table lines"
-    while True:
-        l = f.readline()
-        if not l:
-            break
-        sys.stdout.write(".")
-        values = extract(fmt, l)
-        options.db.insert(values)
-    print "done"
+    i = 0
+    try:
+        while True:
+            l = f.readline()
+            if not l:
+                break
+            i+=1
+            if i%100 == 0:
+                sys.stderr.write("         \r%i %i" % (i, options.db.count()))
+            values = extract(fmt, l)
+            options.db.insert(values)
+    except KeyboardInterrupt:
+        print "\rInterrupted by user"
+    else:
+        print "\rdone           "
 
 def main():
     import optparse
