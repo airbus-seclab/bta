@@ -143,7 +143,7 @@ def main():
     parser.add_option("-f", dest="datatable",
                       help="datatable extracted by libesedb from ntds.dit", metavar="FNAME")
     parser.add_option("-B", dest="backend", default="mongo",
-                      help="database backend (amongst mongo, postgresql)")
+                      help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
     parser.add_option("-t", dest="tablename",
                       help="table name to create in database", metavar="TABLENAME")
     parser.add_option("-T", dest="tabletype", default="datatable",
