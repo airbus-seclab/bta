@@ -17,8 +17,8 @@ class MongoIntNormalizer(MongoNormalizer):
 
 class MongoTimestampNormalizer(MongoNormalizer):
     def normal(self, val):
-        ts = int(val)-11644473600 # adjust windows timestamp (from 01/01/1601) to unix epoch
         try:
+            ts = int(val)-11644473600 # adjust windows timestamp (from 01/01/1601) to unix epoch
             return datetime.fromtimestamp(ts)
         except ValueError:
             return datetime.fromtimestamp(0)
