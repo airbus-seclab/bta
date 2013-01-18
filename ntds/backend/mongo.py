@@ -56,6 +56,9 @@ class Mongo(Backend):
         for x in self.columns:
             if x[3]:
                 self.col.create_index(x[0])
+    def open_table(self):
+        self.col = self.db[self.colname]
+        return self.col
 
     def insert(self, values):
         d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])

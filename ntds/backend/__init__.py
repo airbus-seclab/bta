@@ -21,6 +21,9 @@ class Backend(object):
     def create_table(self):
         pass
 
+    def open_table(self):
+        pass
+
     def add_col(self, coldef):
         self.columns.append(coldef)
 
