@@ -130,9 +130,9 @@ def parse_table(options):
             values = extract(fmt, l)
             options.db.insert(values)
     except KeyboardInterrupt:
-        print "\rInterrupted by user"
+        print "\nInterrupted by user"
     else:
-        print "\rdone           "
+        print "\ndone"
 
 def main():
     import optparse
