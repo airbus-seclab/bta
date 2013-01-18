@@ -1,16 +1,14 @@
 #! /usr/bin/env python
 
-import pymongo
-from ntds2db import Mongo
 import time
+import ntds.backend.mongo
 
 def win2time(x):
     return time.ctime(int(x)-11644473600)
 
 def do_timeline(options):
-    options.records=[]
-    db = Mongo(options)
-    col = db.db[options.tablename]
+    col = options.db.open_table()
+
     
     def find_dn(r):
         cn = r.get("cn") or r.get("name")
@@ -34,6 +32,8 @@ def main():
                       help="table name to create in database", metavar="TABLENAME")
     parser.add_option("--cn", dest="cn",
                       help="look for objects whose common name is CN", metavar="CN")
+    parser.add_option("-B", dest="backend", default="mongo",
+                      help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
 
     options, args = parser.parse_args()
 
@@ -42,6 +42,10 @@ def main():
         parser.error("Missing table name (-t)")
     if options.connection is None:
         parser.error("Missing connection string (-C)")
+
+    db_backend = ntds.backend.Backend.get_backend(options.backend)
+    options.columns = []
+    options.db = db_backend(options)
 
     do_timeline(options)
 
