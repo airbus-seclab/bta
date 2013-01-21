@@ -1,5 +1,6 @@
 
 import pymongo
+import struct
 from datetime import datetime
 from ntds.normalization import TypeFactory,Normalizer
 from ntds.backend import Backend
@@ -23,8 +24,9 @@ class MongoTimestampNormalizer(MongoNormalizer):
         except ValueError:
             return datetime.fromtimestamp(0)
 
-
-    
+class MongoNTSecDesc(MongoNormalizer):
+    def normal(self, val):
+        return struct.unpack("Q", val.decode("hex"))[0]
     
 
 class MongoTypeFactory(TypeFactory):
@@ -34,6 +36,8 @@ class MongoTypeFactory(TypeFactory):
         return MongoIntNormalizer()
     def Timestamp(self):
         return MongoTimestampNormalizer()
+    def NTSecDesc(self):
+        return MongoNTSecDesc()
 
 
 

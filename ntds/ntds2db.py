@@ -27,6 +27,7 @@ class Columns:
         ("attributeID", "ATTc131102", "Int", False),
 #        ("attributeTypes", "ATTc1572869", "Text", False),
         ("attributeSyntax", "ATTc131104", "Text", False),
+        ("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
         ]
     sdtable = [
         # db col name # dt name # db type # index?
