@@ -4,6 +4,7 @@ import sys
 import itertools
 
 import ntds.backend.mongo
+import diskcache
 
 def win2epoch(x):
     return x-11644473600
@@ -53,7 +54,7 @@ def syntax_to_type(s):
     return attsyntax2type.get(s, "Text")
 
 
-
+@diskcache.diskcache(False, True)
 def parse_header(options, head):
     nrec = len(options.columns)
     fmt = [None]*nrec
