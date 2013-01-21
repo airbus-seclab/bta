@@ -17,22 +17,22 @@ class Columns:
     def get(cls, name):
         return getattr(cls, name)
     datatable = [
-        # db col name # dt name # db type 
-        ("RecId", "DNT_col", "Int"),
-        ("ParentRecId", "PDNT_col", "Int"),
-        ("RecordTime", "time_col", "Timestamp"),
+        # db col name # dt name # db type # index?
+        ("RecId", "DNT_col", "Int", True),
+        ("ParentRecId", "PDNT_col", "Int", True),
+        ("RecordTime", "time_col", "Timestamp", True),
 # OBJ_col RDNtyp_col cnt_col ab_cnt_col NCDNT_col IsVisibleInAB recycle_time_col Ancestors_col
-        ("lDAPDisplayName", "ATTm131532", "Text"),
-        ("attributeID", "ATTc131102", "Int"),
-#        ("attributeTypes", "ATTc1572869", "Text"),
-        ("attributeSyntax", "ATTc131104", "Text"),
+        ("lDAPDisplayName", "ATTm131532", "Text", False),
+        ("attributeID", "ATTc131102", "Int", False),
+#        ("attributeTypes", "ATTc1572869", "Text", False),
+        ("attributeSyntax", "ATTc131104", "Text", False),
         ]
     sdtable = [
-        # db col name # dt name # db type 
-        ("id", "sd_id", "Int"),
-        ("hash", "sd_hash", "Text"),
-        ("refcount", "sd_refcount", "Int"),
-        ("value", "sd_value", "Text")
+        # db col name # dt name # db type # index?
+        ("id", "sd_id", "Int", True),
+        ("hash", "sd_hash", "Text", True),
+        ("refcount", "sd_refcount", "Int", False),
+        ("value", "sd_value", "Text", False)
         ]
 
 ATTRIBUTE_ID="ATTc131102"
@@ -90,13 +90,13 @@ def parse_header(options, head):
             if att is not None:
                 typ = syntax_to_type(int(sl[asy]))
                 nam = dbsanecolname(sl[ldn])
-                options.db.add_col((nam, att, typ))
+                options.db.add_col((nam, att, typ, False))
                 fmt.append((pos,typ))
         if unkcd:
             print "Still %i unresolved cols" % len(unkcd)
             for pos,att in unkcd.itervalues():
                 typ = "Text"
-                options.db.add_col((dbsanecolname(att), att, typ))
+                options.db.add_col((dbsanecolname(att), att, typ, False))
                 fmt.append((pos, typ))
         else:
             print "All cols resolved"

@@ -53,6 +53,10 @@ class Mongo(Backend):
     def create_table(self):
         self.fields = [(x[0], getattr(self.typefactory,x[2])())  for x in self.columns]
         self.col = self.db.create_collection(self.colname)
+        for x in self.columns:
+            if x[3]:
+                self.col.create_index(x[0])
+
     def insert(self, values):
         d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
         id = self.col.insert(d)
