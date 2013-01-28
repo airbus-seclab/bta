@@ -4,6 +4,7 @@ import struct
 from datetime import datetime
 from ntds.normalization import TypeFactory,Normalizer
 from ntds.backend import Backend
+import ntds.sd
 
 class MongoNormalizer(Normalizer):
     def empty(self, val):
@@ -27,6 +28,30 @@ class MongoTimestampNormalizer(MongoNormalizer):
 class MongoNTSecDesc(MongoNormalizer):
     def normal(self, val):
         return struct.unpack("Q", val.decode("hex"))[0]
+
+class MongoSID(MongoNormalizer):
+    def normal(self, val):
+        try:
+            val = val.strip().decode("hex")
+        except:
+            return val
+        if val:
+            return ntds.sd.decode_sid(val)
+        return None
+    
+class MongoGUID(MongoNormalizer):
+    def normal(self, val):
+        val = val.strip().decode("hex")
+        if val:
+            return ntds.sd.decode_guid(val)
+        return None
+    
+class MongoSecurityDescriptor(MongoNormalizer):
+    def normal(self, val):
+        val = val.strip().decode("hex")
+        if val:
+            return ntds.sd.sd_to_json(val)
+        return None
     
 
 class MongoTypeFactory(TypeFactory):
@@ -38,6 +63,12 @@ class MongoTypeFactory(TypeFactory):
         return MongoTimestampNormalizer()
     def NTSecDesc(self):
         return MongoNTSecDesc()
+    def SID(self):
+        return MongoSID()
+    def GUID(self):
+        return MongoGUID()
+    def SecurityDescriptor(self):
+        return MongoSecurityDescriptor()
 
 
 
