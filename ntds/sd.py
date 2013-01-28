@@ -169,7 +169,9 @@ def decode_sid(s):
     return sid
 
 def decode_guid(s):
-    return "%08X-%04X-%04X-%04X-%08X%04X" % struct.unpack("<IHHHIH", s)
+    part1 =  "%08X-%04X-%04X-" % struct.unpack("<IHH", s[:8])
+    part2 = "%04X-%08X%04X" % struct.unpack(">HIH", s[8:])
+    return part1+part2
 
 def acl_to_json(acl):
     rev,sbz,size,count,sbz2 = struct.unpack_from("<BBHHH", acl)
