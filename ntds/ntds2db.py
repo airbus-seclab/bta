@@ -28,13 +28,17 @@ class Columns:
 #        ("attributeTypes", "ATTc1572869", "Text", False),
         ("attributeSyntax", "ATTc131104", "Text", False),
         ("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
+        ("msExchMailboxSecurityDescriptor", "ATTp415105104", "NTSecDesc", True),
+        ("objectSid", "ATTr589970", "SID", True),
+        ("objectGUID", "ATTk589826", "GUID", True),
+        ("schemaIDGUID", "ATTk589972", "GUID", True),
         ]
     sdtable = [
         # db col name # dt name # db type # index?
         ("id", "sd_id", "Int", True),
         ("hash", "sd_hash", "Text", True),
         ("refcount", "sd_refcount", "Int", False),
-        ("value", "sd_value", "Text", False)
+        ("value", "sd_value", "SecurityDescriptor", False)
         ]
 
 ATTRIBUTE_ID="ATTc131102"
