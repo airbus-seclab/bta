@@ -5,6 +5,7 @@ from datetime import datetime
 from ntds.normalization import TypeFactory,Normalizer
 from ntds.backend import Backend
 import ntds.sd
+import ntds.tools
 
 class MongoNormalizer(Normalizer):
     def empty(self, val):
@@ -36,14 +37,14 @@ class MongoSID(MongoNormalizer):
         except:
             return val
         if val:
-            return ntds.sd.decode_sid(val)
+            return ntds.tools.decode_sid(val)
         return None
     
 class MongoGUID(MongoNormalizer):
     def normal(self, val):
         val = val.strip().decode("hex")
         if val:
-            return ntds.sd.decode_guid(val)
+            return ntds.tools.decode_guid(val)
         return None
     
 class MongoSecurityDescriptor(MongoNormalizer):

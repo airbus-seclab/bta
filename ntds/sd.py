@@ -1,5 +1,6 @@
 
 import struct
+import tools
 
 class SE:
     SE_OWNER_DEFAULTED               = 0x0001
@@ -159,20 +160,6 @@ class AccessMask(Flags):
         }        
 
 
-def decode_sid(s):
-    rev,subauthnb = struct.unpack_from("<BB",s)
-    rev &= 0x0f
-    iah,ial = struct.unpack_from(">IH", s[2:])
-    ia = (iah<<16)|ial
-    subauth = struct.unpack_from("<%iI" % subauthnb, s[8:])
-    sid = "S-%i-%s" % (rev, "-".join(["%i"%x for x in ((ia,)+subauth)]))
-    return sid
-
-def decode_guid(s):
-    part1 =  "%08X-%04X-%04X-" % struct.unpack("<IHH", s[:8])
-    part2 = "%04X-%08X%04X" % struct.unpack(">HIH", s[8:])
-    return part1+part2
-
 def acl_to_json(acl):
     rev,sbz,size,count,sbz2 = struct.unpack_from("<BBHHH", acl)
     ACL = {}
@@ -204,14 +191,14 @@ def acl_to_json(acl):
             ACE["ObjectFlagsRaw"] = objflagsraw
             ACE["ObjectFlags"] = objflags.to_json()
             if objflags.ObjectTypePresent:
-                ACE["ObjectType"] = decode_guid(sstr[:16])
+                ACE["ObjectType"] = tools.decode_guid(sstr[:16])
                 sstr = sstr[16:]
             if objflags.InheritedObjectTypePresent:
-                ACE["InheritedObjectType"] = decode_guid(sstr[:16])
+                ACE["InheritedObjectType"] = tools.decode_guid(sstr[:16])
                 sstr = sstr[16:]
 
         if typeraw in [0, 1, 2, 3, 5, 6, 7, 8]:
-            ACE["SID"] = decode_sid(sstr)
+            ACE["SID"] = tools.decode_sid(sstr)
 
 
         if type == 0: # ACCESS_ALLOWED
