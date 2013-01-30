@@ -37,7 +37,7 @@ class MongoSID(MongoNormalizer):
         except:
             return val
         if val:
-            return ntds.tools.decode_sid(val)
+            return ntds.tools.decode_sid(val,">")
         return None
     
 class MongoGUID(MongoNormalizer):
