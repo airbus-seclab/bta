@@ -21,16 +21,19 @@ class ESETable(object):
         self.backend = options.backend
         filename = getattr(options, self._tablename_)
         self.fname = os.path.join(options.dirname, filename)
-        self.columns = self._columns_[:]
+    
+    def resolve_unknown_columns(self, columns, fmt, unk_col):
+        return columns, fmt, unk_col
 
 
-    def parse_header(self):
+    def identify_columns(self):
         print "Parsing header line"
+        columns = self._columns_[:]
         f = open(self.fname)
         head = f.readline()
-        nrec = len(self.columns)
+        nrec = len(columns)
         fmt = [None]*nrec
-        h2pos = dict([(x[1],(i,x[2])) for i,x in enumerate(self.columns)])
+        h2pos = dict([(x[1],(i,x[2])) for i,x in enumerate(columns)])
         
         split_head = head.strip().split("\t")
         unk_col = []
@@ -43,7 +46,20 @@ class ESETable(object):
         
         if None in fmt:
             raise Exception("Did not find some headers: fmt=%r" % fmt)
-        return fmt, unk_col
+
+        columns, fmt, unk_col = self.resolve_unknown_columns(columns, fmt, unk_col)
+
+        if unk_col:
+            print "%i unresolved cols" % len(unk_col)
+            for pos,att in unk_col:
+                typ = "Text"
+                columns.append((dbsanecolname(att), att, typ, False))
+                fmt.append((pos, typ))
+        else:
+            print "All cols resolved"
+
+
+        return columns, fmt
     
     def extract(self, fmt, line):
         sl = line.split("\t")
@@ -72,9 +88,9 @@ class ESETable(object):
             print "\ndone"
 
     def create(self):
-        fmt, unk_col = self.parse_header()
+        columns, fmt = self.identify_columns()
         table = self.backend.open_table(self._tablename_)
-        table.create(self.columns)
+        table.create(columns)
         self.parse_file(table, fmt)
 
 
@@ -125,44 +141,30 @@ class Datatable(ESETable):
     def syntax_to_type(self, s):
         return self.attsyntax2type.get(s, "Text")
 
+    def resolve_unknown_columns(self, columns, fmt, unk_col):
+        print "Resolving %i unknown columns" % len(unk_col)
+        f = open(self.fname)
+        head = f.readline()
+        split_head = head.strip().split("\t")
+        unkcd = dict([(h[4:],(i,h)) for i,h in unk_col if h.startswith("ATT")])
+        aid = split_head.index(self.ATTRIBUTE_ID)
+        asy = split_head.index(self.ATTRIBUTE_SYNTAX)
+        ldn = split_head.index(self.LDAP_DISPLAY_NAME)
+        if aid < 0 or asy < 0 or ldn < 0:
+            raise Exception("Did not find %s or %s or %s" % (self.ATTRIBUTE_ID, self.ATTRIBUTE_SYNTAX, self.LDAP_DISPLAY_NAME))
+        while unkcd:
+            l = f.readline()
+            if not l:
+                break
+            sl = l.strip().split("\t")
+            pos,att = unkcd.pop(sl[aid], (None,None))
+            if att is not None:
+                typ = self.syntax_to_type(int(sl[asy]))
+                nam = dbsanecolname(sl[ldn])
+                columns.append((nam, att, typ, False))
+                fmt.append((pos,typ))
 
-    def parse_header(self):
-        fmt, unk_col = Table.parse_header(self)
-    
-        if unk_col:
-            print "Resolving %i unknown columns" % len(unk_col)
-            f = open(self.fname)
-            head = f.readline()
-            split_head = head.strip().split("\t")
-            f = open(self.fname)
-            f.readline() # seek after header
-            unkcd = dict([(h[4:],(i,h)) for i,h in unk_col if h.startswith("ATT")])
-            aid = split_head.index(self.ATTRIBUTE_ID)
-            asy = split_head.index(self.ATTRIBUTE_SYNTAX)
-            ldn = split_head.index(self.LDAP_DISPLAY_NAME)
-            if aid < 0 or asy < 0 or ldn < 0:
-                raise Exception("Did not find %s or %s or %s" % (self.ATTRIBUTE_ID, self.ATTRIBUTE_SYNTAX, self.LDAP_DISPLAY_NAME))
-            while unkcd:
-                l = f.readline()
-                if not l:
-                    break
-                sl = l.strip().split("\t")
-                pos,att = unkcd.pop(sl[aid], (None,None))
-                if att is not None:
-                    typ = self.syntax_to_type(int(sl[asy]))
-                    nam = dbsanecolname(sl[ldn])
-                    self.columns.append((nam, att, typ, False))
-                    fmt.append((pos,typ))
-            if unkcd:
-                print "Still %i unresolved cols" % len(unkcd)
-                for pos,att in unkcd.itervalues():
-                    typ = "Text"
-                    self.columns.append((dbsanecolname(att), att, typ, False))
-                    fmt.append((pos, typ))
-            else:
-                print "All cols resolved"
-        return fmt, unk_col
-    
+        return columns, fmt, unkcd.values()
 
 
 
