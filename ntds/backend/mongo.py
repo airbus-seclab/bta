@@ -3,7 +3,7 @@ import pymongo
 import struct
 from datetime import datetime
 from ntds.normalization import TypeFactory,Normalizer
-from ntds.backend import Backend
+from ntds.backend import Backend, BackendTable
 import ntds.sd
 import ntds.tools
 
@@ -71,34 +71,46 @@ class MongoTypeFactory(TypeFactory):
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
 
+class MongoTable(BackendTable):
+    def __init__(self, options, db, name):
+        BackendTable.__init__(self, options, db, name)
+        self.typefactory = MongoTypeFactory()
+        self.col = db[name]
+        self.fields = None
 
+    def create(self, columns):
+        self.fields = [(x[0], getattr(self.typefactory,x[2])())  for x in columns]
+        self.col = self.db.create_collection(self.name)
+        for x in columns:
+            if x[3]:
+                self.col.create_index(x[0])
+        
+    def insert(self, values):
+        d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
+        id = self.col.insert(d)
+
+    def count(self):
+        return self.col.count()
+
+    def find(self, *args, **kargs):
+        return self.col.find(*args, **kargs)
+    def find_one(self, *args, **kargs):
+        return self.col.find_one(*args, **kargs)
 
 
 @Backend.register("mongo")
 class Mongo(Backend):
     def __init__(self, options):
         Backend.__init__(self, options)
-        self.colname = options.tablename
         ip,port,self.dbname,_ = (options.connection+":::").split(":",3)
         ip = ip if ip else "127.0.0.1"
         port = int(port) if port else 27017
         self.cnxstr = (ip,port)
         self.cnx = pymongo.Connection(*self.cnxstr)
         self.db = self.cnx[self.dbname]
-        self.typefactory = MongoTypeFactory()
-    def create_table(self):
-        self.fields = [(x[0], getattr(self.typefactory,x[2])())  for x in self.columns]
-        self.col = self.db.create_collection(self.colname)
-        for x in self.columns:
-            if x[3]:
-                self.col.create_index(x[0])
-    def open_table(self):
-        self.col = self.db[self.colname]
-        return self.col
 
-    def insert(self, values):
-        d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
-        id = self.col.insert(d)
-    def count(self):
-        return self.col.count()
+
+    def open_table(self, name):
+        return MongoTable(self.options, self.db, name)
+
     

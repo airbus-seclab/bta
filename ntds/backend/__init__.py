@@ -1,4 +1,4 @@
-#
+
 
 class Backend(object):
     backends={}
@@ -13,7 +13,7 @@ class Backend(object):
         return cls.backends[name.lower()]
 
     def __init__(self, options):
-        self.columns = options.columns[:]
+        self.options = options
 
     def commit(self):
         pass
@@ -28,3 +28,14 @@ class Backend(object):
         self.columns.append(coldef)
 
 
+
+class BackendTable(object):
+    def __init__(self, options, db, name):
+        self.options = options
+        self.db = db
+        self.name = name
+
+    def insert(self, values):
+        raise NotImplementedError("Table.insert()")
+    def count(self):
+        raise NotImplementedError("Table.count()")

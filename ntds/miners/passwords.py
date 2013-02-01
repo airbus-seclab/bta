@@ -1,8 +1,6 @@
 from ntds.miners import Miner
 from collections import defaultdict
 
-SDTABLE="sdtable"
-DATATABLE="datatable"
 
 @Miner.register
 class Passwords(Miner):
@@ -31,8 +29,7 @@ class Passwords(Miner):
             
 
     def run(self, options):
-        
-        self.dt = options.db.db[DATATABLE]
+        self.dt = options.backend.open_table("datatable")
 
         if options.bad_password_count:
             self.bad_password_count()

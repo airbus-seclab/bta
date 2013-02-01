@@ -10,7 +10,7 @@ class DNGrep(Miner):
     
     def run(self, options):
 
-        col = options.db.open_table()
+        dt = options.backend.open_table("datatable")
 
         def find_dn(r):
             if not r:
@@ -18,10 +18,10 @@ class DNGrep(Miner):
             cn = r.get("cn") or r.get("name")
             if cn is None or cn=="$ROOT_OBJECT$":
                 return ""
-            r2 = col.find_one({"RecId":r["ParentRecId"]})
+            r2 = dt.find_one({"RecId":r["ParentRecId"]})
             return find_dn(r2)+"."+cn
     
-        c = col.find({"cn":options.cn})
+        c = dt.find({"cn":options.cn})
         for r in c:
             print "=>",r.get("cn"),find_dn(r)
             

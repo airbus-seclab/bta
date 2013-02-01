@@ -1,9 +1,6 @@
 from ntds.miners import Miner
 from collections import defaultdict
 
-SDTABLE="sdtable"
-DATATABLE="datatable"
-
 class HRec: # wraps sd entries to make them hashable
     def __init__(self, rec):
         self.rec = rec
@@ -23,8 +20,8 @@ class SDusers(Miner):
     
     def run(self, options):
 
-        dt = options.db.db[DATATABLE]
-        sd = options.db.db[SDTABLE]
+        sd = options.backend.open_table("sdtable")
+        dt = options.backend.open_table("datatable")
     
         match = None
         if options.match:

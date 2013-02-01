@@ -20,9 +20,7 @@ class Miner(object):
 
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
-        parser.add_argument("-t", dest="tablename",
-                            help="table name to create in database", metavar="TABLENAME")
-        parser.add_argument("-B", dest="backend", default="mongo",
+        parser.add_argument("-B", dest="backend_type", default="mongo",
                             help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
         
 
@@ -42,14 +40,11 @@ class Miner(object):
         parser = cls.create_arg_parser()
         options = parser.parse_args()
         
-        if options.tablename is None:
-            parser.error("Missing table name (-t)")
         if options.connection is None:
             parser.error("Missing connection string (-C)")
     
-        db_backend = ntds.backend.Backend.get_backend(options.backend)
-        options.columns = []
-        options.db = db_backend(options)
+        backend_type = ntds.backend.Backend.get_backend(options.backend_type)
+        options.backend = backend_type(options)
         
         miner = cls.get(options.miner_name)
         m = miner()
