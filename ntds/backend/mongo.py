@@ -86,8 +86,11 @@ class MongoTable(BackendTable):
                 self.col.create_index(x[0])
         
     def insert(self, values):
+        return self.col.insert(values)
+
+    def insert_fields(self, values):
         d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
-        id = self.col.insert(d)
+        return self.insert(d)
 
     def count(self):
         return self.col.count()

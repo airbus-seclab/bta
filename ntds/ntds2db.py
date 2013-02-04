@@ -81,7 +81,7 @@ class ESETable(object):
                 if i%100 == 0:
                     sys.stderr.write("         \r%i %i" % (i, table.count()))
                 values = self.extract(fmt, l)
-                table.insert(values)
+                table.insert_fields(values)
         except KeyboardInterrupt:
             print "\nInterrupted by user"
         else:
