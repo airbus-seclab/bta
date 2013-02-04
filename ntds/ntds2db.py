@@ -89,9 +89,18 @@ class ESETable(object):
 
     def create(self):
         columns, fmt = self.identify_columns()
+
+        metatable = self.backend.open_table(self._tablename_+"_meta")
+
         table = self.backend.open_table(self._tablename_)
         table.create(columns)
         self.parse_file(table, fmt)
+
+        for fname,attname,type_,idx in columns:
+            c = table.find({fname:{"$exists":True}}).count()
+            metatable.insert(dict(name=fname, attname=attname, type=type_, count=c))
+
+
 
 
 class SDTable(ESETable):
