@@ -79,11 +79,11 @@ class MongoTable(BackendTable):
         self.fields = None
 
     def create(self, columns):
-        self.fields = [(x[0], getattr(self.typefactory,x[2])())  for x in columns]
+        self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
         self.col = self.db.create_collection(self.name)
-        for x in columns:
-            if x[3]:
-                self.col.create_index(x[0])
+        for c in columns:
+            if c.index:
+                self.col.create_index(c.name)
         
     def insert(self, values):
         return self.col.insert(values)
