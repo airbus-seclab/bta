@@ -193,6 +193,8 @@ def main():
                       help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
 
     
+    parser.add_option("--only", dest="only", default=None,
+                      help="Restrict import to TABLENAME", metavar="TABLENAME")
     
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
@@ -211,10 +213,12 @@ def main():
     backend_class = ntds.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
-    sd = SDTable(options)
-    sd.create()
-    dt = Datatable(options)
-    dt.create()
+    if options.only.lower() in [None,"sdtable","sd_table", "sd"]:
+        sd = SDTable(options)
+        sd.create()
+    if options.only.lower() in [None,"datatable","data"]:
+        dt = Datatable(options)
+        dt.create()
 
     options.backend.commit()
     
