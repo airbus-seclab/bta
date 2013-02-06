@@ -12,6 +12,14 @@ def win2epoch(x):
 def dbsanecolname(x):
     return x.replace("-","_")
 
+
+class ESEColumn(object):
+    def __init__(self, name, attname, type_, index=False):
+        self.name = name
+        self.attname = attname
+        self.type = type_
+        self.index = index
+
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
     _tablename_ = None
@@ -33,7 +41,7 @@ class ESETable(object):
         head = f.readline()
         nrec = len(columns)
         fmt = [None]*nrec
-        h2pos = dict([(x[1],(i,x[2])) for i,x in enumerate(columns)])
+        h2pos = dict([(c.attname,(i,c.type)) for i,c in enumerate(columns)])
         
         split_head = head.strip().split("\t")
         unk_col = []
@@ -53,7 +61,7 @@ class ESETable(object):
             print "%i unresolved cols" % len(unk_col)
             for pos,att in unk_col:
                 typ = "Text"
-                columns.append((dbsanecolname(att), att, typ, False))
+                columns.append(ESEColumn(dbsanecolname(att), att, typ))
                 fmt.append((pos, typ))
         else:
             print "All cols resolved"
@@ -81,7 +89,7 @@ class ESETable(object):
                 if i%100 == 0:
                     sys.stderr.write("         \r%i %i" % (i, table.count()))
                 values = self.extract(fmt, l)
-                table.insert(values)
+                table.insert_fields(values)
         except KeyboardInterrupt:
             print "\nInterrupted by user"
         else:
@@ -89,37 +97,59 @@ class ESETable(object):
 
     def create(self):
         columns, fmt = self.identify_columns()
+
+        metatable = self.backend.open_table(self._tablename_+"_meta")
+
         table = self.backend.open_table(self._tablename_)
         table.create(columns)
         self.parse_file(table, fmt)
+
+        for col in columns:
+            c = table.find({col.name:{"$exists":True}}).count()
+            metatable.insert(dict(name=col.name, attname=col.attname, type=col.type, count=c))
+
+
 
 
 class SDTable(ESETable):
     _tablename_ = "sdtable"
     _columns_ = [
-        ("id", "sd_id", "Int", True),
-        ("hash", "sd_hash", "Text", True),
-        ("refcount", "sd_refcount", "Int", True),
-        ("value", "sd_value", "SecurityDescriptor", False)
+        ESEColumn("id", "sd_id", "Int", True),
+        ESEColumn("hash", "sd_hash", "Text", True),
+        ESEColumn("refcount", "sd_refcount", "Int", True),
+        ESEColumn("value", "sd_value", "SecurityDescriptor", False)
         ]
 
+class LinkTable(ESETable):
+    _tablename_ = "linktable"
+    _columns_ = [
+        ESEColumn("link_DNT", "link_DNT", "Int", True),
+        ESEColumn("backlink_DNT", "backlink_DNT", "Int", True),
+        ESEColumn("link_base", "link_base", "Int", True),
+        ESEColumn("link_deactivetime", "link_deactivetime", "Timestamp", True),
+        ESEColumn("link_deltime", "link_deltime", "Timestamp", True),
+        ESEColumn("link_usnchanged", "link_usnchanged", "Int", True),
+        ESEColumn("link_ncdnt", "link_ncdnt", "Int", True),
+        ESEColumn("link_metadata", "link_metadata", "Text", True),
+        ESEColumn("link_data", "link_data", "Text", True),
+        ESEColumn("link_ndesc", "link_ndesc", "Text", True),
+        ]
 
 class Datatable(ESETable):
     _tablename_ = "datatable"
     _columns_ = [
-        ("RecId", "DNT_col", "Int", True),
-        ("ParentRecId", "PDNT_col", "Int", True),
-        ("RecordTime", "time_col", "Timestamp", True),
-# OBJ_col RDNtyp_col cnt_col ab_cnt_col NCDNT_col IsVisibleInAB recycle_time_col Ancestors_col
-        ("lDAPDisplayName", "ATTm131532", "Text", False),
-        ("attributeID", "ATTc131102", "Int", False),
-#        ("attributeTypes", "ATTc1572869", "Text", False),
-        ("attributeSyntax", "ATTc131104", "Text", False),
-        ("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
-        ("msExchMailboxSecurityDescriptor", "ATTp415105104", "NTSecDesc", True),
-        ("objectSid", "ATTr589970", "SID", True),
-        ("objectGUID", "ATTk589826", "GUID", True),
-        ("schemaIDGUID", "ATTk589972", "GUID", True),
+        ESEColumn("RecId", "DNT_col", "Int", True),
+        ESEColumn("ParentRecId", "PDNT_col", "Int", True),
+        ESEColumn("RecordTime", "time_col", "Timestamp", True),
+        ESEColumn("lDAPDisplayName", "ATTm131532", "Text", False),
+        ESEColumn("attributeID", "ATTc131102", "Int", False),
+        ESEColumn("attributeSyntax", "ATTc131104", "Text", False),
+        ESEColumn("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
+        ESEColumn("msExchMailboxSecurityDescriptor", "ATTp415105104", "NTSecDesc", True),
+        ESEColumn("objectSid", "ATTr589970", "SID", True),
+        ESEColumn("objectGUID", "ATTk589826", "GUID", True),
+        ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
+#       ESEColumn("attributeTypes", "ATTc1572869", "Text", False),
         ]
 
 
@@ -161,7 +191,7 @@ class Datatable(ESETable):
             if att is not None:
                 typ = self.syntax_to_type(int(sl[asy]))
                 nam = dbsanecolname(sl[ldn])
-                columns.append((nam, att, typ, False))
+                columns.append(ESEColumn(nam, att, typ, index=False))
                 fmt.append((pos,typ))
 
         return columns, fmt, unkcd.values()
@@ -178,13 +208,17 @@ def main():
                       help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
 
     
+    parser.add_option("--only", dest="only", default=None,
+                      help="Restrict import to TABLENAME", metavar="TABLENAME")
     
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
     parser.add_option("--datatable", dest="datatable", default="datatable.3",
-                      help="Read datatable in FILENAME", metavar="FILENAME")
+                      help="Read datatable from FILENAME", metavar="FILENAME")
     parser.add_option("--sdtable", dest="sdtable", default="sd_table.8",
-                      help="Read datatable in FILENAME", metavar="FILENAME")
+                      help="Read sd_table from FILENAME", metavar="FILENAME")
+    parser.add_option("--linktable", dest="linktable", default="link_table.5",
+                      help="Read linktable from FILENAME", metavar="FILENAME")
 
     options, args = parser.parse_args()
 
@@ -196,10 +230,15 @@ def main():
     backend_class = ntds.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
-    sd = SDTable(options)
-    sd.create()
-    dt = Datatable(options)
-    dt.create()
+    if options.only.lower() in [None,"sdtable","sd_table", "sd"]:
+        sd = SDTable(options)
+        sd.create()
+    if options.only.lower() in [None,"linktable","link_table", "link"]:
+        lt = LinkTable(options)
+        lt.create()
+    if options.only.lower() in [None,"datatable","data"]:
+        dt = Datatable(options)
+        dt.create()
 
     options.backend.commit()
     
