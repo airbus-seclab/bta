@@ -197,9 +197,9 @@ def main():
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
     parser.add_option("--datatable", dest="datatable", default="datatable.3",
-                      help="Read datatable in FILENAME", metavar="FILENAME")
+                      help="Read datatable from FILENAME", metavar="FILENAME")
     parser.add_option("--sdtable", dest="sdtable", default="sd_table.8",
-                      help="Read datatable in FILENAME", metavar="FILENAME")
+                      help="Read sd_table from FILENAME", metavar="FILENAME")
 
     options, args = parser.parse_args()
 
