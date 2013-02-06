@@ -120,6 +120,21 @@ class SDTable(ESETable):
         ESEColumn("value", "sd_value", "SecurityDescriptor", False)
         ]
 
+class LinkTable(ESETable):
+    _tablename_ = "linktable"
+    _columns_ = [
+        ESEColumn("link_DNT", "link_DNT", "Int", True),
+        ESEColumn("backlink_DNT", "backlink_DNT", "Int", True),
+        ESEColumn("link_base", "link_base", "Int", True),
+        ESEColumn("link_deactivetime", "link_deactivetime", "Timestamp", True),
+        ESEColumn("link_deltime", "link_deltime", "Timestamp", True),
+        ESEColumn("link_usnchanged", "link_usnchanged", "Int", True),
+        ESEColumn("link_ncdnt", "link_ncdnt", "Int", True),
+        ESEColumn("link_metadata", "link_metadata", "Text", True),
+        ESEColumn("link_data", "link_data", "Text", True),
+        ESEColumn("link_ndesc", "link_ndesc", "Text", True),
+        ]
+
 class Datatable(ESETable):
     _tablename_ = "datatable"
     _columns_ = [
@@ -202,6 +217,8 @@ def main():
                       help="Read datatable from FILENAME", metavar="FILENAME")
     parser.add_option("--sdtable", dest="sdtable", default="sd_table.8",
                       help="Read sd_table from FILENAME", metavar="FILENAME")
+    parser.add_option("--linktable", dest="linktable", default="link_table.5",
+                      help="Read linktable from FILENAME", metavar="FILENAME")
 
     options, args = parser.parse_args()
 
@@ -216,6 +233,9 @@ def main():
     if options.only.lower() in [None,"sdtable","sd_table", "sd"]:
         sd = SDTable(options)
         sd.create()
+    if options.only.lower() in [None,"linktable","link_table", "link"]:
+        lt = LinkTable(options)
+        lt.create()
     if options.only.lower() in [None,"datatable","data"]:
         dt = Datatable(options)
         dt.create()
