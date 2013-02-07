@@ -19,6 +19,8 @@ class ESEColumn(object):
         self.attname = attname
         self.type = type_
         self.index = index
+    def to_json(self):
+        return dict((k,v) for (k,v) in self.__dict__.iteritems() if not k.startswith("_"))
 
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
@@ -96,6 +98,7 @@ class ESETable(object):
             print "\ndone"
 
     def create(self):
+        print "### Starting importation of %s" % self._tablename_
         columns, fmt = self.identify_columns()
 
         metatable = self.backend.open_table(self._tablename_+"_meta")
@@ -104,9 +107,12 @@ class ESETable(object):
         table.create(columns)
         self.parse_file(table, fmt)
 
+        print "Creating metatable"
         for col in columns:
             c = table.find({col.name:{"$exists":True}}).count()
-            metatable.insert(dict(name=col.name, attname=col.attname, type=col.type, count=c))
+            col.count = c
+            metatable.insert(col.to_json())
+        print "### Importation of %s is done." % self._tablename_
 
 
 
