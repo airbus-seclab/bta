@@ -157,19 +157,37 @@ class Datatable(ESETable):
     ATTRIBUTE_SYNTAX="ATTc131104"
     LDAP_DISPLAY_NAME="ATTm131532"
 
-
     attsyntax2type = {
-    #    524290: BigInt, #ID
-        524293: "Text", #printable name
-        524298: "Text", # GUID
-    #    524297: "Int",
-        524299: "Timestamp", #timestamp
-        524300: "Text", #names
-        524304: "Timestamp", # time
-    }
+        0x80001: "DN",                   # 2.5.5.1
+        0x80002: "OID",                  # 2.5.5.2
+        0x80003: "CaseExactString",      # 2.5.5.3
+        0x80004: "CaseIgnoreString",     # 2.5.5.4
+        0x80005: "IA5String",            # 2.5.5.5
+        0x80006: "NumericString",        # 2.5.5.6
+        0x80007: "DNWithBinary",         # 2.5.5.7
+        0x80008: "Boolean",              # 2.5.5.8
+        0x80009: "Enumeration",          # 2.5.5.9
+        0x8000a: "OctetString",          # 2.5.5.10
+        0x8000b: "GeneralizedTime",      # 2.5.5.11
+        0x8000c: "DirectoryString",      # 2.5.5.12    # separated by ';' when not single valued
+        0x8000d: "PresentationAddress",  # 2.5.5.13
+        0x8000e: "DNWithString",         # 2.5.5.14
+        0x8000f: "NTSecurityDescriptor", # 2.5.5.15
+        0x80010: "Integer8",             # 2.5.5.16
+        0x80011: "Sid",                  # 2.5.5.17
+        }
 
+    type2type = {
+        "DN": "Text",
+        "OID": "Text",
+        "CaseExactString" : "Text",
+        "GeneralizedTime" : "Timestamp",
+        "Integer8": "Int",
+        "NTSecurityDescriptor" : "NTSecDesc",
+        }
+    
     def syntax_to_type(self, s):
-        return self.attsyntax2type.get(s, "Text")
+        return self.type2type.get(self.attsyntax2type.get(s), "Text")
 
     def resolve_unknown_columns(self, columns, fmt, unk_col):
         print "Resolving %i unknown columns" % len(unk_col)
