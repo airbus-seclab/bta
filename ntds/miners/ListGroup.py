@@ -1,5 +1,6 @@
 from ntds.miners import Miner
 from collections import defaultdict
+from ntds.miners.tools import User, Group, Sid
 
 @Miner.register
 class ListGroup(Miner):
@@ -9,6 +10,8 @@ class ListGroup(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for groups matching REGEX", metavar="REGEX")
+        parser.add_argument("--noresolve", help="Do not resolve SID", action="store_true")
+        parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def run(self, options):
         dt = options.backend.open_table("datatable")
@@ -25,9 +28,26 @@ class ListGroup(Miner):
         groups={}
         for group in dt.find(match):
              groups[group['objectGUID']]=set()
-             for link in lt.find({'link_DNT': group['RecId']}, {'backlink_DNT': True}):
-                 groups[group['objectGUID']].add(link['backlink_DNT'])
+             for link in lt.find({'link_DNT': group['RecId']}):
+                 deleted=False
+                 if 'link_deltime' in link and link['link_deltime'].year > 1970:
+                     deleted = link['link_deltime']
+                 membership = (User(dt, RecId=link['backlink_DNT']), deleted)
+                 groups[group['objectGUID']].add(membership)
 
-        for groupname,members in groups.items():
-             s=u"{0:50} {1}".format(groupname, ', '.join(map(str, members)))
-             print s.encode('utf-8')
+        misc=''
+        for groupname,membership in groups.items():
+            if not options.noresolve:
+                group = Group(dt, objectGUID=groupname)
+                print Sid.resolveRID(group.objectSid), group.cn
+            else:
+                print groupname
+            for member,deleted in membership:
+                if options.noresolve:
+                    member = member.objectSid
+                else:
+                    sid = Sid.resolveRID(member.objectSid)
+                    member = '{0:50} {1[cn]}'.format(sid, member)
+                if options.verbose and deleted:
+                    member += " deleted %s" % deleted
+                print '        - {0} {1}'.format(member, misc)
