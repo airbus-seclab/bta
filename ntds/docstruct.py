@@ -7,7 +7,7 @@ class DocPart(object):
         self.parent = parent
         self.name = name
         self.content = []
-    def add_content(self, content):
+    def add_content(self, content=None):
         self.content.append(content)
     def flush(self):
         pass
@@ -25,9 +25,6 @@ class DocPart(object):
                 c.to_text_file(f, level+1)
             else:
                 f.write("%s\n" % c)
-                
-        
-        
 
 
 class Table(DocPart):
