@@ -1,6 +1,9 @@
 
+import sys
 import argparse
 import ntds.backend.mongo
+import ntds.docstruct
+from ntds.docstruct import LiveRootDoc, RootDoc
 
 class Miner(object):
     _miners_ = {}
@@ -22,6 +25,9 @@ class Miner(object):
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
         parser.add_argument("-B", dest="backend_type", default="mongo",
                             help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+
+        parser.add_argument("-t", "--output-type", dest="output_type", default="live",
+                            help="output document type (amongst: %s)" % (", ".join(["live"])))
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
@@ -48,6 +54,17 @@ class Miner(object):
         
         miner = cls.get(options.miner_name)
         m = miner()
-        m.run(options)
+
+        docC = RootDoc if options.output_type != "live" else LiveRootDoc
+
+        doc = docC("Analysis by miner [%s]" % options.miner_name)
+        doc.start_stream()
+
+        m.run(options, doc)
+
+        doc.finish_stream()
+
+        if options.output_type != "live":
+            doc.to_text_file(sys.stdout)
 
     
