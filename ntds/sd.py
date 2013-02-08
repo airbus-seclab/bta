@@ -2,6 +2,8 @@
 import struct
 import tools
 
+# Heavily inspired by reading WinNT.h
+
 class SE:
     SE_OWNER_DEFAULTED               = 0x0001
     SE_GROUP_DEFAULTED               = 0x0002
