@@ -237,9 +237,9 @@ def sd_to_json(sd):
     jsd["Revision"] = rev
     jsd["ControlRaw"] = rctrl
     jsd["Control"] = ctrl.to_json()
-    jsd["Owner"] = owner
-    jsd["Group"] = group
     if ctrl.SelfRelative:
+        jsd["Owner"] = tools.decode_sid(sd[owner:])
+        jsd["Group"] = tools.decode_sid(sd[group:])
         if ctrl.SACLPresent:
             jsd["SACL"] = acl_to_json(sd[saclofs:])
         if ctrl.DACLPresent:
