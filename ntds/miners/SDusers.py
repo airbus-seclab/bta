@@ -18,7 +18,7 @@ class SDusers(Miner):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
         parser.add_argument("--verbose", action="store_true", help="List security descriptors for each user")
     
-    def run(self, options):
+    def run(self, options, doc):
 
         sd = options.backend.open_table("sdtable")
         dt = options.backend.open_table("datatable")
@@ -47,14 +47,17 @@ class SDusers(Miner):
                         sid = ace["SID"]
                         # XXX check sid matches regex
                         users[sid].add(HRec(r))
+
+        table = doc.create_table("Users present in security descriptors")
+        table.add(["SID","# of SD", "SID obj names", "SID obj creation dates"])
+        table.add()
         
         for sid,lsd in sorted(users.iteritems(), key=lambda (x,y):len(y)):
             c = dt.find({"objectSid":sid}) #, "name":{"$exists":True}})
             names = set([ r["name"] for r in c if "name" in r])
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])
-            s = "%-50s %5i SD (%3i objects) %-60s   %s" % (sid, len(lsd), c.count(), " | ".join(names), " | ".join(dates))
-            print s.encode('utf-8')
-            if options.verbose:
-                for sd in lsd:
-                    print "    id=%(id)7i refcount=%(refcount)4i hash=%(hash)s" % sd.rec
+            table.add([sid, str(len(lsd)), " | ".join(names), " | ".join(dates)])
+#            if options.verbose:
+#                for sd in lsd:
+#                    print "    id=%(id)7i refcount=%(refcount)4i hash=%(hash)s" % sd.rec
