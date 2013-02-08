@@ -53,7 +53,8 @@ class SDusers(Miner):
             names = set([ r["name"] for r in c if "name" in r])
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])
-            print "%-50s %5i SD (%3i objects) %-60s   %s" % (sid, len(lsd), c.count(), " | ".join(names), " | ".join(dates))
+            s = "%-50s %5i SD (%3i objects) %-60s   %s" % (sid, len(lsd), c.count(), " | ".join(names), " | ".join(dates))
+            print s.encode('utf-8')
             if options.verbose:
                 for sd in lsd:
                     print "    id=%(id)7i refcount=%(refcount)4i hash=%(hash)s" % sd.rec
