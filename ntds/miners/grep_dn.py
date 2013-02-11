@@ -8,10 +8,13 @@ class DNGrep(Miner):
     def create_arg_subparser(cls, parser):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")
     
-    def run(self, options):
+    def run(self, options, doc):
 
         dt = options.backend.open_table("datatable")
 
+        doc.add("Listing DN of all objects whose CN matches [%s]" % options.cn)
+
+        l = doc.create_list("List of CN")
         def find_dn(r):
             if not r:
                 return ""
@@ -23,5 +26,5 @@ class DNGrep(Miner):
     
         c = dt.find({"cn":options.cn})
         for r in c:
-            print "=>",r.get("cn"),find_dn(r)
-            
+            l.add("%s: %s" % (r.get("cn"),find_dn(r)))
+        l.finished()
