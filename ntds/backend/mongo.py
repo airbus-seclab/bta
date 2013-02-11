@@ -16,7 +16,10 @@ class MongoTextNormalizer(MongoNormalizer):
     
 class MongoIntNormalizer(MongoNormalizer):
     def normal(self, val):
-        return int(val)
+        v = int(val)
+        if -0x8000000000000000 <= v < 0x8000000000000000:
+            return v
+        return val
 
 class MongoTimestampNormalizer(MongoNormalizer):
     def normal(self, val):
