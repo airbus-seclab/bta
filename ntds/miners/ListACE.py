@@ -3,7 +3,7 @@ from ntds.miners.tools import User, Group, Sid
 import re
 
 @Miner.register
-class ListGroup(Miner):
+class ListACE(Miner):
     _name_ = "ListACE"
     _desc_ = "List ACE matching criteria"
 
