@@ -11,6 +11,26 @@ except:
     sys.stderr.write("Cannot read local RID files (%s), I will not resolve RID!\n" % load_rid_path)
 
 class Sid(object):
+    def __init__(self, datatable, verbose=False, **kwargs):
+        self.verbose = verbose
+        try:
+            self.obj = datatable.find_one(kwargs)
+        except:
+            self.obj = {'cn': '(null)', 'objectSid': '(null)'}
+
+    def __str__(self):
+        if not self.obj:
+            return '(null obj)'
+        try:
+            if self.verbose:
+                s ='{0[cn]} ({0[objectSid]})'.format(self.obj)
+            else:
+                s ='{0[cn]}'.format(self.obj)
+        except:
+            print self.obj
+            s = self.obj['objectSid']
+        return s.encode('utf-8')
+
     @staticmethod
     def resolveRID(sid):
         pos = sid.rfind('-')
