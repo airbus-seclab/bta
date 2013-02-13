@@ -83,10 +83,16 @@ class MongoTable(BackendTable):
 
     def create(self, columns):
         self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
-        self.col = self.db.create_collection(self.name)
-        for c in columns:
-            if c.index:
-                self.col.create_index(c.name)
+        try:
+            self.col = self.db.create_collection(self.name)
+        except pymongo.errors.CollectionInvalid,e:
+            if not self.options.append:
+                raise
+            print "Collection already exists. Appending."
+        else:
+            for c in columns:
+                if c.index:
+                    self.col.create_index(c.name)
         
     def insert(self, values):
         return self.col.insert(values)

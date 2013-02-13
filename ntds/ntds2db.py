@@ -234,6 +234,8 @@ def main():
     
     parser.add_option("--only", dest="only", default="",
                       help="Restrict import to TABLENAME", metavar="TABLENAME")
+    parser.add_option("--append", dest="append", action="store_true",
+                      help="Append ESE tables to existing data in db")
     
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
