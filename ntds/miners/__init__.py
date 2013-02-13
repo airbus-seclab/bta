@@ -55,7 +55,7 @@ class Miner(object):
         miner = cls.get(options.miner_name)
         m = miner()
 
-        docC = RootDoc if options.output_type != "live" else LiveRootDoc
+        docC = LiveRootDoc if options.live_output else RootDoc
 
         doc = docC("Analysis by miner [%s]" % options.miner_name)
         doc.start_stream()
