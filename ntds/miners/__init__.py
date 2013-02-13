@@ -4,6 +4,8 @@ import argparse
 import ntds.backend.mongo
 import ntds.docstruct
 from ntds.docstruct import LiveRootDoc, RootDoc
+from ntds.formatters import Formatter
+import ntds.formatters.rest
 
 class Miner(object):
     _miners_ = {}
@@ -26,8 +28,10 @@ class Miner(object):
         parser.add_argument("-B", dest="backend_type", default="mongo",
                             help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
 
-        parser.add_argument("-t", "--output-type", dest="output_type", default="live",
-                            help="output document type (amongst: %s)" % (", ".join(["live"])))
+        parser.add_argument("--live-output", dest="live_output", action="store_true",
+                            help="Provides a live output")
+        parser.add_argument("-t", "--output-type", dest="output_type",
+                            help="output document type (amongst: %s)" % (", ".join(Formatter._formatters_.keys())))
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
@@ -64,7 +68,9 @@ class Miner(object):
 
         doc.finish_stream()
 
-        if options.output_type != "live":
-            doc.to_text_file(sys.stdout)
+        if options.output_type:
+            fmt = Formatter.get(options.output_type)()
+            doc.format_doc(fmt)
+            print fmt.finalize()
 
     
