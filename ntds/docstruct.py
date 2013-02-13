@@ -26,23 +26,12 @@ class DocPart(object):
         return self.create_subelement(List(self, name))
 
 
-
     def flush(self):
         self.parent.flush()
+    
     def to_json(self):
         content = [ (c.to_json() if hasattr(c,"to_json") else c) for c in self.content ]
         return { "name":self.name, "type": self._type_, "content": content }
-    def to_text_file(self, f, level=0):
-        f.write("%s\n" % self.name)
-        if level <= 1:
-            f.write("%s\n" % ({0:"=",1:"-"}.get(level," ")*len(self.name)))
-        f.write("\n")
-        for c in self.content:
-            if hasattr(c, "to_text_file"):
-                f.write("\n")
-                c.to_text_file(f, level+1)
-            else:
-                f.write("%s\n" % c)
 
     def finished(self):
         self.done = True
@@ -93,6 +82,15 @@ class DocPart(object):
 
         stream.write("\n")
 
+    def format_doc(self, formatter, lvl=0):
+        formatter.add_section(self.name, lvl)
+        for c in self.content:
+            if isinstance(c, DocPart):
+                c.format_doc(formatter, lvl+1)
+            else:
+                formatter.add_content(c)
+
+
 class RootDoc(DocPart):
     def __init__(self, name):
         DocPart.__init__(self, None, name)
@@ -122,30 +120,9 @@ class LiveRootDoc(RootDoc):
 
 class Table(DocPart):
     _type_ = "table"
-    def format_table(self, width_hint=160):
-        sep = " | "
-        cross = "-+-"
-        tl = map(max, zip(*[map(len,l) for l in self.content if l]))
-        total_width = sum(tl)+len(tl)*len(sep)
-        if total_width > width_hint:
-            tl = [max(2,int(round(float(l*width_hint)/total_width))) for l in tl]
-        fmt = sep.join(["%%-%is"]*len(tl)) % tuple(tl)
-        hfmt = cross.join(["%%-%is"]*len(tl)) % tuple(tl)
-        hline = hfmt % tuple(["-"*l for l in tl])
-        return fmt, hline
-        
 
-    def to_text_file(self, f, level=0):
-        f.write("%s\n" % self.name)
-        fmt,hline = self.format_table()
-        fmt += "\n"
-        hline += "\n"
-        for l in self.content:
-            if l:
-                f.write(fmt % tuple(l))
-            else:
-                f.write(hline)
-        f.write("\n")
+    def format_doc(self, formatter, lvl=0):
+        formatter.add_table(self.content)
 
 
 class List(DocPart):
@@ -154,6 +131,20 @@ class List(DocPart):
     
     def format_content(self, c):
         return "%s* %s\n" % ("  "*self.list_level, c)
+
+    
+    def make_formatter_list(self, lvl=0):
+        l = []
+        for c in self.content:
+            if hasattr(c, "make_formatter_list"):
+                l += c.make_formatter_list(lvl+1)
+            else:
+                l.append( (lvl, c) )
+        return l
+
+    def format_doc(self, formatter, lvl=0):
+        formatter.add_list(self.make_formatter_list())
+
 
 def w():
     import time
