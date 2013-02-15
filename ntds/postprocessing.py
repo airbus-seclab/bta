@@ -4,14 +4,16 @@ import ntds.backend.mongo
 
 
 class PostProcessing(object):
+    PREFIX="postproc_"
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
         self.dt = self.backend.open_table("datatable")
 
-    def list_post_processors(self):
-        return [pname for pname,proc in self.__class__.__dict__.iteritems()
-                if type(proc) is types.FunctionType and pname.startswith("postproc_")]
+    @classmethod
+    def list_post_processors(cls):
+        return [pname[len(cls.PREFIX):] for pname,proc in cls.__dict__.iteritems()
+                if type(proc) is types.FunctionType and pname.startswith(cls.PREFIX)]
 
     def post_process_all(self):
         for pname in self.list_post_processors():
@@ -19,6 +21,8 @@ class PostProcessing(object):
             self.post_process_one(pname)
 
     def post_process_one(self, name):
+        if not name.startswith(self.PREFIX):
+            name = self.PREFIX+name
         proc = getattr(self, name)
         proc()
 
@@ -51,6 +55,9 @@ def main():
     parser.add_option("-B", dest="backend_class", default="mongo",
                       help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
 
+    parser.add_option("--only", dest="only", metavar="POSTPROC",
+                      help="Only run POSTPROC (amongst %s)" % (", ".join(PostProcessing.list_post_processors())))
+
     parser.add_option("--overwrite", dest="overwrite", action="store_true",
                       help="Delete tables that already exist in db")
     
@@ -65,7 +72,10 @@ def main():
     
 
     pp = PostProcessing(options)
-    pp.post_process_all()
+    if options.only:
+        pp.post_process_one(options.only)
+    else:
+        pp.post_process_all()
 
     
 
