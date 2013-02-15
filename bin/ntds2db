@@ -1,0 +1,7 @@
+#! /usr/bin/env python
+
+import ntds.ntds2db
+
+
+if __name__ == "__main__":
+    ntds.ntds2db.main()
