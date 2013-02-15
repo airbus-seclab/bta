@@ -13,8 +13,14 @@ class WhoIs(Miner):
         parser.add_argument("--noresolve", help="Do not resolve SID", action="store_true")
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
-    def run(self, options):
+    def run(self, options, doc):
         dt = options.backend.open_table("datatable")
-        pprint(dt.find_one({'objectSid': options.sid}))
-
+        sec = doc.create_subsection("Who is %s" % options.sid)
+        
+        c = dt.find({'objectSid': options.sid})
+        for r in c:
+            t = sec.create_table("Name=[%s]" % r.get("name",""))
+            for k,v in r.iteritems():
+                t.add([k,v])
+            t.finished()
 
