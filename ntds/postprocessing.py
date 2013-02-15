@@ -45,6 +45,16 @@ class PostProcessing(object):
         for r in self.dt.find({"objectCategory":"2370", "objectSid":{"$exists":True}}):
             domains.insert({"domain":find_dn(r), "sid":r["objectSid"]})
 
+    def postproc_usersid(self):
+        usersid = self.options.backend.open_table("usersid")
+        usersid.create()
+        usersid.create_index("name")
+        usersid.create_index("sid")
+        usersid.create_index("account")
+
+        for r in self.dt.find({"objectCategory":"3818", "objectSid":{"$exists":True}}):
+            usersid.insert({"name":r["name"], "account":r["sAMAccountName"], "sid": r["objectSid"]})
+
 
 def main():
     import optparse
