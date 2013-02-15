@@ -27,7 +27,6 @@ class Sid(object):
             else:
                 s ='{0[cn]}'.format(self.obj)
         except:
-            print self.obj
             s = self.obj['objectSid']
         return s.encode('utf-8')
 
@@ -41,6 +40,24 @@ class Sid(object):
         else:
             return sid
 
+
+class Record(object):
+    def __init__(self, **dbrecord):
+        self.obj = dbrecord
+
+    def __getattr__(self, attr):
+        return self.obj.get(attr, None)
+
+    def __getitem__(self, attr):
+        return self.obj.get(attr, None)
+
+    def __repr__(self):
+        return self.obj.__str__()
+
+    def __str__(self):
+        return self.obj.__str__()
+
+
 class Group(object):
     def __init__(self, datatable, **kwargs):
         kwargs['objectCategory'] = '5945'
@@ -52,14 +69,10 @@ class Group(object):
         return '{0[objectSid]:50} {0[cn]}'.format(self.obj).encode('utf-8')
 
     def __getattr__(self, attr):
-        if attr in self.obj:
-            return self.obj[attr]
-        return super(Group, self).__getattr__(self, attr)
+        return self.obj.get(attr, None)
 
     def __getitem__(self, attr):
-        if attr in self.obj:
-            return self.obj[attr]
-        return super(Group, self).__getitem__(self, attr)
+        return self.obj.get(attr, None)
 
 class User(object):
     def __init__(self, datatable, **kwargs):
