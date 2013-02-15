@@ -121,6 +121,10 @@ class LiveRootDoc(RootDoc):
 class Table(DocPart):
     _type_ = "table"
 
+    def format_content(self, c):
+        fmt = " | ".join(["%-20s"]*len(c)) + "\n"
+        return fmt % tuple(c)
+
     def format_doc(self, formatter, lvl=0):
         formatter.add_table(self.content)
 
