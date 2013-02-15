@@ -16,7 +16,6 @@ class SDusers(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
-        parser.add_argument("--verbose", action="store_true", help="List security descriptors for each user")
     
     def run(self, options, doc):
 
@@ -58,6 +57,3 @@ class SDusers(Miner):
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])
             table.add([sid, str(len(lsd)), ", ".join(names), ", ".join(dates)])
-#            if options.verbose:
-#                for sd in lsd:
-#                    print "    id=%(id)7i refcount=%(refcount)4i hash=%(hash)s" % sd.rec
