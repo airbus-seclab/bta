@@ -80,25 +80,30 @@ class MongoTable(BackendTable):
         self.typefactory = MongoTypeFactory()
         self.col = db[name]
         self.fields = None
+        self.append = getattr(options, "append", False)
+        self.overwrite = getattr(options, "overwrite", False)
 
     def create_index(self, colname):
         self.col.create_index(colname)
 
     def create(self):
-        try:
-            self.col = self.db.create_collection(self.name)
-        except pymongo.errors.CollectionInvalid,e:
-            if not self.options.append:
-                raise
-            print "Collection already exists. Appending."
-        else:
-            for c in columns:
-                if c.index:
-                    self.create_index(c.name)
+        if self.name in self.db.collection_names():
+            if self.append:
+                print "Collection [%s] already exists. Appending." % self.name
+                return
+            elif self.overwrite:
+                print "Collection [%s] already exists. Overwriting." % self.name
+                self.db.drop_collection(self.name)
+            else:
+                raise Exception("Collection [%s] already exists in database [%s]" % (self.name, self.db.name))
+        self.col = self.db.create_collection(self.name)
 
     def create_fields(self, columns):
         self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
         self.create()
+        for c in columns:
+            if c.index:
+                self.create_index(c.name)
         
     def insert(self, values):
         return self.col.insert(values)
