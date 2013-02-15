@@ -104,7 +104,7 @@ class ESETable(object):
         metatable = self.backend.open_table(self._tablename_+"_meta")
 
         table = self.backend.open_table(self._tablename_)
-        table.create(columns)
+        table.create_fields(columns)
         self.parse_file(table, fmt)
 
         print "Creating metatable"
