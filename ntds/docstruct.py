@@ -126,7 +126,7 @@ class Table(DocPart):
         return fmt % tuple(c)
 
     def format_doc(self, formatter, lvl=0):
-        formatter.add_table(self.content)
+        formatter.add_table([map(str, x) for x in self.content])
 
 
 class List(DocPart):
