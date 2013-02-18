@@ -89,6 +89,9 @@ class MongoTable(BackendTable):
     def create_index(self, colname):
         self.col.create_index(colname)
 
+    def ensure_index(self, colname):
+        self.col.ensure_index(colname)
+
     def create(self):
         if self.name in self.db.collection_names():
             if self.append:
