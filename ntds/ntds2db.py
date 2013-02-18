@@ -7,6 +7,9 @@ import ntds.backend.mongo
 import ntds.postprocessing
 import diskcache
 
+import logging
+log = logging.getLogger("bta.ntds2db")
+
 def win2epoch(x):
     return x-11644473600
 
@@ -38,7 +41,7 @@ class ESETable(object):
 
 
     def identify_columns(self):
-        print "Parsing header line"
+        log.info("Parsing header line")
         columns = self._columns_[:]
         f = open(self.fname)
         head = f.readline()
@@ -61,13 +64,13 @@ class ESETable(object):
         columns, fmt, unk_col = self.resolve_unknown_columns(columns, fmt, unk_col)
 
         if unk_col:
-            print "%i unresolved cols" % len(unk_col)
+            log.info("%i unresolved cols" % len(unk_col))
             for pos,att in unk_col:
                 typ = "Text"
                 columns.append(ESEColumn(dbsanecolname(att), att, typ))
                 fmt.append((pos, typ))
         else:
-            print "All cols resolved"
+            log.info("All cols resolved")
 
 
         return columns, fmt
@@ -81,7 +84,7 @@ class ESETable(object):
         f = open(self.fname)
         head = f.readline()
 
-        print "Parsing table lines"
+        log.info("Parsing table lines")
         i = 0
         try:
             while True:
@@ -89,17 +92,19 @@ class ESETable(object):
                 if not l:
                     break
                 i+=1
-                if i%100 == 0:
+                if i%100 == 0 and self.options.verbosity <= logging.INFO:
                     sys.stderr.write("         \r%i %i" % (i, table.count()))
                 values = self.extract(fmt, l)
                 table.insert_fields(values)
         except KeyboardInterrupt:
-            print "\nInterrupted by user"
+            if self.options.verbosity <= logging.INFO:
+                print >>sys.stderr, "\nInterrupted by user"
         else:
-            print "\ndone"
+            if self.options.verbosity <= logging.INFO:
+                print >>sys.stderr, "\ndone"
 
     def create(self):
-        print "### Starting importation of %s" % self._tablename_
+        log.info("### Starting importation of %s" % self._tablename_)
         columns, fmt = self.identify_columns()
 
         metatable = self.backend.open_table(self._tablename_+"_meta")
@@ -108,12 +113,12 @@ class ESETable(object):
         table.create_fields(columns)
         self.parse_file(table, fmt)
 
-        print "Creating metatable"
+        log.info("Creating metatable")
         for col in columns:
             c = table.find({col.name:{"$exists":True}}).count()
             col.count = c
             metatable.insert(col.to_json())
-        print "### Importation of %s is done." % self._tablename_
+        log.info("### Importation of %s is done." % self._tablename_)
 
 
 
@@ -197,7 +202,7 @@ class Datatable(ESETable):
         return self.type2type.get(self.attsyntax2type.get(s), "Text")
 
     def resolve_unknown_columns(self, columns, fmt, unk_col):
-        print "Resolving %i unknown columns" % len(unk_col)
+        log.info("Resolving %i unknown columns" % len(unk_col))
         f = open(self.fname)
         head = f.readline()
         split_head = head.strip().split("\t")
@@ -243,6 +248,11 @@ def main():
                       help="Don't post-process imported data")
 
 
+    parser.add_option("-v", dest="verbose", action="count", default=3,
+                      help="be more verbose (can be used many times)")
+    parser.add_option("-q", dest="quiet", action="count", default=0,
+                      help="be more quiet (can be used many times)")
+
     
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
@@ -259,6 +269,8 @@ def main():
     if options.connection is None:
         parser.error("Missing connection string (-C)")
     
+    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
+    logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
     backend_class = ntds.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)

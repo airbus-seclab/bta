@@ -2,6 +2,8 @@
 import types
 import ntds.backend.mongo
 
+import logging
+log = logging.getLogger("bta.postprocessing")
 
 class PostProcessing(object):
     PREFIX="postproc_"
@@ -17,7 +19,7 @@ class PostProcessing(object):
 
     def post_process_all(self):
         for pname in self.list_post_processors():
-            print "Post-processiong: %s" % pname
+            log.info("Post-processiong: %s" % pname)
             self.post_process_one(pname)
 
     def post_process_one(self, name):

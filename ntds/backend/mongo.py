@@ -6,6 +6,9 @@ from ntds.normalization import TypeFactory,Normalizer
 from ntds.backend import Backend, BackendTable
 import ntds.sd
 import ntds.tools
+import logging
+
+log = logging.getLogger("bta.backend.mongo")
 
 class MongoNormalizer(Normalizer):
     def empty(self, val):
@@ -89,10 +92,10 @@ class MongoTable(BackendTable):
     def create(self):
         if self.name in self.db.collection_names():
             if self.append:
-                print "Collection [%s] already exists. Appending." % self.name
+                log.info("Collection [%s] already exists. Appending." % self.name)
                 return
             elif self.overwrite:
-                print "Collection [%s] already exists. Overwriting." % self.name
+                log.info("Collection [%s] already exists. Overwriting." % self.name)
                 self.db.drop_collection(self.name)
             else:
                 raise Exception("Collection [%s] already exists in database [%s]" % (self.name, self.db.name))
