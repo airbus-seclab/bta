@@ -190,16 +190,16 @@ class Datatable(ESETable):
         }
 
     type2type = {
-        "DN": "Text",
-        "OID": "Text",
-        "CaseExactString" : "Text",
-        "GeneralizedTime" : "Timestamp",
-        "Integer8": "Int",
-        "NTSecurityDescriptor" : "NTSecDesc",
+        "DN": ("Text",False),
+        "OID": ("Text",False),
+        "CaseExactString" : ("Text",False),
+        "GeneralizedTime" : ("Timestamp",False),
+        "Integer8": ("Int",False),
+        "NTSecurityDescriptor" : ("NTSecDesc",True),
         }
     
     def syntax_to_type(self, s):
-        return self.type2type.get(self.attsyntax2type.get(s), "Text")
+        return self.type2type.get(self.attsyntax2type.get(s), ("Text",False))
 
     def resolve_unknown_columns(self, columns, fmt, unk_col):
         log.info("Resolving %i unknown columns" % len(unk_col))
@@ -219,9 +219,9 @@ class Datatable(ESETable):
             sl = l.strip().split("\t")
             pos,att = unkcd.pop(sl[aid], (None,None))
             if att is not None:
-                typ = self.syntax_to_type(int(sl[asy]))
+                typ,idx = self.syntax_to_type(int(sl[asy]))
                 nam = dbsanecolname(sl[ldn])
-                columns.append(ESEColumn(nam, att, typ, index=False))
+                columns.append(ESEColumn(nam, att, typ, index=idx))
                 fmt.append((pos,typ))
 
         return columns, fmt, unkcd.values()
