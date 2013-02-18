@@ -121,13 +121,18 @@ class LiveRootDoc(RootDoc):
 
 class Table(DocPart):
     _type_ = "table"
+    _last_col_nb = 0
 
     def format_content(self, c):
-        fmt = " | ".join(["%-20s"]*len(c)) + "\n"
-        return fmt % tuple(c)
+        if c:
+            self._last_col_nb = len(c)
+            fmt = " | ".join(["%-20s"]*len(c)) + "\n"
+            return fmt % tuple(c)
+        else:
+            return "-+-".join(["-"*20]*self._last_col_nb)
 
     def format_doc(self, formatter, lvl=0):
-        formatter.add_table([map(str, x) for x in self.content])
+        formatter.add_table([map(str, x) if x else None for x in self.content])
 
 
 class List(DocPart):
