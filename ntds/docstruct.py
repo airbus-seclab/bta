@@ -7,7 +7,7 @@ class DocPart(object):
         self.parent = parent
         self.name = name
         self.content = []
-    def add_content(self, content=None):
+    def add(self, content=None):
         self.content.append(content)
     def flush(self):
         pass
@@ -70,24 +70,24 @@ class DocStruct(DocPart):
 if __name__ == "__main__":
     import sys
     d = DocStruct(None, "root")
-    d.add_content("foo")
-    d.add_content("bar")
+    d.add("foo")
+    d.add("bar")
     s1 = d.create_subsection("sub1")
-    s1.add_content("foobar")
-    s1.add_content("foobarbar")
+    s1.add("foobar")
+    s1.add("foobarbar")
     t = s1.create_table("table 1")
-    t.add_content(["n1","c2","test3"])
-    t.add_content("")
-    t.add_content(["1","2","3"])
-    t.add_content(["7","5","6"])
-    t.add_content(["6","45648","2"])
-    t.add_content("")
-    t.add_content(["aze","az","aa"])
+    t.add(["n1","c2","test3"])
+    t.add("")
+    t.add(["1","2","3"])
+    t.add(["7","5","6"])
+    t.add(["6","45648","2"])
+    t.add("")
+    t.add(["aze","az","aa"])
     s2 = d.create_subsection("sub2")
-    s2.add_content("foobar")
-    s2.add_content("foobar")
-    s2.add_content("foobartrain!")
+    s2.add("foobar")
+    s2.add("foobar")
+    s2.add("foobartrain!")
     s3 = s2.create_subsection("subsub3")
-    s3.add_content("barfoo")
+    s3.add("barfoo")
 
     d.to_text_file(sys.stdout)
