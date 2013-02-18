@@ -25,38 +25,49 @@ class ListACE(Miner):
         return perms2human.get(objtype.lower(), objtype)
 
     def summarize_ace(self, acl, ace):
-        s='Owner={0:40} Object={1:60}'.format(Sid(self.dt, verbose=self.options.verbose, objectSid=acl['value']['Owner']),
-                                                Sid(self.dt, verbose=self.options.verbose, objectSid=ace['SID']))
         perms=[]
         for perm, val in ace['AccessMask'].items():
             if val:
                 perms.append(perm)
         if 'ObjectType' in ace:
-            objtype = ' ObjectType=%s ' % (self.type2human(ace['ObjectType']))
+            objtype = self.type2human(ace['ObjectType'])
         else:
-            objtype = " No object type /!\ DANGEROUS "
-        s = s + objtype + ', '.join(perms)
-        return s
+            objtype = "No object type /!\ DANGEROUS"
 
-    def run(self, options):
+
+        return [str(Sid(self.dt, verbose=self.options.verbose, objectSid=acl['value']['Owner'])),
+                str(Sid(self.dt, verbose=self.options.verbose, objectSid=ace['SID'])),
+                objtype,
+                ', '.join(perms)]
+
+    def run(self, options, doc):
         self.options = options
         self.dt = dt = options.backend.open_table("datatable")
         sdt = options.backend.open_table("sdtable")
-
+        
+        desc = []
         queries = []
         if options.owner:
             queries.append({'value.Owner': options.owner})
+            desc.append("owner=%s" % options.owner)
         if options.type:
+            desc.append("type=%s" % options.type)
             query = {'$or': [
                         {"value.DACL.ACEList": {'$elemMatch': {'ObjectType': re.compile(options.type, re.IGNORECASE )}}},
                         {"value.SACL.ACEList": {'$elemMatch': {'ObjectType': re.compile(options.type, re.IGNORECASE )}}}, ]}
             queries.append(query)
         if options.target:
+            desc.append("target=%s" % options.target)
             query = {'$or': [
                         {"value.DACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}},
                         {"value.SACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}}, ]}
             queries.append(query)
         bigquery = {'$and': queries} if queries else {"value":{"$ne":None}}
+
+        desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
+        table = doc.create_table(desct)
+        table.add(["Owner", "Object", "Object type", "Perms"])
+        table.add()
 
         for acl in sdt.find(bigquery):
             for listName in ['DACL', 'SASL']:
@@ -67,5 +78,5 @@ class ListACE(Miner):
                         continue
                     if options.target and ace['SID'] != options.target:
                         continue
-                    print self.summarize_ace(acl, ace)
-
+                    table.add(self.summarize_ace(acl, ace))
+        table.finished()
