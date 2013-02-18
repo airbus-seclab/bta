@@ -111,6 +111,7 @@ class LiveRootDoc(RootDoc):
         self.live = self.live_output(stream)
     def finish_stream(self):
         try:
+            self.live.next() # just in case the generator was not started yet
             self.live.send(True)
         except StopIteration:
             pass
