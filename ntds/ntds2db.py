@@ -156,12 +156,9 @@ class Datatable(ESETable):
         ESEColumn("lDAPDisplayName", "ATTm131532", "Text", False),
         ESEColumn("attributeID", "ATTc131102", "Int", False),
         ESEColumn("attributeSyntax", "ATTc131104", "Text", False),
-        ESEColumn("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
-        ESEColumn("msExchMailboxSecurityDescriptor", "ATTp415105104", "NTSecDesc", True),
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
-#       ESEColumn("attributeTypes", "ATTc1572869", "Text", False),
         ]
 
 
