@@ -56,7 +56,7 @@ class ListACE(Miner):
                         {"value.DACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}},
                         {"value.SACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}}, ]}
             queries.append(query)
-        bigquery = {'$and': queries}
+        bigquery = {'$and': queries} if queries else {"value":{"$ne":None}}
 
         for acl in sdt.find(bigquery):
             for listName in ['DACL', 'SASL']:
