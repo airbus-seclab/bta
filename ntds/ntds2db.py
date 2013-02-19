@@ -29,6 +29,7 @@ class ESEColumn(object):
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
     _tablename_ = None
+    _indexes_ = []
 
     def __init__(self, options):
         self.options = options
@@ -111,6 +112,8 @@ class ESETable(object):
 
         table = self.backend.open_table(self._tablename_)
         table.create_fields(columns)
+        for idx in self._indexes_:
+            table.create_index(idx)
         self.parse_file(table, fmt)
 
         log.info("Creating metatable")
@@ -160,6 +163,7 @@ class Datatable(ESETable):
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
         ]
+    _indexes_ = [ "rightsGuid" ]
 
 
     ATTRIBUTE_ID="ATTc131102"
