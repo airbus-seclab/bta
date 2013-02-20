@@ -15,6 +15,6 @@ def decode_sid(s, endianness="<"):
     return sid
 
 def decode_guid(s):
-    part1 =  "%08X-%04X-%04X-" % struct.unpack("<IHH", s[:8])
-    part2 = "%04X-%08X%04X" % struct.unpack(">HIH", s[8:])
+    part1 =  "%08x-%04x-%04x-" % struct.unpack("<IHH", s[:8])
+    part2 = "%04x-%08x%04x" % struct.unpack(">HIH", s[8:])
     return part1+part2
