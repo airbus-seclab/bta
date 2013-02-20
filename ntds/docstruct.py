@@ -140,9 +140,15 @@ class List(DocPart):
     list_level = 0
     
     def format_content(self, c):
-        return "%s* %s\n" % ("  "*self.list_level, c)
+        return "%s%s %s\n" % ("    "*self.list_level,
+                              ["*","+","-"][self.list_level%3],
+                              c)
 
-    
+    def create_list(self, name):
+        sublist = self.create_subelement(List(self, name))
+        sublist.list_level = self.list_level+1
+        return sublist
+
     def make_formatter_list(self, lvl=0):
         l = []
         for c in self.content:
