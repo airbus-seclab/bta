@@ -132,7 +132,7 @@ class Table(DocPart):
             return "-+-".join(["-"*20]*self._last_col_nb)
 
     def format_doc(self, formatter, lvl=0):
-        formatter.add_table([map(str, x) if x else None for x in self.content])
+        formatter.add_table([map(unicode, x) if x else None for x in self.content])
 
 
 class List(DocPart):
