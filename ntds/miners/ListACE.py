@@ -29,6 +29,10 @@ class ListACE(Miner):
             objtype = self.type2human(ace['ObjectType'])
         else:
             objtype = "No object type /!\ DANGEROUS"
+        return [str(Sid(self.dt, verbose=self.options.verbose, objectSid=acl['value']['Owner'])),
+                str(Sid(self.dt, verbose=self.options.verbose, objectSid=ace['SID'])),
+                objtype,
+                ', '.join(perms)]
 
     def getSecurityDescriptor(self, sd_id):
         raw_securitydescriptor = self.sd.find_one({'id': sd_id})
@@ -56,15 +60,18 @@ class ListACE(Miner):
                 perms.append(perm)
         return '{0[cn]} on {2[SID]}: {3}'.format(user, securitydescriptor, ace, ', '.join(perms))
 
+
     def run(self, options, doc):
         self.options = options
         self.dt = dt = options.backend.open_table("datatable")
         self.sd = sdt = options.backend.open_table("sdtable")
 
         res = []
+        desc = []
         queries = []
         if options.user:
             users = dt.find({'objectSid': options.user})
+            desc.append("owner=%s" % options.user)
 
             for raw_user in users:
                 user = Record(**raw_user)
@@ -82,12 +89,17 @@ class ListACE(Miner):
                             {"value.DACL.ACEList": {'$elemMatch': {'ObjectType': re.compile(options.type, re.IGNORECASE )}}},
                             {"value.SACL.ACEList": {'$elemMatch': {'ObjectType': re.compile(options.type, re.IGNORECASE )}}}, ]}
                 queries.append(query)
+                desc.append("type=%s" % options.type)
+
             if options.target:
                 query = {'$or': [
                             {"value.DACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}},
                             {"value.SACL.ACEList": {'$elemMatch': {'SID': re.compile(options.target, re.IGNORECASE )}}}, ]}
                 queries.append(query)
+                desc.append("target=%s" % options.target)
             bigquery = {'$and': queries}
+
+
 
             for raw_sd in sdt.find(bigquery):
                 securitydescriptor = Record(**raw_sd)
@@ -95,6 +107,12 @@ class ListACE(Miner):
                 users = dt.find({'nTSecurityDescriptor': securitydescriptor.id})
                 for user in users:
                     res.append((user, securitydescriptor, ace))
+
+        desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
+        table = doc.create_table(desct)
+        table.add(["Owner", "Object", "Object type", "Perms"])
+        table.add()
         for t in res:
             user, securitydescriptor, ace = t
-            print self.show(*t)
+            table.add(self.summarize_ace(securitydescriptor, ace))
+        table.finished()

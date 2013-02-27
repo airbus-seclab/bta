@@ -51,6 +51,9 @@ class Record(object):
     def __getitem__(self, attr):
         return self.obj.get(attr, None)
 
+    def __contains__(self, attr):
+        return self.obj.__contains__(attr)
+
     def __repr__(self):
         return self.obj.__str__()
 
