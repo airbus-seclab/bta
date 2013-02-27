@@ -24,9 +24,6 @@ class SecurityDescriptor(object):
     def __init__(self, sd):
         self.raw_sd = sd
         rev,sbz,ctrl,owner,group,sacl,dacl = struct.unpack_from("<BBHIIII", sd)
-        print sacl
-        print dacl
-        print len(sd)
         self.ctrl = ctrl
         self.owner = owner
         self.group = group

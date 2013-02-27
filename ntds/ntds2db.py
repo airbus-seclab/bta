@@ -4,7 +4,11 @@ import sys,os
 import itertools
 
 import ntds.backend.mongo
+import ntds.postprocessing
 import diskcache
+
+import logging
+log = logging.getLogger("bta.ntds2db")
 
 def win2epoch(x):
     return x-11644473600
@@ -25,6 +29,7 @@ class ESEColumn(object):
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
     _tablename_ = None
+    _indexes_ = []
 
     def __init__(self, options):
         self.options = options
@@ -37,7 +42,7 @@ class ESETable(object):
 
 
     def identify_columns(self):
-        print "Parsing header line"
+        log.info("Parsing header line")
         columns = self._columns_[:]
         f = open(self.fname)
         head = f.readline()
@@ -60,13 +65,13 @@ class ESETable(object):
         columns, fmt, unk_col = self.resolve_unknown_columns(columns, fmt, unk_col)
 
         if unk_col:
-            print "%i unresolved cols" % len(unk_col)
+            log.info("%i unresolved cols" % len(unk_col))
             for pos,att in unk_col:
                 typ = "Text"
                 columns.append(ESEColumn(dbsanecolname(att), att, typ))
                 fmt.append((pos, typ))
         else:
-            print "All cols resolved"
+            log.info("All cols resolved")
 
 
         return columns, fmt
@@ -80,7 +85,7 @@ class ESETable(object):
         f = open(self.fname)
         head = f.readline()
 
-        print "Parsing table lines"
+        log.info("Parsing table lines")
         i = 0
         try:
             while True:
@@ -88,31 +93,35 @@ class ESETable(object):
                 if not l:
                     break
                 i+=1
-                if i%100 == 0:
+                if i%100 == 0 and self.options.verbosity <= logging.INFO:
                     sys.stderr.write("         \r%i %i" % (i, table.count()))
                 values = self.extract(fmt, l)
                 table.insert_fields(values)
         except KeyboardInterrupt:
-            print "\nInterrupted by user"
+            if self.options.verbosity <= logging.INFO:
+                print >>sys.stderr, "\nInterrupted by user"
         else:
-            print "\ndone"
+            if self.options.verbosity <= logging.INFO:
+                print >>sys.stderr, "\ndone"
 
     def create(self):
-        print "### Starting importation of %s" % self._tablename_
+        log.info("### Starting importation of %s" % self._tablename_)
         columns, fmt = self.identify_columns()
 
         metatable = self.backend.open_table(self._tablename_+"_meta")
 
         table = self.backend.open_table(self._tablename_)
-        table.create(columns)
+        table.create_fields(columns)
+        for idx in self._indexes_:
+            table.create_index(idx)
         self.parse_file(table, fmt)
 
-        print "Creating metatable"
+        log.info("Creating metatable")
         for col in columns:
             c = table.find({col.name:{"$exists":True}}).count()
             col.count = c
             metatable.insert(col.to_json())
-        print "### Importation of %s is done." % self._tablename_
+        log.info("### Importation of %s is done." % self._tablename_)
 
 
 
@@ -150,13 +159,11 @@ class Datatable(ESETable):
         ESEColumn("lDAPDisplayName", "ATTm131532", "Text", False),
         ESEColumn("attributeID", "ATTc131102", "Int", False),
         ESEColumn("attributeSyntax", "ATTc131104", "Text", False),
-        ESEColumn("nTSecurityDescriptor", "ATTp131353", "NTSecDesc", True),
-        ESEColumn("msExchMailboxSecurityDescriptor", "ATTp415105104", "NTSecDesc", True),
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
-#       ESEColumn("attributeTypes", "ATTc1572869", "Text", False),
         ]
+    _indexes_ = [ "rightsGuid" ]
 
 
     ATTRIBUTE_ID="ATTc131102"
@@ -184,19 +191,19 @@ class Datatable(ESETable):
         }
 
     type2type = {
-        "DN": "Text",
-        "OID": "Text",
-        "CaseExactString" : "Text",
-        "GeneralizedTime" : "Timestamp",
-        "Integer8": "Int",
-        "NTSecurityDescriptor" : "NTSecDesc",
+        "DN": ("Text",False),
+        "OID": ("Text",False),
+        "CaseExactString" : ("Text",False),
+        "GeneralizedTime" : ("Timestamp",False),
+        "Integer8": ("Int",False),
+        "NTSecurityDescriptor" : ("NTSecDesc",True),
         }
     
     def syntax_to_type(self, s):
-        return self.type2type.get(self.attsyntax2type.get(s), "Text")
+        return self.type2type.get(self.attsyntax2type.get(s), ("Text",False))
 
     def resolve_unknown_columns(self, columns, fmt, unk_col):
-        print "Resolving %i unknown columns" % len(unk_col)
+        log.info("Resolving %i unknown columns" % len(unk_col))
         f = open(self.fname)
         head = f.readline()
         split_head = head.strip().split("\t")
@@ -213,9 +220,9 @@ class Datatable(ESETable):
             sl = l.strip().split("\t")
             pos,att = unkcd.pop(sl[aid], (None,None))
             if att is not None:
-                typ = self.syntax_to_type(int(sl[asy]))
+                typ,idx = self.syntax_to_type(int(sl[asy]))
                 nam = dbsanecolname(sl[ldn])
-                columns.append(ESEColumn(nam, att, typ, index=False))
+                columns.append(ESEColumn(nam, att, typ, index=idx))
                 fmt.append((pos,typ))
 
         return columns, fmt, unkcd.values()
@@ -234,6 +241,19 @@ def main():
     
     parser.add_option("--only", dest="only", default="",
                       help="Restrict import to TABLENAME", metavar="TABLENAME")
+    parser.add_option("--append", dest="append", action="store_true",
+                      help="Append ESE tables to existing data in db")
+    parser.add_option("--overwrite", dest="overwrite", action="store_true",
+                      help="Delete tables that already exist in db")
+    parser.add_option("--no-post-processing", dest="no_post_proc", action="store_true",
+                      help="Don't post-process imported data")
+
+
+    parser.add_option("-v", dest="verbose", action="count", default=3,
+                      help="be more verbose (can be used many times)")
+    parser.add_option("-q", dest="quiet", action="count", default=0,
+                      help="be more quiet (can be used many times)")
+
     
     parser.add_option("--dirname", dest="dirname", default="",
                       help="Look for extracted table files in DIR", metavar="DIR")
@@ -250,6 +270,8 @@ def main():
     if options.connection is None:
         parser.error("Missing connection string (-C)")
     
+    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
+    logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
     backend_class = ntds.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
@@ -265,6 +287,10 @@ def main():
         dt.create()
 
     options.backend.commit()
+
+    if not options.no_post_proc:
+        pp = ntds.postprocessing.PostProcessing(options)
+        pp.post_process_all()
     
 
 if __name__ == "__main__":

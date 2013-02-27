@@ -30,7 +30,7 @@ class PeekedMailboxes(Miner):
                 pass
         return aces
 
-    def run(self, options):
+    def run(self, options, doc):
         self.dt = options.backend.open_table("datatable")
         self.sd = options.backend.open_table("sdtable")
 
@@ -57,20 +57,18 @@ class PeekedMailboxes(Miner):
                    userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
                    userAccess[ace['SID']][userMailboxCN] = rules
 
-        print
-        print '-----------------------------------------------[ Who has access to this mailbox? ]--------'
-        print
-
+        s1 = doc.create_subsection("Who has access to this mailbox?")
+        table = s1.create_table("")
         for k,v in mailboxAccess.items():
-                out = u'{0:30} ==> {1}'.format(k,  ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items())))
-                print out.encode('utf-8')
-
-        print
-        print '-----------------------------------------------[ Which mailbox can be accessed by this user? ]--------'
-        print
+            table.add([k, ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items()))])
+        table.finished()
+        s1.finished()
+        
+        s2 = doc.create_subsection("Which mailbox can be accessed by this user?")
+        table = s2.create_table("")
 
         for k,v in userAccess.items():
-                out = u'{0:30} ==> {1}'.format(k,  ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items())))
-                print out.encode('utf-8')
-
+            table.add([k,  ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items()))])
+        table.finished()
+        s2.finished()
 

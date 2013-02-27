@@ -11,27 +11,26 @@ class Passwords(Miner):
         parser.add_argument("--bad-password-count", action="store_true", help="Find users whose bad password count is non-zero")
         parser.add_argument("--dump-unicode-pwd", action="store_true", help="Dump unicodePwd AD field")
     
-    def print_user(self, record, field=None):
-        fmt = "%(sAMAccountName)-20s %(name)-50s"
-        d = defaultdict(lambda:"-")
-        d.update(record)
-        if field:
-            fmt += " %%(%s)s" % field
-        print fmt % d
-    
-    def bad_password_count(self):
+    def get_line(self, record, line):
+        return [unicode(record.get(x,"-")) for x in line]
+
+    def bad_password_count(self, doc):
+        t = doc.create_table("Users whose badPwdCount is non-zero")
         for r in self.dt.find({"badPwdCount":{"$exists": True, "$ne":"0"}}): #.sort({"badPwdCount":1}):
-            self.print_user(r, "badPwdCount")
+            t.add(self.get_line(r, ["sAMAccountName", "name", "badPwdCount"]))
+            t.flush()
 
-    def dump_field(self, field):
+    def dump_field(self, doc, field):
+        t = doc.create_table("Dump of %s" % field)
         for r in self.dt.find({field:{"$exists": True}}):
-            self.print_user(r, field)
-            
+            t.add(self.get_line(r, ["sAMAccountName", "name", field]))
+            t.flush()
 
-    def run(self, options):
+    def run(self, options, doc):
         self.dt = options.backend.open_table("datatable")
 
         if options.bad_password_count:
-            self.bad_password_count()
+            self.bad_password_count(doc)
         if options.dump_unicode_pwd:
-            self.dump_field("unicodePwd")
+            self.dump_field(doc, "unicodePwd")
+

@@ -6,6 +6,9 @@ from ntds.normalization import TypeFactory,Normalizer
 from ntds.backend import Backend, BackendTable
 import ntds.sd
 import ntds.tools
+import logging
+
+log = logging.getLogger("bta.backend.mongo")
 
 class MongoNormalizer(Normalizer):
     def empty(self, val):
@@ -80,13 +83,33 @@ class MongoTable(BackendTable):
         self.typefactory = MongoTypeFactory()
         self.col = db[name]
         self.fields = None
+        self.append = getattr(options, "append", False)
+        self.overwrite = getattr(options, "overwrite", False)
 
-    def create(self, columns):
-        self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
+    def create_index(self, colname):
+        self.col.create_index(colname)
+
+    def ensure_index(self, colname):
+        self.col.ensure_index(colname)
+
+    def create(self):
+        if self.name in self.db.collection_names():
+            if self.append:
+                log.info("Collection [%s] already exists. Appending." % self.name)
+                return
+            elif self.overwrite:
+                log.info("Collection [%s] already exists. Overwriting." % self.name)
+                self.db.drop_collection(self.name)
+            else:
+                raise Exception("Collection [%s] already exists in database [%s]" % (self.name, self.db.name))
         self.col = self.db.create_collection(self.name)
+
+    def create_fields(self, columns):
+        self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
+        self.create()
         for c in columns:
             if c.index:
-                self.col.create_index(c.name)
+                self.create_index(c.name)
         
     def insert(self, values):
         return self.col.insert(values)

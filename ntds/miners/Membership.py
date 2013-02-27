@@ -10,14 +10,17 @@ class Membership(Miner):
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
 
-    def run(self, options):
+    def run(self, options, doc):
         sd = options.backend.open_table("sdtable")
         dt = options.backend.open_table("datatable")
         lt = options.backend.open_table("linktable")
         match = None
 
-        if options.match:
-            match = {"$and": [{ 'objectSid': {'$exists': True}, 'primaryGroupID': {'$exists': True}},
+        table = doc.create_table("group membership")
+
+        match = { 'objectSid': {'$exists': True}, 'primaryGroupID': {'$exists': True},  }
+        if options.match is not None:
+            match = {"$and": [ match,
                               {"$or": [ { "cn": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}
@@ -33,7 +36,8 @@ class Membership(Miner):
              groups.add(primarygroup['cn'])
              for link in links:
                  groupRecId = link['link_DNT']
-                 group = dt.find_one({'RecId': groupRecId}, {'cn': True})
-                 groups.add(group['cn'])
-             s=u"{0[objectSid]:50} {0[cn]:20} {1}".format(user, ', '.join(groups))
-             print s.encode('utf-8')
+                 group = dt.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
+                 if group:
+                     groups.add(group['cn'])
+             table.add([user["objectSid"], user["cn"], ', '.join(groups)])
+        table.finished()

@@ -13,11 +13,13 @@ class ListGroup(Miner):
         parser.add_argument("--noresolve", help="Do not resolve SID", action="store_true")
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
-    def run(self, options):
+    def run(self, options, doc):
         dt = options.backend.open_table("datatable")
         lt = options.backend.open_table("linktable")
         match = None
-
+        
+        doc.add("List of groups matching [%s]" % options.match)
+        
         if options.match:
             match = {"$and": [{'objectCategory': '5945'},
                               {"$or": [ { "name": { "$regex": options.match } },
@@ -36,12 +38,14 @@ class ListGroup(Miner):
                  groups[group['objectGUID']].add(membership)
 
         misc=''
+        glist = doc.create_list("")
         for groupname,membership in groups.items():
             if not options.noresolve:
                 group = Group(dt, objectGUID=groupname)
-                print Sid.resolveRID(group.objectSid), group.cn
+                glist.add("%s %s" % (Sid.resolveRID(group.objectSid), group.cn))
             else:
-                print groupname
+                glist.add(groupname)
+            sublist = glist.create_list("")
             for member,deleted in membership:
                 if options.noresolve:
                     member = member.objectSid
@@ -50,4 +54,5 @@ class ListGroup(Miner):
                     member = '{0:50} {1[cn]}'.format(sid, member)
                 if options.verbose and deleted:
                     member += " deleted %s" % deleted
-                print '        - {0} {1}'.format(member, misc)
+                sublist.add('{0} {1}'.format(member, misc))
+            sublist.finished()

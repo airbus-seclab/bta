@@ -1,6 +1,11 @@
 
+import sys
 import argparse
 import ntds.backend.mongo
+import ntds.docstruct
+from ntds.docstruct import LiveRootDoc, RootDoc
+from ntds.formatters import Formatter
+import ntds.formatters.rest
 
 class Miner(object):
     _miners_ = {}
@@ -22,6 +27,11 @@ class Miner(object):
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
         parser.add_argument("-B", dest="backend_type", default="mongo",
                             help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+
+        parser.add_argument("--live-output", dest="live_output", action="store_true",
+                            help="Provides a live output")
+        parser.add_argument("-t", "--output-type", dest="output_type",
+                            help="output document type (amongst: %s)" % (", ".join(Formatter._formatters_.keys())))
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
@@ -48,6 +58,19 @@ class Miner(object):
         
         miner = cls.get(options.miner_name)
         m = miner()
-        m.run(options)
+
+        docC = LiveRootDoc if options.live_output else RootDoc
+
+        doc = docC("Analysis by miner [%s]" % options.miner_name)
+        doc.start_stream()
+
+        m.run(options, doc)
+
+        doc.finish_stream()
+
+        if options.output_type:
+            fmt = Formatter.get(options.output_type)()
+            doc.format_doc(fmt)
+            print fmt.finalize()
 
     
