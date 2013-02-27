@@ -40,18 +40,15 @@ class ListGroup(Miner):
         misc=''
         glist = doc.create_list("")
         for groupname,membership in groups.items():
-            if not options.noresolve:
-                group = Group(dt, objectGUID=groupname)
-                glist.add("%s %s" % (Sid.resolveRID(group.objectSid), group.cn))
-            else:
-                glist.add(groupname)
+            group = Sid(dt, objectGUID=groupname, verbose=options.verbose)
+            glist.add(group)
             sublist = glist.create_list("")
             for member,deleted in membership:
                 if options.noresolve:
                     member = member.objectSid
                 else:
-                    sid = Sid.resolveRID(member.objectSid)
-                    member = '{0:50} {1[cn]}'.format(sid, member)
+                    sid = Sid(dt, objectSid=member.objectSid)
+                    member = str(sid)
                 if options.verbose and deleted:
                     member += " deleted %s" % deleted
                 sublist.add('{0} {1}'.format(member, misc))
