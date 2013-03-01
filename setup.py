@@ -5,7 +5,7 @@ from setuptools import setup
 setup(
     name = 'bta',
     version = '0.1',
-    packages=['ntds', 'ntds/backend', 'ntds/miners', ],
+    packages=['ntds', 'ntds/backend', 'ntds/miners', 'ntds/formatters', ],
     scripts = ['bin/miners', 'bin/ntds2db'],
 
     # Metadata
