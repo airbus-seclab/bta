@@ -129,7 +129,7 @@ class Table(DocPart):
             fmt = " | ".join(["%-20s"]*len(c)) + "\n"
             return fmt % tuple(c)
         else:
-            return "-+-".join(["-"*20]*self._last_col_nb)
+            return "-+-".join(["-"*20]*self._last_col_nb) + "\n"
 
     def format_doc(self, formatter, lvl=0):
         formatter.add_table([map(unicode, x) if x else None for x in self.content])

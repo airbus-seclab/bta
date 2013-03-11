@@ -59,6 +59,9 @@ class Miner(object):
         miner = cls.get(options.miner_name)
         m = miner()
 
+        if not options.output_type:
+            options.live_output = True
+
         docC = LiveRootDoc if options.live_output else RootDoc
 
         doc = docC("Analysis by miner [%s]" % options.miner_name)
