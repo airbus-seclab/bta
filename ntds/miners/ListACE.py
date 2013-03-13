@@ -79,6 +79,10 @@ class ListACE(Miner):
             users = dt.find({'objectSid': options.subject})
             desc.append("trustee=%s" % options.subject)
 
+            table = doc.create_table(desc)
+            table.add(["Trustee", "Subject", "Object type"])
+            table.add()
+
             for raw_user in users:
                 user = Record(**raw_user)
                 securitydescriptor = self.getSecurityDescriptor(user.nTSecurityDescriptor)
@@ -90,7 +94,10 @@ class ListACE(Miner):
                     if options.trustee and ace.SID != options.trustee:
                         continue
                     filteredACE.append(ace)
-                res.append((user, securitydescriptor, filteredACE))
+                    table.add([str(Sid(self.dt, verbose=self.options.verbose, objectSid=ace.SID)),
+                               user.cn,
+                               ace.ObjectType])
+            table.finished()
         else:
             query = {}
             if options.type:
