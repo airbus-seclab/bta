@@ -10,7 +10,7 @@ def decode_sid(s, endianness="<"):
         subauth = struct.unpack_from("<%iI" % (subauthnb-1), s[8:-4])
         subauth += struct.unpack_from("%sI"%endianness, s[-4:])
     else:
-        subauth = []
+        subauth = ()
     sid = "S-%i-%s" % (rev, "-".join(["%i"%x for x in ((ia,)+subauth)]))
     return sid
 
