@@ -68,7 +68,7 @@ class ListGroup(Miner):
             for sid,deleted,fromgrp in membership:
                 sidobj = Sid(dt, objectSid=sid)
                 member = str(sidobj)
-                if options.verbose and deleted:
+                if deleted:
                     member += " deleted %s" % deleted
                 if fromgrp:
                     member += ' [%s]' % (Sid(dt, objectSid=fromgrp))
