@@ -75,7 +75,7 @@ class ListGroup(Miner):
             glist.add(group)
             sublist = glist.create_list("")
             for sid,deleted,fromgrp in deleted_last(membership):
-                sidobj = Sid(dt, objectSid=sid)
+                sidobj = Sid(dt, objectSid=sid, verbose=options.verbose)
                 member = str(sidobj)
                 if deleted:
                     member += " deleted %s" % deleted
