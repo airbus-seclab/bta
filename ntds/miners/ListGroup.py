@@ -41,6 +41,15 @@ class ListGroup(Miner):
         return members
 
     def run(self, options, doc):
+        def deleted_last(l):
+            deleteditems=[]
+            for i in l:
+                if not i[1]:
+                    yield i
+                else:
+                    deleteditems.append(i)
+            for i in deleteditems:
+                yield i
         self.dt = dt = options.backend.open_table("datatable")
         self.lt = lt = options.backend.open_table("linktable")
         match = None
@@ -65,7 +74,7 @@ class ListGroup(Miner):
             group = Sid(dt, objectGUID=groupname, verbose=options.verbose)
             glist.add(group)
             sublist = glist.create_list("")
-            for sid,deleted,fromgrp in membership:
+            for sid,deleted,fromgrp in deleted_last(membership):
                 sidobj = Sid(dt, objectSid=sid)
                 member = str(sidobj)
                 if deleted:
