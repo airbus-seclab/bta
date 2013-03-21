@@ -14,8 +14,8 @@ class ListGroup(Miner):
         parser.add_argument("--noresolve", help="Do not resolve SID", action="store_true")
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
-    def get_members_of(self, sid):
-        group = self.dt.find_one({ 'objectSid': sid})
+    def get_members_of(self, grpsid, recursive=False):
+        group = self.dt.find_one({ 'objectSid': grpsid})
         if not group:
             return set()
         members=set()
@@ -30,10 +30,11 @@ class ListGroup(Miner):
             sid = row['objectSid']
             if row['objectCategory'] == '5945':
                 if sid not in self.groups_already_saw:
-                    members.update(self.get_members_of(sid))
+                    members.update(self.get_members_of(sid, recursive=True))
                     self.groups_already_saw[sid] = True
             elif row['objectCategory'] == '3818':
-                membership = (row['objectSid'], deleted)
+                fromgrp = grpsid if recursive else ''
+                membership = (row['objectSid'], deleted, fromgrp)
                 members.add(membership)
             else:
                 print '***** Unknown category (%s) for %s' % (row['objectCategory'], sid)
@@ -64,10 +65,12 @@ class ListGroup(Miner):
             group = Sid(dt, objectGUID=groupname, verbose=options.verbose)
             glist.add(group)
             sublist = glist.create_list("")
-            for sid,deleted in membership:
+            for sid,deleted,fromgrp in membership:
                 sidobj = Sid(dt, objectSid=sid)
                 member = str(sidobj)
                 if options.verbose and deleted:
                     member += " deleted %s" % deleted
+                if fromgrp:
+                    member += ' [%s]' % (Sid(dt, objectSid=fromgrp))
                 sublist.add('{0} {1}'.format(member, misc))
             sublist.finished()
