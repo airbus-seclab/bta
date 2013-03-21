@@ -23,9 +23,9 @@ class Sid(object):
             return '(null obj)'
         try:
             if self.verbose:
-                s ='{0[cn]} ({0[objectSid]})'.format(self.obj)
+                s =u'{0[cn]} ({0[objectSid]})'.format(self.obj)
             else:
-                s ='{0[cn]}'.format(self.obj)
+                s =u'{0[cn]}'.format(self.obj)
         except:
             s = self.obj['objectSid']
         return s.encode('utf-8')
