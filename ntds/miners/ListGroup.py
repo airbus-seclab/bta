@@ -69,17 +69,18 @@ class ListGroup(Miner):
              groups[group['objectGUID']] = self.get_members_of(group['objectSid'])
 
         misc=''
-        glist = doc.create_list("")
+        headers=['User', 'Deletion', 'Flags', 'Recursive']
+
         for groupname,membership in groups.items():
+            table = doc.create_table("Members of %s" % groupname)
+            table.add(headers)
+            table.add()
             group = Sid(dt, objectGUID=groupname, verbose=options.verbose)
-            glist.add(group)
-            sublist = glist.create_list("")
             for sid,deleted,fromgrp in deleted_last(membership):
                 sidobj = Sid(dt, objectSid=sid, verbose=options.verbose)
                 member = str(sidobj)
-                if deleted:
-                    member += " deleted %s" % deleted
                 if fromgrp:
-                    member += ' [%s]' % (Sid(dt, objectSid=fromgrp))
-                sublist.add('{0} {1}'.format(member, misc))
-            sublist.finished()
+                    fromgrp = Sid(dt, objectSid=fromgrp)
+                flags = sidobj.getUserAccountControl()
+                table.add((member, deleted or '', flags, fromgrp))
+            table.finished()
