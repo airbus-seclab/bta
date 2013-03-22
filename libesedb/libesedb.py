@@ -237,6 +237,17 @@ def test2():
         for v in r:
             print v
 
+def test3():
+    import sys
+    db = ESEDB(sys.argv[1])
+    sys.stdout.write("\t".join(c.name for c in db.sd_table) + "\n")
+    i = 0
+    for r in db.datatable.iter_records():
+        sys.stdout.write("\t".join(v.strvalue for v in r) + "\n")
+        i+=1
+        if i > 500:
+            break
+
 
 if __name__ == "__main__":
-    test2()
+    test3()
