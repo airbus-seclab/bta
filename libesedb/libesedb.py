@@ -82,8 +82,22 @@ class LibESEDB(object):
         data=c_void_p()
         self._func("record_get_value")(record, value_num, byref(data), byref(datalen), byref(flags))
         return string_at(data, datalen.value), flags.value
+    def record_get_long_value(self, record, value_num):
+        long_value = c_void_p()
+        self._func("record_get_long_value")(record, value_num, byref(long_value))
+        return long_value
     def record_free(self, record):
         self._func("record_free")(byref(record))
+    def long_value_get_number_of_segments(self, long_value):
+        sz = c_int()
+        self._func("long_value_get_number_of_segments")(long_value, byref(sz))
+        return sz.value
+    def long_value_get_segment_data(self, long_value, segment_num):
+        datalen = c_int()
+        data=c_void_p()
+        self._func("long_value_get_segment_data")(long_value, segment_num, byref(data), byref(datalen))
+        return string_at(data, datalen.value)
+
 
 class ESEDB(object):
     def __init__(self, fname):
