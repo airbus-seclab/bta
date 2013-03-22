@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
+from esetypes import ColumnType,ValueFlags,native_type
 
 class ESEDB_Exception(Exception):
     pass
@@ -172,13 +173,35 @@ class ESEValue(object):
         self.record = record
         self.lib = record.lib
         self.num = value_num
-        self.id = self.lib.record_get_column_identifier(self.record.record, value_num)
         self.type = self.lib.record_get_column_type(self.record.record, value_num)
-        self.value,self.flag = self.lib.record_get_value(self.record.record, value_num)
-        self.hexvalue = self.value.encode("hex")
-    def __repr__(self):
-        return "<val:id={0.id}:type={0.type}:flag={0.flag}:value={0.hexvalue}>".format(self)
+        value,self.flag = self.lib.record_get_value(self.record.record, value_num)
 
+        if self.flag & ValueFlags.LONG_VALUE:
+            lv = self.lib.record_get_long_value(self.record.record, value_num)
+            segnb = self.lib.long_value_get_number_of_segments(lv)
+            segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
+            value = "".join(segs)
+
+        self.value = native_type(self.type, value)
+    
+
+# Removed for perf reasons and because nobody needs these values yet
+#
+#        self.id =self.lib.record_get_column_identifier(self.record.record, value_num)
+#        self.hexvalue = self.value.encode("hex")
+#        self.texttype = ColumnType[self.type]
+#        self.textflag = ValueFlags.flag(self.flag)
+    @property
+    def strvalue(self):
+        if self.type in [ColumnType.BINARY_DATA, 
+                         ColumnType.LARGE_BINARY_DATA, 
+                         ColumnType.SUPER_LARGE_VALUE]:
+            return self.value.encode("hex")
+        return str(self.value)
+
+
+    def __repr__(self):
+        return "<val:id={0.id}:type={0.texttype}:flag={0.textflag}:value={0.hexvalue}>".format(self)
 
 
 def test():
