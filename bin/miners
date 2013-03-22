@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-import ntds.miners.all
+import bta.miners.all
 
 
 if __name__ == "__main__":
-    ntds.miners.Miner.main()
+    bta.miners.Miner.main()

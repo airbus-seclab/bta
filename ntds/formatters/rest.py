@@ -1,5 +1,5 @@
 import itertools
-from ntds.formatters import Formatter
+from bta.formatters import Formatter
 
 def get_bullet(lvl):
     b = {0:"*", 1:"+", 2:"-"}.get(lvl, "*")

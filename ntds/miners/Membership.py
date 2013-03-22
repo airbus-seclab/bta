@@ -1,4 +1,4 @@
-from ntds.miners import Miner
+from bta.miners import Miner
 from collections import defaultdict
 
 @Miner.register

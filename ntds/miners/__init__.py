@@ -1,11 +1,11 @@
 
 import sys
 import argparse
-import ntds.backend.mongo
-import ntds.docstruct
-from ntds.docstruct import LiveRootDoc, RootDoc
-from ntds.formatters import Formatter
-import ntds.formatters.rest
+import bta.backend.mongo
+import bta.docstruct
+from bta.docstruct import LiveRootDoc, RootDoc
+from bta.formatters import Formatter
+import bta.formatters.rest
 
 class Miner(object):
     _miners_ = {}
@@ -26,7 +26,7 @@ class Miner(object):
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
         parser.add_argument("-B", dest="backend_type", default="mongo",
-                            help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+                            help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
         parser.add_argument("--live-output", dest="live_output", action="store_true",
                             help="Provides a live output")
@@ -53,7 +53,7 @@ class Miner(object):
         if options.connection is None:
             parser.error("Missing connection string (-C)")
     
-        backend_type = ntds.backend.Backend.get_backend(options.backend_type)
+        backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
         
         miner = cls.get(options.miner_name)

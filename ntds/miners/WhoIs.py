@@ -1,5 +1,5 @@
-from ntds.miners import Miner
-from ntds.miners.tools import User, Group, Sid
+from bta.miners import Miner
+from bta.miners.tools import User, Group, Sid
 from pprint import pprint
 
 @Miner.register

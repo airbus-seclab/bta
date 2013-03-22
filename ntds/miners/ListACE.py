@@ -1,5 +1,5 @@
-from ntds.miners import Miner
-from ntds.miners.tools import User, Group, Sid, Record
+from bta.miners import Miner
+from bta.miners.tools import User, Group, Sid, Record
 import re
 
 p2h={'00299570-246d-11d0-a768-00aa006e0529': 'User-Force-Change-Password',

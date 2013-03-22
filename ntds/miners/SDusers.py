@@ -1,4 +1,4 @@
-from ntds.miners import Miner
+from bta.miners import Miner
 from collections import defaultdict
 
 class HRec: # wraps sd entries to make them hashable

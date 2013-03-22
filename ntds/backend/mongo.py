@@ -2,10 +2,10 @@
 import pymongo
 import struct
 from datetime import datetime
-from ntds.normalization import TypeFactory,Normalizer
-from ntds.backend import Backend, BackendTable
-import ntds.sd
-import ntds.tools
+from bta.normalization import TypeFactory,Normalizer
+from bta.backend import Backend, BackendTable
+import bta.sd
+import bta.tools
 import logging
 
 log = logging.getLogger("bta.backend.mongo")
@@ -43,21 +43,21 @@ class MongoSID(MongoNormalizer):
         except:
             return val
         if val:
-            return ntds.tools.decode_sid(val,">")
+            return bta.tools.decode_sid(val,">")
         return None
     
 class MongoGUID(MongoNormalizer):
     def normal(self, val):
         val = val.strip().decode("hex")
         if val:
-            return ntds.tools.decode_guid(val)
+            return bta.tools.decode_guid(val)
         return None
     
 class MongoSecurityDescriptor(MongoNormalizer):
     def normal(self, val):
         val = val.strip().decode("hex")
         if val:
-            return ntds.sd.sd_to_json(val)
+            return bta.sd.sd_to_json(val)
         return None
     
 

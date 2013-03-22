@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import types
-import ntds.backend.mongo
+import bta.backend.mongo
 
 import logging
 log = logging.getLogger("bta.postprocessing")
@@ -65,7 +65,7 @@ def main():
     parser.add_option("-C", dest="connection",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
     parser.add_option("-B", dest="backend_class", default="mongo",
-                      help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+                      help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
     parser.add_option("--only", dest="only", metavar="POSTPROC",
                       help="Only run POSTPROC (amongst %s)" % (", ".join(PostProcessing.list_post_processors())))
@@ -79,7 +79,7 @@ def main():
         parser.error("Missing connection string (-C)")
     
 
-    backend_class = ntds.backend.Backend.get_backend(options.backend_class)
+    backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
 

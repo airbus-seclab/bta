@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import ntds.backend.mongo
+import bta.backend.mongo
 
 
 class TableDiff(object):
@@ -83,9 +83,9 @@ def main():
                       help="Backend B connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
 
     parser.add_option("--BA", dest="backend_classA", default="mongo",
-                      help="database A backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+                      help="database A backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
     parser.add_option("--BB", dest="backend_classB", default="mongo",
-                      help="database B backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+                      help="database B backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
     
     parser.add_option("--only", dest="only", default="",
@@ -100,11 +100,11 @@ def main():
         parser.error("Missing connection string B (--CB)")
     
 
-    backend_classA = ntds.backend.Backend.get_backend(options.backend_classA)
+    backend_classA = bta.backend.Backend.get_backend(options.backend_classA)
     options.connection = options.connectionA # XXX hack
     options.backendA = backend_classA(options)
     
-    backend_classB = ntds.backend.Backend.get_backend(options.backend_classB)
+    backend_classB = bta.backend.Backend.get_backend(options.backend_classB)
     options.connection = options.connectionB # XXX hack
     options.backendB = backend_classB(options)
     

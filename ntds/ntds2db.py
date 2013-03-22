@@ -3,8 +3,8 @@
 import sys,os
 import itertools
 
-import ntds.backend.mongo
-import ntds.postprocessing
+import bta.backend.mongo
+import bta.postprocessing
 import diskcache
 
 import logging
@@ -236,7 +236,7 @@ def main():
     parser.add_option("-C", dest="connection",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
     parser.add_option("-B", dest="backend_class", default="mongo",
-                      help="database backend (amongst: %s)" % (", ".join(ntds.backend.Backend.backends.keys())))
+                      help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
     
     parser.add_option("--only", dest="only", default="",
@@ -273,7 +273,7 @@ def main():
     options.verbosity = max(1,50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
-    backend_class = ntds.backend.Backend.get_backend(options.backend_class)
+    backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
     if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
@@ -289,7 +289,7 @@ def main():
     options.backend.commit()
 
     if not options.no_post_proc:
-        pp = ntds.postprocessing.PostProcessing(options)
+        pp = bta.postprocessing.PostProcessing(options)
         pp.post_process_all()
     
 
