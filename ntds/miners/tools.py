@@ -1,5 +1,9 @@
 import os, sys
 
+FLAG_DISABLED = 0x2
+FLAG_PASSWD_NEVER_EXPIRE = 0x10000
+FLAG_EXPIRED  = 0x800000
+
 load_rid_path=os.path.join(os.environ['HOME'], 'local_rid.py')
 
 local_relative_domains_sid=None
@@ -23,12 +27,26 @@ class Sid(object):
             return '(null obj)'
         try:
             if self.verbose:
-                s ='{0[cn]} ({0[objectSid]})'.format(self.obj)
+                s =u'{0[cn]} ({0[objectSid]})'.format(self.obj)
             else:
-                s ='{0[cn]}'.format(self.obj)
+                s =u'{0[cn]}'.format(self.obj)
         except:
             s = self.obj['objectSid']
         return s.encode('utf-8')
+
+    def getUserAccountControl(self):
+        if 'userAccountControl' in self.obj:
+            uac = int(self.obj['userAccountControl'])
+            flags=[]
+            if uac & FLAG_PASSWD_NEVER_EXPIRE:
+                flags.append('PASSWD_NEVER_EXPIRE')
+            if uac & FLAG_DISABLED:
+                flags.append('DISABLED')
+            if uac & FLAG_EXPIRED:
+                flags.append('EXPIRED')
+            if flags:
+                return ', '.join(flags)
+        return ''
 
     @staticmethod
     def resolveRID(sid):
