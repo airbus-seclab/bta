@@ -80,8 +80,42 @@ converters = {
  }
 
 
+multi_converters = {
+#    ColumnType.BOOLEAN:
+#        lambda x: bool(struct.unpack("c",x)[0]),
+#    ColumnType.FLOAT_32BIT :
+#        lambda x: struct.unpack("<f",x)[0],
+#    ColumnType.DOUBLE_64BIT :
+#        lambda x: struct.unpack("<d",x)[0],
+#    ColumnType.DATE_TIME :
+#        lambda x: datetime.datetime(x),
+
+#    ColumnType.GUID:
+#        lambda x: decode_guid(x),
+    ColumnType.INTEGER_8BIT_UNSIGNED:
+        lambda x: struct.unpack_from("<%iB"%len(x), x),
+    ColumnType.INTEGER_16BIT_SIGNED :
+        lambda x: struct.unpack_from("<%ih"%(len(x)/2), x),
+    ColumnType.INTEGER_16BIT_UNSIGNED :
+        lambda x: struct.unpack_from("<%iH"%(len(x)/2), x),
+    ColumnType.INTEGER_32BIT_SIGNED :
+        lambda x: struct.unpack_from("<%ii"%(len(x)/4), x),
+    ColumnType.INTEGER_32BIT_SIGNED :
+        lambda x: struct.unpack_from("<%iI"%(len(x)/4), x),
+    ColumnType.INTEGER_64BIT_SIGNED :
+        lambda x: struct.unpack_from("<%iq"%(len(x)/8), x),
+    ColumnType.CURRENCY :
+        lambda x: struct.unpack_from("<%iQ"%(len(x)/8), x),
+ }
+
+
 
 def native_type(typ, val):
     if typ in converters:
         return converters[typ](val)
+    return val
+
+def multi_native_type(typ, val):
+    if typ in multi_converters:
+        return multi_converters[typ](val)
     return val
