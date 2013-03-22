@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
-from esetypes import ColumnType,ValueFlags,native_type
+from esetypes import ColumnType,ValueFlags,native_type,multi_native_type
 
 class ESEDB_Exception(Exception):
     pass
@@ -174,15 +174,22 @@ class ESEValue(object):
         self.lib = record.lib
         self.num = value_num
         self.type = self.lib.record_get_column_type(self.record.record, value_num)
-        value,self.flag = self.lib.record_get_value(self.record.record, value_num)
+        value,self.flags = self.lib.record_get_value(self.record.record, value_num)
+        if not value:
+            self.value = None
+        else:
 
-        if self.flag & ValueFlags.LONG_VALUE:
-            lv = self.lib.record_get_long_value(self.record.record, value_num)
-            segnb = self.lib.long_value_get_number_of_segments(lv)
-            segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
-            value = "".join(segs)
+            if self.flags & ValueFlags.LONG_VALUE:
+                lv = self.lib.record_get_long_value(self.record.record, value_num)
+                segnb = self.lib.long_value_get_number_of_segments(lv)
+                segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
+                value = "".join(segs)
 
-        self.value = native_type(self.type, value)
+            if self.flags & ValueFlags.MULTI_VALUE:
+                self.value = multi_native_type(self.type, value)
+            else:
+                self.value = native_type(self.type, value)
+                
     
 
 # Removed for perf reasons and because nobody needs these values yet
@@ -190,18 +197,22 @@ class ESEValue(object):
 #        self.id =self.lib.record_get_column_identifier(self.record.record, value_num)
 #        self.hexvalue = self.value.encode("hex")
 #        self.texttype = ColumnType[self.type]
-#        self.textflag = ValueFlags.flag(self.flag)
+#        self.textflags = ValueFlags.flag(self.flags)
+
+
     @property
     def strvalue(self):
+        if self.value is None:
+            return ""
         if self.type in [ColumnType.BINARY_DATA, 
-                         ColumnType.LARGE_BINARY_DATA, 
-                         ColumnType.SUPER_LARGE_VALUE]:
+                                                    ColumnType.LARGE_BINARY_DATA, 
+                                                    ColumnType.SUPER_LARGE_VALUE]:
             return self.value.encode("hex")
         return str(self.value)
 
 
     def __repr__(self):
-        return "<val:id={0.id}:type={0.texttype}:flag={0.textflag}:value={0.hexvalue}>".format(self)
+        return "<val:id={0.id}:type={0.texttype}:flags={0.textflags}:value={0.value}>".format(self)
 
 
 def test():
