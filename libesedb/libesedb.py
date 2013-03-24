@@ -7,6 +7,9 @@ class ESEDB_Exception(Exception):
     pass
 
 class LibESEDB(object):
+    # keep references to those functions that are called in destructors
+    byref = byref
+    c_void_p = c_void_p
     def __init__(self):
         self.lib = cdll.LoadLibrary("libesedb.so")
 
@@ -14,8 +17,8 @@ class LibESEDB(object):
         funcname = "libesedb_"+funcname
         func = getattr(self.lib, funcname)
         def _call(*args):
-            e = c_void_p()
-            args += (byref(e),)
+            e = self.c_void_p()
+            args += (self.byref(e),)
             if func(*args) != 1:
                 raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(e)))
         return _call
@@ -55,7 +58,7 @@ class LibESEDB(object):
         self._func("table_get_column")(table, col_num, byref(column), flags)
         return column
     def table_free(self, table):
-        self._func("table_free")(byref(table))
+        self._func("table_free")(self.byref(table))
     def table_get_number_of_records(self, table):
         nb = c_int()
         self._func("table_get_number_of_records")(table, byref(nb))
@@ -71,7 +74,7 @@ class LibESEDB(object):
         self._func("column_get_utf8_name")(column, byref(name), sz)
         return name.value.decode("utf8")
     def column_free(self, column):
-        self._func("column_free")(byref(column))
+        self._func("column_free")(self.byref(column))
     def record_get_number_of_values(self, record):
         sz = c_int()
         self._func("record_get_number_of_values")(record, byref(sz))
@@ -95,7 +98,7 @@ class LibESEDB(object):
         self._func("record_get_long_value")(record, value_num, byref(long_value))
         return long_value
     def record_free(self, record):
-        self._func("record_free")(byref(record))
+        self._func("record_free")(self.byref(record))
     def long_value_get_number_of_segments(self, long_value):
         sz = c_int()
         self._func("long_value_get_number_of_segments")(long_value, byref(sz))
