@@ -17,7 +17,7 @@ class LibESEDB(object):
             e = c_void_p()
             args += (byref(e),)
             if func(*args) != 1:
-                raise ESEDB_Exception("%s:??? [%r] [%i]" % (funcname, e, e.value))
+                raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(e)))
         return _call
 
     def get_error(self, error):
