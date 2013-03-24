@@ -215,8 +215,8 @@ class ESEValue(object):
         if self.value is None:
             return ""
         if self.type in [ColumnType.BINARY_DATA, 
-                                                    ColumnType.LARGE_BINARY_DATA, 
-                                                    ColumnType.SUPER_LARGE_VALUE]:
+                         ColumnType.LARGE_BINARY_DATA, 
+                         ColumnType.SUPER_LARGE_VALUE]:
             return self.value.encode("hex")
         return str(self.value)
 
