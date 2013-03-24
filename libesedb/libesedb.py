@@ -104,7 +104,7 @@ class ESEDB(object):
     def __init__(self, fname):
         self.lib = LibESEDB()
         self.file = self.lib.open(fname)
-        self.tables = [ESETable(self, self.lib.file_get_table(self.file, i)) for i in range(self.lib.file_get_number_of_tables(self.file))]
+        self.tables = [ESETable(self, i) for i in range(self.lib.file_get_number_of_tables(self.file))]
         self.name2table = {t.name:t for t in self.tables}
     def __getitem__(self, i):
         try:
@@ -122,12 +122,13 @@ class ESEDB(object):
         return "<ESEDB: %s>" % " ".join(t.name for t in self.tables)
 
 class ESETable(object):
-    def __init__(self, db, table):
+    def __init__(self, db, table_num):
         self.db = db
         self.lib = db.lib
-        self.table = table
-        self.name = self.lib.table_get_utf8_name(table)
-        self.columns = [ESEColumn(self, self.lib.table_get_column(self.table, i)) for i in range(self.lib.table_get_number_of_columns(self.table))]
+        self.table_num = table_num
+        self.table = self.lib.file_get_table(self.db.file, table_num)
+        self.name = self.lib.table_get_utf8_name(self.table)
+        self.columns = [ESEColumn(self, i) for i in range(self.lib.table_get_number_of_columns(self.table))]
         self.name2column = {c.name:c for c in self.columns}
         self.number_of_records = self.lib.table_get_number_of_records(self.table)
     def __del__(self):
@@ -145,22 +146,24 @@ class ESETable(object):
     def __iter__(self):
         return iter(self.columns)
     def iter_records(self):
-        return (ESERecord(self, self.lib.table_get_record(self.table, i)) for i in xrange(self.number_of_records))
+        return (ESERecord(self, i) for i in xrange(self.number_of_records))
 
 class ESEColumn(object):
-    def __init__(self, table, column):
+    def __init__(self, table, column_num):
         self.table = table
         self.lib = table.lib
-        self.column = column
+        self.column_num = column_num
+        self.column = self.lib.table_get_column(self.table.table, column_num)
         self.name = self.lib.column_get_utf8_name(self.column)
     def __del__(self):
         self.lib.column_free(self.column)
 
 class ESERecord(object):
-    def __init__(self, table, record):
+    def __init__(self, table, record_num):
         self.table = table
         self.lib = table.lib
-        self.record = record
+        self.record_num = record_num
+        self.record = self.lib.table_get_record(self.table.table, record_num)
         self.values = [ESEValue(self, i) for i in range(self.lib.record_get_number_of_values(self.record))]
     def __del__(self):
         self.lib.record_free(self.record)
