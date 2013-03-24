@@ -20,6 +20,13 @@ class LibESEDB(object):
                 raise ESEDB_Exception("%s:??? [%r] [%i]" % (funcname, e, e.value))
         return _call
 
+    def get_error(self, error):
+        sz = 2048
+        msgbuf = create_string_buffer(sz)
+        if self.lib.liberror_error_sprint(error, byref(msgbuf), sz) == -1:
+            raise ESEDB_Exception("liberror_error_sprint: unkown error!")
+        return msgbuf.value
+
     def open(self, fname, flags=1):
         f = c_void_p()
         self._func("file_initialize")(byref(f))
