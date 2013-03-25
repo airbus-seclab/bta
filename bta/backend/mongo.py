@@ -4,6 +4,7 @@ import struct
 from datetime import datetime
 from bta.normalization import TypeFactory,Normalizer
 from bta.backend import Backend, BackendTable
+import bson.binary
 import bta.sd
 import bta.tools
 import logging
@@ -19,10 +20,25 @@ class MongoTextNormalizer(MongoNormalizer):
     
 class MongoIntNormalizer(MongoNormalizer):
     def normal(self, val):
-        v = int(val)
-        if -0x8000000000000000 <= v < 0x8000000000000000:
-            return v
-        return val
+        if -0x8000000000000000 <= val < 0x8000000000000000:
+            return val
+        return str(val)
+
+class MongoBinaryNormalizer(MongoNormalizer):
+    def normal(self, val):
+        return bson.binary.Binary(val)
+
+class MongoUnknownNormalizer(MongoNormalizer):
+    def normal(self, val):
+        if type(val) in [int, long]:
+            if -0x8000000000000000 <= val < 0x8000000000000000:
+                return val
+            return str(val)
+        if type(val) in [list]:
+            return val
+        if type(val) is tuple:
+            return list(val)
+        return bson.binary.Binary(val)
 
 class MongoTimestampNormalizer(MongoNormalizer):
     def normal(self, val):
@@ -34,38 +50,34 @@ class MongoTimestampNormalizer(MongoNormalizer):
 
 class MongoNTSecDesc(MongoNormalizer):
     def normal(self, val):
-        return struct.unpack("Q", val.decode("hex"))[0]
+        return struct.unpack("Q", val)[0]
 
 class MongoSID(MongoNormalizer):
     def normal(self, val):
-        try:
-            val = val.strip().decode("hex")
-        except:
-            return val
         if val:
             return bta.tools.decode_sid(val,">")
         return None
     
 class MongoGUID(MongoNormalizer):
     def normal(self, val):
-        val = val.strip().decode("hex")
         if val:
             return bta.tools.decode_guid(val)
         return None
     
 class MongoSecurityDescriptor(MongoNormalizer):
     def normal(self, val):
-        val = val.strip().decode("hex")
         if val:
             return bta.sd.sd_to_json(val)
         return None
-    
+
 
 class MongoTypeFactory(TypeFactory):
     def Text(self):
         return MongoTextNormalizer()
     def Int(self):
         return MongoIntNormalizer()
+    def Binary(self):
+        return MongoBinaryNormalizer()
     def Timestamp(self):
         return MongoTimestampNormalizer()
     def NTSecDesc(self):
@@ -76,6 +88,8 @@ class MongoTypeFactory(TypeFactory):
         return MongoGUID()
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
+    def UnknownType(self):
+        return MongoUnknownNormalizer()
 
 class MongoTable(BackendTable):
     def __init__(self, options, db, name):
