@@ -156,8 +156,11 @@ class ESETable(object):
             raise AttributeError(attr)
     def __iter__(self):
         return iter(self.columns)
-    def iter_records(self):
-        return (ESERecord(self, i) for i in xrange(self.number_of_records))
+    def iter_records(self, entries=None, columns=None):
+        if entries is None:
+            if columns is not None:
+                entries = [c.column_num for c in columns]
+        return (ESERecord(self, i, limit=entries) for i in xrange(self.number_of_records))
 
 class ESEColumn(object):
     def __init__(self, table, column_num):
@@ -171,12 +174,13 @@ class ESEColumn(object):
             self.lib.column_free(self.column)
 
 class ESERecord(object):
-    def __init__(self, table, record_num):
+    def __init__(self, table, record_num, limit=None):
         self.table = table
         self.lib = table.lib
         self.record_num = record_num
         self.record = self.lib.table_get_record(self.table.table, record_num)
-        self.values = [ESEValue(self, i) for i in range(self.lib.record_get_number_of_values(self.record))]
+        self.value_entries = limit if limit is not None else range(self.lib.record_get_number_of_values(self.record))
+        self.values = [ESEValue(self, i) for i in self.value_entries]
     def __del__(self):
         if hasattr(self, "record"):
             self.lib.record_free(self.record)
