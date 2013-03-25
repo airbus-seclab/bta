@@ -3,6 +3,8 @@
 import sys,os
 import itertools
 
+import libesedb
+
 import bta.backend.mongo
 import bta.postprocessing
 import diskcache
@@ -34,69 +36,29 @@ class ESETable(object):
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
-        filename = getattr(options, self._tablename_)
-        self.fname = os.path.join(options.dirname, filename)
-    
-    def resolve_unknown_columns(self, columns, fmt, unk_col):
-        return columns, fmt, unk_col
-
+        self.attname2col =  { col.attname:col for col in self._columns_ }
+        self.esedb = options.esedb
+        self.esetable = options.esedb[self._tablename_]
 
     def identify_columns(self):
-        log.info("Parsing header line")
-        columns = self._columns_[:]
-        f = open(self.fname)
-        head = f.readline()
-        nrec = len(columns)
-        fmt = [None]*nrec
-        h2pos = dict([(c.attname,(i,c.type)) for i,c in enumerate(columns)])
-        
-        split_head = head.strip().split("\t")
-        unk_col = []
-        for i,h in enumerate(split_head):
-            if h in h2pos:
-                pos,typ = h2pos[h]
-                fmt[pos] = i,typ
+        columns = []
+        for c in self.esetable.columns:
+            if c.name in self.attname2col:
+                esecol = self.attname2col[c.name] 
             else:
-                unk_col.append((i,h))
-        
-        if None in fmt:
-            raise Exception("Did not find some headers: fmt=%r" % fmt)
+                esecol = ESEColumn(dbsanecolname(c.name), c.name, "UnknownType")
+            columns.append(esecol)
+        return columns
 
-        columns, fmt, unk_col = self.resolve_unknown_columns(columns, fmt, unk_col)
-
-        if unk_col:
-            log.info("%i unresolved cols" % len(unk_col))
-            for pos,att in unk_col:
-                typ = "Text"
-                columns.append(ESEColumn(dbsanecolname(att), att, typ))
-                fmt.append((pos, typ))
-        else:
-            log.info("All cols resolved")
-
-
-        return columns, fmt
-    
-    def extract(self, fmt, line):
-        sl = line.split("\t")
-    #    return [typ.to_db(sl[i]) for i,typ in fmt]
-        return [sl[i] for i,typ in fmt]
-    
-    def parse_file(self, table, fmt):
-        f = open(self.fname)
-        head = f.readline()
-
-        log.info("Parsing table lines")
+    def parse_file(self, dbtable):
+        log.info("Parsing ESE table records")
         i = 0
         try:
-            while True:
-                l = f.readline()
-                if not l:
-                    break
+            for rec in self.esetable.iter_records():
+                dbtable.insert_fields([val.value for val in rec])
                 i+=1
                 if i%100 == 0 and self.options.verbosity <= logging.INFO:
-                    sys.stderr.write("         \r%i %i" % (i, table.count()))
-                values = self.extract(fmt, l)
-                table.insert_fields(values)
+                    sys.stderr.write("         \r%i %i" % (i, dbtable.count()))
         except KeyboardInterrupt:
             if self.options.verbosity <= logging.INFO:
                 print >>sys.stderr, "\nInterrupted by user"
@@ -105,8 +67,9 @@ class ESETable(object):
                 print >>sys.stderr, "\ndone"
 
     def create(self):
-        log.info("### Starting importation of %s" % self._tablename_)
-        columns, fmt = self.identify_columns()
+        log.info("/### Starting importation of %s" % self._tablename_)
+        
+        columns = self.identify_columns()
 
         metatable = self.backend.open_table(self._tablename_+"_meta")
 
@@ -114,29 +77,29 @@ class ESETable(object):
         table.create_fields(columns)
         for idx in self._indexes_:
             table.create_index(idx)
-        self.parse_file(table, fmt)
+        self.parse_file(table)
 
         log.info("Creating metatable")
         for col in columns:
             c = table.find({col.name:{"$exists":True}}).count()
             col.count = c
             metatable.insert(col.to_json())
-        log.info("### Importation of %s is done." % self._tablename_)
+        log.info("\### Importation of %s is done." % self._tablename_)
 
 
 
 
 class SDTable(ESETable):
-    _tablename_ = "sdtable"
+    _tablename_ = "sd_table"
     _columns_ = [
-        ESEColumn("id", "sd_id", "Int", True),
-        ESEColumn("hash", "sd_hash", "Text", True),
-        ESEColumn("refcount", "sd_refcount", "Int", True),
-        ESEColumn("value", "sd_value", "SecurityDescriptor", False)
+        ESEColumn("sd_id", "sd_id", "Int", True),
+        ESEColumn("sd_hash", "sd_hash", "Binary", True),
+        ESEColumn("sd_refcount", "sd_refcount", "Int", True),
+        ESEColumn("sd_value", "sd_value", "SecurityDescriptor", False)
         ]
 
 class LinkTable(ESETable):
-    _tablename_ = "linktable"
+    _tablename_ = "link_table"
     _columns_ = [
         ESEColumn("link_DNT", "link_DNT", "Int", True),
         ESEColumn("backlink_DNT", "backlink_DNT", "Int", True),
@@ -145,8 +108,8 @@ class LinkTable(ESETable):
         ESEColumn("link_deltime", "link_deltime", "Timestamp", True),
         ESEColumn("link_usnchanged", "link_usnchanged", "Int", True),
         ESEColumn("link_ncdnt", "link_ncdnt", "Int", True),
-        ESEColumn("link_metadata", "link_metadata", "Text", True),
-        ESEColumn("link_data", "link_data", "Text", True),
+        ESEColumn("link_metadata", "link_metadata", "Binary", True),
+        ESEColumn("link_data", "link_data", "Binary", True),
         ESEColumn("link_ndesc", "link_ndesc", "Text", True),
         ]
 
@@ -200,32 +163,37 @@ class Datatable(ESETable):
         }
     
     def syntax_to_type(self, s):
-        return self.type2type.get(self.attsyntax2type.get(s), ("Text",False))
+        return self.type2type.get(self.attsyntax2type.get(s), ("UnknownType",False))
 
-    def resolve_unknown_columns(self, columns, fmt, unk_col):
-        log.info("Resolving %i unknown columns" % len(unk_col))
-        f = open(self.fname)
-        head = f.readline()
-        split_head = head.strip().split("\t")
-        unkcd = dict([(h[4:],(i,h)) for i,h in unk_col if h.startswith("ATT")])
-        aid = split_head.index(self.ATTRIBUTE_ID)
-        asy = split_head.index(self.ATTRIBUTE_SYNTAX)
-        ldn = split_head.index(self.LDAP_DISPLAY_NAME)
-        if aid < 0 or asy < 0 or ldn < 0:
-            raise Exception("Did not find %s or %s or %s" % (self.ATTRIBUTE_ID, self.ATTRIBUTE_SYNTAX, self.LDAP_DISPLAY_NAME))
-        while unkcd:
-            l = f.readline()
-            if not l:
-                break
-            sl = l.strip().split("\t")
-            pos,att = unkcd.pop(sl[aid], (None,None))
-            if att is not None:
-                typ,idx = self.syntax_to_type(int(sl[asy]))
-                nam = dbsanecolname(sl[ldn])
-                columns.append(ESEColumn(nam, att, typ, index=idx))
-                fmt.append((pos,typ))
 
-        return columns, fmt, unkcd.values()
+    def identify_columns(self):
+        att2ldn = {}
+        att2asy = {}
+        cols = { c.name:c for c in self.esetable } 
+
+        try:
+            lcols = [cols[self.ATTRIBUTE_ID], cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
+        except IndexError:
+            raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
+
+        for rec in self.esetable.iter_records(columns=lcols):
+            aid,asy,ldn = list(rec)
+            cc = cols.pop(aid, None)
+            if cc:
+                att2ldn[aid] = ldn
+                att2asy[aid] = asy
+
+        columns = []
+        for c in self.esetable.columns:
+            if c.name in self.attname2col:
+                esecol = self.attname2col[c.name] 
+            else:
+                esecol = ESEColumn(
+                    att2ldn.get(c.name, dbsanecolname(c.name)),
+                    c.name, 
+                    att2asy.get(c.name, "UnknownType"))
+            columns.append(esecol)
+        return columns
 
 
 
@@ -255,14 +223,8 @@ def main():
                       help="be more quiet (can be used many times)")
 
     
-    parser.add_option("--dirname", dest="dirname", default="",
-                      help="Look for extracted table files in DIR", metavar="DIR")
-    parser.add_option("--datatable", dest="datatable", default="datatable.3",
-                      help="Read datatable from FILENAME", metavar="FILENAME")
-    parser.add_option("--sdtable", dest="sdtable", default="sd_table.8",
-                      help="Read sd_table from FILENAME", metavar="FILENAME")
-    parser.add_option("--linktable", dest="linktable", default="link_table.5",
-                      help="Read linktable from FILENAME", metavar="FILENAME")
+    parser.add_option("-f", "--ntds-file", dest="fname", default="ntds.dit",
+                      help="Path to ntds.dit file", metavar="FILENAME")
 
     options, args = parser.parse_args()
 
@@ -275,6 +237,8 @@ def main():
 
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
+
+    options.esedb = libesedb.ESEDB(options.fname)
     
     if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
         sd = SDTable(options)
