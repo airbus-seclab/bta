@@ -142,7 +142,8 @@ class ESETable(object):
         self.name2column = {c.name:c for c in self.columns}
         self.number_of_records = self.lib.table_get_number_of_records(self.table)
     def __del__(self):
-        self.lib.table_free(self.table)
+        if hasattr(self, "table"):
+            self.lib.table_free(self.table)
     def __getitem__(self, i):
         try:
             return self.columns[i]
@@ -166,7 +167,8 @@ class ESEColumn(object):
         self.column = self.lib.table_get_column(self.table.table, column_num)
         self.name = self.lib.column_get_utf8_name(self.column)
     def __del__(self):
-        self.lib.column_free(self.column)
+        if hasattr(self, "column"):
+            self.lib.column_free(self.column)
 
 class ESERecord(object):
     def __init__(self, table, record_num):
@@ -176,7 +178,8 @@ class ESERecord(object):
         self.record = self.lib.table_get_record(self.table.table, record_num)
         self.values = [ESEValue(self, i) for i in range(self.lib.record_get_number_of_values(self.record))]
     def __del__(self):
-        self.lib.record_free(self.record)
+        if hasattr(self, "record"):
+            self.lib.record_free(self.record)
     def __iter__(self):
         return iter(self.values)
 
