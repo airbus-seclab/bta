@@ -174,6 +174,7 @@ class ESEColumn(object):
         self.column = self.lib.table_get_column(self.table.table, column_num)
         try:
             self.name = self.lib.column_get_utf8_name(self.column)
+            self.type = self.lib.column_get_type(self.column)
         finally:
             self.lib.column_free(self.column)
             self.column = None
@@ -200,7 +201,7 @@ class ESEValue(object):
         self.record = record
         self.lib = record.lib
         self.num = value_num
-        self.type = self.lib.record_get_column_type(self.record.record, value_num)
+        self.type = self.record.table.columns[value_num].type
         value,self.flags = self.lib.record_get_value(self.record.record, value_num)
         if not value:
             self.value = None
