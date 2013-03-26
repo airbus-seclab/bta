@@ -65,17 +65,17 @@ class ListGroup(Miner):
 
         groups={}
         for group in dt.find(match):
-             groups[group['objectGUID']]=set()
-             groups[group['objectGUID']] = self.get_members_of(group['objectSid'])
+             groups[group['objectSid']]=set()
+             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
         misc=''
         headers=['User', 'Deletion', 'Flags', 'Recursive']
 
         for groupname,membership in groups.items():
-            table = doc.create_table("Members of %s" % groupname)
+            group = Sid(dt, objectSid=groupname, verbose=True)
+            table = doc.create_table("Members of %s" % group)
             table.add(headers)
             table.add()
-            group = Sid(dt, objectGUID=groupname, verbose=options.verbose)
             for sid,deleted,fromgrp in deleted_last(membership):
                 sidobj = Sid(dt, objectSid=sid, verbose=options.verbose)
                 member = str(sidobj)
