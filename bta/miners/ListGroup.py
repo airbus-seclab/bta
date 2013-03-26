@@ -1,5 +1,6 @@
+
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid
+from bta.miners.tools import User, Group, Sid, CATEGORY_GROUP, CATEGORY_USER
 
 
 @Miner.register
@@ -28,16 +29,17 @@ class ListGroup(Miner):
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
             sid = row['objectSid']
-            if row['objectCategory'] == '5945':
+            category = int(row['objectCategory'] )
+            if category == CATEGORY_GROUP:
                 if sid not in self.groups_already_saw:
                     members.update(self.get_members_of(sid, recursive=True))
                     self.groups_already_saw[sid] = True
-            elif row['objectCategory'] == '3818':
+            elif category == CATEGORY_USER:
                 fromgrp = grpsid if recursive else ''
                 membership = (row['objectSid'], deleted, fromgrp)
                 members.add(membership)
             else:
-                print '***** Unknown category (%s) for %s' % (row['objectCategory'], sid)
+                print '***** Unknown category (%d) for %s' % (category, sid)
         return members
 
     def run(self, options, doc):
@@ -57,7 +59,7 @@ class ListGroup(Miner):
         doc.add("List of groups matching [%s]" % options.match)
         
         if options.match:
-            match = {"$and": [{'objectCategory': '5945'},
+            match = {"$and": [{'objectCategory': CATEGORY_GROUP},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]

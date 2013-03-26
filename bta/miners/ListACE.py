@@ -1,5 +1,5 @@
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid, Record
+from bta.miners.tools import User, Group, Sid, Record, CATEGORY_GROUP, CATEGORY_USER
 import re
 
 p2h={'00299570-246d-11d0-a768-00aa006e0529': 'User-Force-Change-Password',
@@ -75,9 +75,6 @@ class AccessControlEntry(object):
             return x
         return (r(self.trustee), r(self.subject),  r(p2h.get(self.perm, self.perm)))
 
-
-CATEGORY_GROUP = '5945'
-CATEGORY_USER  = '3818'
 
 @Miner.register
 class ListACE(Miner):
