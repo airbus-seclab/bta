@@ -190,12 +190,12 @@ class ListACE(Miner):
                 query = {
                     'nTSecurityDescriptor': securitydescriptor.id,
                     'objectSid': {'$exists': 1},
-                    'objectCategory': {'$in': [CATEGORY_USER, CATEGORY_GROUP]}
+                    'objectCategory': {'$in': [str(CATEGORY_USER), str(CATEGORY_GROUP)]}
                 }
                 subjects=set()
                 for subject in dt.find(query, {'objectSid': True}):
                     subjects.add(subject['objectSid'])
-                if not subject:
+                if not subjects:
                     continue
     
                 aceList = self.extractACE(securitydescriptor)
