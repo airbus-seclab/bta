@@ -73,6 +73,10 @@ class LibESEDB(object):
         name = create_string_buffer(sz.value)
         self._func("column_get_utf8_name")(column, byref(name), sz)
         return name.value.decode("utf8")
+    def column_get_type(self, column):
+        typ = c_int()
+        self._func("column_get_type")(column, byref(typ))
+        return typ.value
     def column_free(self, column):
         self._func("column_free")(self.byref(column))
     def record_get_number_of_values(self, record):
