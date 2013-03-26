@@ -59,7 +59,7 @@ class ListGroup(Miner):
         doc.add("List of groups matching [%s]" % options.match)
         
         if options.match:
-            match = {"$and": [{'objectCategory': CATEGORY_GROUP},
+            match = {"$and": [{'objectCategory': str(CATEGORY_GROUP)},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]
