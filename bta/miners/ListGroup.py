@@ -32,8 +32,8 @@ class ListGroup(Miner):
             category = int(row['objectCategory'] )
             if category == CATEGORY_GROUP:
                 if sid not in self.groups_already_saw:
-                    members.update(self.get_members_of(sid, recursive=True))
                     self.groups_already_saw[sid] = True
+                    members.update(self.get_members_of(sid, recursive=True))
             elif category == CATEGORY_USER:
                 fromgrp = grpsid if recursive else ''
                 membership = (row['objectSid'], deleted, fromgrp)
