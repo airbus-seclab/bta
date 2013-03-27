@@ -1,12 +1,15 @@
 #! /usr/bin/env python
 
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
-from esetypes import ColumnType,ValueFlags,native_type
+from esetypes import ColumnType,ValueFlags,native_type,multi_native_type
 
 class ESEDB_Exception(Exception):
     pass
 
 class LibESEDB(object):
+    # keep references to those functions that are called in destructors
+    byref = byref
+    c_void_p = c_void_p
     def __init__(self):
         self.lib = cdll.LoadLibrary("libesedb.so")
 
@@ -14,11 +17,18 @@ class LibESEDB(object):
         funcname = "libesedb_"+funcname
         func = getattr(self.lib, funcname)
         def _call(*args):
-            e = c_void_p()
-            args += (byref(e),)
+            e = self.c_void_p()
+            args += (self.byref(e),)
             if func(*args) != 1:
-                raise ESEDB_Exception("%s:??? [%r] [%i]" % (funcname, e, e.value))
+                raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(e)))
         return _call
+
+    def get_error(self, error):
+        sz = 2048
+        msgbuf = create_string_buffer(sz)
+        if self.lib.liberror_error_sprint(error, byref(msgbuf), sz) == -1:
+            raise ESEDB_Exception("liberror_error_sprint: unkown error!")
+        return msgbuf.value
 
     def open(self, fname, flags=1):
         f = c_void_p()
@@ -48,7 +58,7 @@ class LibESEDB(object):
         self._func("table_get_column")(table, col_num, byref(column), flags)
         return column
     def table_free(self, table):
-        self._func("table_free")(byref(table))
+        self._func("table_free")(self.byref(table))
     def table_get_number_of_records(self, table):
         nb = c_int()
         self._func("table_get_number_of_records")(table, byref(nb))
@@ -64,7 +74,7 @@ class LibESEDB(object):
         self._func("column_get_utf8_name")(column, byref(name), sz)
         return name.value.decode("utf8")
     def column_free(self, column):
-        self._func("column_free")(byref(column))
+        self._func("column_free")(self.byref(column))
     def record_get_number_of_values(self, record):
         sz = c_int()
         self._func("record_get_number_of_values")(record, byref(sz))
@@ -88,7 +98,7 @@ class LibESEDB(object):
         self._func("record_get_long_value")(record, value_num, byref(long_value))
         return long_value
     def record_free(self, record):
-        self._func("record_free")(byref(record))
+        self._func("record_free")(self.byref(record))
     def long_value_get_number_of_segments(self, long_value):
         sz = c_int()
         self._func("long_value_get_number_of_segments")(long_value, byref(sz))
@@ -104,7 +114,7 @@ class ESEDB(object):
     def __init__(self, fname):
         self.lib = LibESEDB()
         self.file = self.lib.open(fname)
-        self.tables = [ESETable(self, self.lib.file_get_table(self.file, i)) for i in range(self.lib.file_get_number_of_tables(self.file))]
+        self.tables = [ESETable(self, i) for i in range(self.lib.file_get_number_of_tables(self.file))]
         self.name2table = {t.name:t for t in self.tables}
     def __getitem__(self, i):
         try:
@@ -122,16 +132,18 @@ class ESEDB(object):
         return "<ESEDB: %s>" % " ".join(t.name for t in self.tables)
 
 class ESETable(object):
-    def __init__(self, db, table):
+    def __init__(self, db, table_num):
         self.db = db
         self.lib = db.lib
-        self.table = table
-        self.name = self.lib.table_get_utf8_name(table)
-        self.columns = [ESEColumn(self, self.lib.table_get_column(self.table, i)) for i in range(self.lib.table_get_number_of_columns(self.table))]
+        self.table_num = table_num
+        self.table = self.lib.file_get_table(self.db.file, table_num)
+        self.name = self.lib.table_get_utf8_name(self.table)
+        self.columns = [ESEColumn(self, i) for i in range(self.lib.table_get_number_of_columns(self.table))]
         self.name2column = {c.name:c for c in self.columns}
         self.number_of_records = self.lib.table_get_number_of_records(self.table)
     def __del__(self):
-        self.lib.table_free(self.table)
+        if hasattr(self, "table"):
+            self.lib.table_free(self.table)
     def __getitem__(self, i):
         try:
             return self.columns[i]
@@ -144,26 +156,37 @@ class ESETable(object):
             raise AttributeError(attr)
     def __iter__(self):
         return iter(self.columns)
-    def iter_records(self):
-        return (ESERecord(self, self.lib.table_get_record(self.table, i)) for i in xrange(self.number_of_records))
+    def iter_records(self, entries=None, columns=None):
+        if entries is None:
+            if columns is not None:
+                entries = [c.column_num for c in columns]
+        return (ESERecord(self, i, limit=entries) for i in xrange(self.number_of_records))
 
 class ESEColumn(object):
-    def __init__(self, table, column):
+    def __init__(self, table, column_num):
         self.table = table
         self.lib = table.lib
-        self.column = column
-        self.name = self.lib.column_get_utf8_name(self.column)
-    def __del__(self):
-        self.lib.column_free(self.column)
+        self.column_num = column_num
+        self.column = self.lib.table_get_column(self.table.table, column_num)
+        try:
+            self.name = self.lib.column_get_utf8_name(self.column)
+        finally:
+            self.lib.column_free(self.column)
+            self.column = None
 
 class ESERecord(object):
-    def __init__(self, table, record):
+    def __init__(self, table, record_num, limit=None):
         self.table = table
         self.lib = table.lib
-        self.record = record
-        self.values = [ESEValue(self, i) for i in range(self.lib.record_get_number_of_values(self.record))]
-    def __del__(self):
-        self.lib.record_free(self.record)
+        self.record_num = record_num
+        self.record = self.lib.table_get_record(self.table.table, record_num)
+        try:
+            self.value_entries = limit if limit is not None else range(self.lib.record_get_number_of_values(self.record))
+            self.values = [ESEValue(self, i) for i in self.value_entries]
+        finally:
+            self.lib.record_free(self.record)
+            self.record = None
+
     def __iter__(self):
         return iter(self.values)
 
@@ -174,15 +197,22 @@ class ESEValue(object):
         self.lib = record.lib
         self.num = value_num
         self.type = self.lib.record_get_column_type(self.record.record, value_num)
-        value,self.flag = self.lib.record_get_value(self.record.record, value_num)
+        value,self.flags = self.lib.record_get_value(self.record.record, value_num)
+        if not value:
+            self.value = None
+        else:
 
-        if self.flag & ValueFlags.LONG_VALUE:
-            lv = self.lib.record_get_long_value(self.record.record, value_num)
-            segnb = self.lib.long_value_get_number_of_segments(lv)
-            segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
-            value = "".join(segs)
+            if self.flags & ValueFlags.LONG_VALUE:
+                lv = self.lib.record_get_long_value(self.record.record, value_num)
+                segnb = self.lib.long_value_get_number_of_segments(lv)
+                segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
+                value = "".join(segs)
 
-        self.value = native_type(self.type, value)
+            if self.flags & ValueFlags.MULTI_VALUE:
+                self.value = multi_native_type(self.type, value)
+            else:
+                self.value = native_type(self.type, value)
+                
     
 
 # Removed for perf reasons and because nobody needs these values yet
@@ -190,9 +220,13 @@ class ESEValue(object):
 #        self.id =self.lib.record_get_column_identifier(self.record.record, value_num)
 #        self.hexvalue = self.value.encode("hex")
 #        self.texttype = ColumnType[self.type]
-#        self.textflag = ValueFlags.flag(self.flag)
+#        self.textflags = ValueFlags.flag(self.flags)
+
+
     @property
     def strvalue(self):
+        if self.value is None:
+            return ""
         if self.type in [ColumnType.BINARY_DATA, 
                          ColumnType.LARGE_BINARY_DATA, 
                          ColumnType.SUPER_LARGE_VALUE]:
@@ -201,7 +235,7 @@ class ESEValue(object):
 
 
     def __repr__(self):
-        return "<val:id={0.id}:type={0.texttype}:flag={0.textflag}:value={0.hexvalue}>".format(self)
+        return "<val:id={0.id}:type={0.texttype}:flags={0.textflags}:value={0.value}>".format(self)
 
 
 def test():
@@ -226,6 +260,17 @@ def test2():
         for v in r:
             print v
 
+def test3():
+    import sys
+    db = ESEDB(sys.argv[1])
+    sys.stdout.write("\t".join(c.name for c in db.sd_table) + "\n")
+    i = 0
+    for r in db.datatable.iter_records():
+        sys.stdout.write("\t".join(v.strvalue for v in r) + "\n")
+        i+=1
+        if i > 500:
+            break
+
 
 if __name__ == "__main__":
-    test2()
+    test3()
