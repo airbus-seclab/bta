@@ -1,6 +1,6 @@
 
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid, CATEGORY_GROUP, CATEGORY_USER
+from bta.miners.tools import User, Group, Sid
 
 @Miner.register
 class ListGroup(Miner):
@@ -29,11 +29,11 @@ class ListGroup(Miner):
                 continue
             sid = row['objectSid']
             category = int(row['objectCategory'] )
-            if category == CATEGORY_GROUP:
+            if category == self.idGroup:
                 if sid not in self.groups_already_saw:
                     self.groups_already_saw[sid] = True
                     members.update(self.get_members_of(sid, recursive=True))
-            elif category == CATEGORY_USER:
+            elif category == self.idUser:
                 fromgrp = grpsid if recursive else ''
                 membership = (row['objectSid'], deleted, fromgrp)
                 members.add(membership)
@@ -66,11 +66,14 @@ class ListGroup(Miner):
                 
         self.dt = dt = options.backend.open_table("datatable")
         self.lt = lt = options.backend.open_table("linktable")
+        self.ct = ct = options.backend.open_table("category")
+        self.idGroup = int(self.ct.find_one({"name": "Group"})['id']) # id group
+        self.idUser = int(self.ct.find_one({"name": "Person"})['id']) # id user
         match = None
         
         doc.add("List of groups matching [%s]" % options.match)
         if options.match:
-            match = {"$and": [{'objectCategory': str(CATEGORY_GROUP)},
+            match = {"$and": [{'objectCategory': str(self.idGroup)},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]
