@@ -198,6 +198,7 @@ class ESERecord(object):
 
 
 class ESEValue(object):
+    __slots__ = ["record", "lib", "num", "type", "flags", "value"]
     def __init__(self, record, value_num):
         self.record = record
         self.lib = record.lib
