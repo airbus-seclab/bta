@@ -12,13 +12,14 @@ class LibESEDB(object):
     c_void_p = c_void_p
     def __init__(self):
         self.lib = cdll.LoadLibrary("libesedb.so")
+        self.error = c_void_p()
+        self.error_p = pointer(self.error)
 
     def _func(self, funcname):
         funcname = "libesedb_"+funcname
         func = getattr(self.lib, funcname)
         def _call(*args):
-            e = self.c_void_p()
-            args += (self.byref(e),)
+            args += (self.error_p,)
             if func(*args) != 1:
                 raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(e)))
         return _call
