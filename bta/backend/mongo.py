@@ -38,6 +38,8 @@ class MongoUnknownNormalizer(MongoNormalizer):
             return val
         if type(val) is tuple:
             return list(val)
+        if type(val) is unicode:
+            return val
         return bson.binary.Binary(val)
 
 class MongoTimestampNormalizer(MongoNormalizer):
