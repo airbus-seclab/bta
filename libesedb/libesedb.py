@@ -145,7 +145,12 @@ class ESETable(object):
         self.name = self.lib.table_get_utf8_name(self.table)
         self.columns = [ESEColumn(self, i) for i in range(self.lib.table_get_number_of_columns(self.table))]
         self.name2column = {c.name:c for c in self.columns}
-        self.number_of_records = self.lib.table_get_number_of_records(self.table)
+        self._number_of_records = None # expensive to get, so we wait for it to be actually needed
+    @property
+    def number_of_records(self):
+        if self._number_of_records is None:
+            self._number_of_records = self.lib.table_get_number_of_records(self.table)
+        return self._number_of_records
     def __del__(self):
         if hasattr(self, "table"):
             self.lib.table_free(self.table)
