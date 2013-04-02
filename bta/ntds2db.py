@@ -238,7 +238,9 @@ def main():
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
 
+    log.info("Opening [%s]" % options.fname)
     options.esedb = libesedb.ESEDB(options.fname)
+    log.info("Opening done.")
     
     if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
         sd = SDTable(options)
