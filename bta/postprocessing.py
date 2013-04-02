@@ -28,12 +28,24 @@ class PostProcessing(object):
         proc = getattr(self, name)
         proc()
 
+    def postproc_category(self):
+        category = self.options.backend.open_table("category")
+        category.create()
+        category.create_index("id")
+        category.create_index("name")
+
+        idShema = self.dt.find_one({"cn": "Class-Schema"})['RecId']
+        for r in self.dt.find({"objectCategory": str(idShema)}):
+            category.insert({"id":r["RecId"], "name":r["cn"]})
+        
     def postproc_domains(self):
         domains = self.options.backend.open_table("domains")
         domains.create()
         domains.create_index("domain")
         domains.create_index("sid")
 
+        ct = self.options.backend.open_table("category")
+        dom = str(ct.find_one({"name": "Domain-DNS"})['id'])
         def find_dn(r):
             if not r:
                 return ""
@@ -44,7 +56,7 @@ class PostProcessing(object):
             return find_dn(r2)+"."+cn
 
 
-        for r in self.dt.find({"objectCategory":"2370", "objectSid":{"$exists":True}}):
+        for r in self.dt.find({"objectCategory":dom, "objectSid":{"$exists":True}}):
             domains.insert({"domain":find_dn(r), "sid":r["objectSid"]})
 
     def postproc_usersid(self):
@@ -54,7 +66,9 @@ class PostProcessing(object):
         usersid.create_index("sid")
         usersid.create_index("account")
 
-        for r in self.dt.find({"objectCategory":"3818", "objectSid":{"$exists":True}}):
+        ct = self.options.backend.open_table("category")
+        pers = str(ct.find_one({"name": "Person"})['id'])
+        for r in self.dt.find({"objectCategory":pers, "objectSid":{"$exists":True}}):
             usersid.insert({"name":r["name"], "account":r["sAMAccountName"], "sid": r["objectSid"]})
 
 
@@ -88,7 +102,7 @@ def main():
         pp.post_process_one(options.only)
     else:
         pp.post_process_all()
-
+    options.backend.commit()
     
 
 if __name__ == "__main__":
