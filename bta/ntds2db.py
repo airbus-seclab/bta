@@ -129,9 +129,9 @@ class Datatable(ESETable):
     _indexes_ = [ "rightsGuid" ]
 
 
-    ATTRIBUTE_ID="ATTc131102"
-    ATTRIBUTE_SYNTAX="ATTc131104"
-    LDAP_DISPLAY_NAME="ATTm131532"
+    ATTRIBUTE_ID = 131102      # ATTc131102
+    ATTRIBUTE_SYNTAX = 131104  # ATTc131104
+    LDAP_DISPLAY_NAME = 131532 # ATTm131532
 
     attsyntax2type = {
         0x80001: "DN",                   # 2.5.5.1
@@ -167,34 +167,42 @@ class Datatable(ESETable):
 
 
     def identify_columns(self):
+        log.info("Resolving column names")
         att2ldn = {}
         att2asy = {}
-        cols = { c.name:c for c in self.esetable } 
+        cols = { int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
+        log.info("%i columns to be identified, out of %i" % (len(cols),len(self.esetable.columns)))
 
         try:
             lcols = [cols[self.ATTRIBUTE_ID], cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
         except IndexError:
             raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
 
+        i = j = 0
         for rec in self.esetable.iter_records(columns=lcols):
+            i += 1
             aid,asy,ldn = list(rec)
-            cc = cols.pop(aid, None)
+            if not ldn.value:
+                continue
+            if aid.value and asy.value and ldn.value:
+                j+=1
+            cc = cols.pop(aid.value, None)
             if cc:
-                att2ldn[aid] = ldn
-                att2asy[aid] = asy
+                att2ldn[cc.name] = ldn.value#.decode("utf16")
+                att2asy[cc.name] = asy.value
 
+        log.info("Resolved %i columns out of %i" % (len(att2ldn), len(self.esetable.columns)))
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
                 esecol = self.attname2col[c.name] 
             else:
+                synt,idx = self.syntax_to_type(att2asy.get(c.name))
                 esecol = ESEColumn(
-                    att2ldn.get(c.name, dbsanecolname(c.name)),
-                    c.name, 
-                    att2asy.get(c.name, "UnknownType"))
+                    dbsanecolname(att2ldn.get(c.name, c.name)),
+                    c.name, synt, idx)
             columns.append(esecol)
         return columns
-
 
 
 def main():
