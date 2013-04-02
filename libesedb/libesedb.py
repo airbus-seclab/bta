@@ -242,7 +242,7 @@ class ESEValue(object):
 
 
     def __repr__(self):
-        return "<val:id={0.id}:type={0.texttype}:flags={0.textflags}:value={0.value}>".format(self)
+        return "<val:type=%s:flags=%s:value=%s>" % (ColumnType[self.type], ValueFlags.flag(self.flags), self.strvalue )
 
 
 def test():
