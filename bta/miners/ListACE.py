@@ -182,7 +182,7 @@ class ListACE(Miner):
 
             desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
             table = doc.create_table(desct)
-            table.add(["Trustee", "Subject", "Object type"])
+            table.add(["Subject", "Trustee", "Object type"])
             table.add()
 
             for raw_sd in sdt.find(bigquery):
