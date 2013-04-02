@@ -77,6 +77,10 @@ converters = {
         lambda x: struct.unpack("<q",x)[0],
     ColumnType.CURRENCY :
         lambda x: struct.unpack("<Q",x)[0],
+    ColumnType.TEXT : 
+        lambda x:x.decode("utf16"),
+    ColumnType.LARGE_TEXT : 
+        lambda x:x.decode("utf16"),
  }
 
 
