@@ -71,7 +71,7 @@ converters = {
         lambda x: struct.unpack("<H",x)[0],
     ColumnType.INTEGER_32BIT_SIGNED :
         lambda x: struct.unpack("<i",x)[0],
-    ColumnType.INTEGER_32BIT_SIGNED :
+    ColumnType.INTEGER_32BIT_UNSIGNED :
         lambda x: struct.unpack("<I",x)[0],
     ColumnType.INTEGER_64BIT_SIGNED :
         lambda x: struct.unpack("<q",x)[0],
@@ -104,7 +104,7 @@ multi_converters = {
         lambda x: struct.unpack_from("<%iH"%(len(x)/2), x),
     ColumnType.INTEGER_32BIT_SIGNED :
         lambda x: struct.unpack_from("<%ii"%(len(x)/4), x),
-    ColumnType.INTEGER_32BIT_SIGNED :
+    ColumnType.INTEGER_32BIT_UNSIGNED :
         lambda x: struct.unpack_from("<%iI"%(len(x)/4), x),
     ColumnType.INTEGER_64BIT_SIGNED :
         lambda x: struct.unpack_from("<%iq"%(len(x)/8), x),
