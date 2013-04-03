@@ -139,14 +139,12 @@ class ListACE(Miner):
 
     def run(self, options, doc):
         self.options = options
-        self.dt = dt = options.backend.open_table("datatable")
-        self.sd = sdt = options.backend.open_table("sdtable")
 
         res = []
         desc = []
         queries = []
         if options.subject:
-            users = dt.find({'objectSid': options.subject})
+            users = self.dt.find({'objectSid': options.subject})
             desc.append("trustee=%s" % options.subject)
 
             table = doc.create_table(desc)
@@ -185,7 +183,7 @@ class ListACE(Miner):
             table.add(["Subject", "Trustee", "Object type"])
             table.add()
 
-            for raw_sd in sdt.find(bigquery):
+            for raw_sd in self.sd.find(bigquery):
                 securitydescriptor = Record(**raw_sd)
                 query = {
                     'nTSecurityDescriptor': securitydescriptor.id,
@@ -193,7 +191,7 @@ class ListACE(Miner):
                     'objectCategory': {'$in': [str(CATEGORY_USER), str(CATEGORY_GROUP)]}
                 }
                 subjects=set()
-                for subject in dt.find(query, {'objectSid': True}):
+                for subject in self.dt.find(query, {'objectSid': True}):
                     subjects.add(subject['objectSid'])
                 if not subjects:
                     continue

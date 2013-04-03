@@ -31,9 +31,6 @@ class PeekedMailboxes(Miner):
         return aces
 
     def run(self, options, doc):
-        self.dt = options.backend.open_table("datatable")
-        self.sd = options.backend.open_table("sdtable")
-
         userAccess = {}     # Permissions per User
         mailboxAccess = {}  # Permissions per mailbox
 

@@ -44,7 +44,7 @@ class Miner(object):
     @classmethod
     def create_arg_subparser(cls, parser):
         pass
-
+        
     @classmethod
     def main(cls):
         parser = cls.create_arg_parser()
@@ -55,6 +55,10 @@ class Miner(object):
     
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
+        cls.dt = options.backend.open_table("datatable")
+        cls.lt = options.backend.open_table("linktable")
+        cls.sd = options.backend.open_table("sdtable")
+        cls.ct = options.backend.open_table("category")
         
         miner = cls.get(options.miner_name)
         m = miner()

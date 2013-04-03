@@ -2,7 +2,7 @@ from bta.miners import Miner
 
 
 @Miner.register
-class SDusers(Miner):
+class Skel(Miner):
     _name_ = "skeleton"
     _desc_ = "skeleton, list SD id and hashes when id < 50"
     @classmethod
@@ -11,17 +11,17 @@ class SDusers(Miner):
         parser.add_argument("--dummy_flag", help="dummy flag", action="store_true")
     
     def run(self, options, doc):
-        sd = options.backend.open_table("sdtable")
-        dt = options.backend.open_table("datatable")
-
-
+        #self.dt datatable
+        #self.lt linktable
+        #self.sd sdtable
+        #self.ct category
         doc.add("Option dummy is %s" % options.dummy)
 
         table = doc.create_table("my table")
         table.add(["id","hash"])
         table.add()
 
-        for r in sd.find({"id": {"$lt":50}}):
+        for r in self.sd.find({"id": {"$lt":50}}):
             table.add([r["id"],r["hash"]])
             
         table.finished()

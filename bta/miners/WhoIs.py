@@ -14,10 +14,9 @@ class WhoIs(Miner):
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def run(self, options, doc):
-        dt = options.backend.open_table("datatable")
         sec = doc.create_subsection("Who is %s" % options.sid)
         
-        c = dt.find({'objectSid': options.sid})
+        c = self.dt.find({'objectSid': options.sid})
         for r in c:
             t = sec.create_table("Name=[%s]" % r.get("name",""))
             for k,v in r.iteritems():

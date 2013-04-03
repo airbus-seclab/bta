@@ -27,8 +27,6 @@ class Passwords(Miner):
             t.flush()
 
     def run(self, options, doc):
-        self.dt = options.backend.open_table("datatable")
-
         if options.bad_password_count:
             self.bad_password_count(doc)
         if options.dump_unicode_pwd:

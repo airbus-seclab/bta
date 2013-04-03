@@ -36,17 +36,14 @@ class MailBoxRights(Miner):
         return aces
 
     def run(self, options, doc):
-        self.dt = options.backend.open_table("datatable")
-        self.sd = options.backend.open_table("sdtable")
-
         userAccess = {}     # Permissions per User
         mailboxAccess = {}  # Permissions per mailbox
 
-    	if options.user:
-        	match =  { "objectSid": options.user }  
-	else:
-    	     if options.userid:
-        	match =  { "sAMAccountName": { "$regex" : options.userid } } 
+        if options.user:
+            match =  { "objectSid": options.user }  
+        else:
+            if options.userid:
+                match =  { "sAMAccountName": { "$regex" : options.userid } } 
 
         mailboxes=self.dt.find_one(match)
         for mbox in mailboxes:

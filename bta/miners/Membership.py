@@ -11,9 +11,6 @@ class Membership(Miner):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
 
     def run(self, options, doc):
-        sd = options.backend.open_table("sdtable")
-        dt = options.backend.open_table("datatable")
-        lt = options.backend.open_table("linktable")
         match = None
 
         table = doc.create_table("group membership")
@@ -27,16 +24,16 @@ class Membership(Miner):
                              ]
             }
 
-        for user in dt.find(match):
-             links = lt.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
+        for user in self.dt.find(match):
+             links = self.lt.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
              groups=set()
              sid = user['objectSid']
              pgid = sid[:sid.rfind('-') + 1] + user['primaryGroupID']
-             primarygroup = dt.find_one({'objectSid': pgid}, {'cn': True})
+             primarygroup = self.dt.find_one({'objectSid': pgid}, {'cn': True})
              groups.add(primarygroup['cn'])
              for link in links:
                  groupRecId = link['link_DNT']
-                 group = dt.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
+                 group = self.dt.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
                  if group:
                      groups.add(group['cn'])
              table.add([user["objectSid"], user["cn"], ', '.join(groups)])

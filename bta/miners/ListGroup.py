@@ -64,9 +64,6 @@ class ListGroup(Miner):
             for i in deleteditems:
                 yield i
                 
-        self.dt = dt = options.backend.open_table("datatable")
-        self.lt = lt = options.backend.open_table("linktable")
-        self.ct = ct = options.backend.open_table("category")
         self.idGroup = int(self.ct.find_one({"name": "Group"})['id']) # id group
         self.idUser = int(self.ct.find_one({"name": "Person"})['id']) # id user
         match = None
@@ -80,7 +77,7 @@ class ListGroup(Miner):
             }
 
         groups={}
-        for group in dt.find(match):
+        for group in self.dt.find(match):
             groups[group['objectSid']] = set()
             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
@@ -104,10 +101,10 @@ class ListGroup(Miner):
             table.add(headers)
             table.add()
             for sid,deleted,fromgrp in deleted_last(membership):
-                sidobj = Sid(dt, objectSid=sid, verbose=options.verbose)
+                sidobj = Sid(self.dt, objectSid=sid, verbose=options.verbose)
                 member = str(sidobj)
                 if fromgrp:
-                    fromgrp = Sid(dt, objectSid=fromgrp)
+                    fromgrp = Sid(self.dt, objectSid=fromgrp)
                 flags = sidobj.getUserAccountControl()
                 table.add((member, deleted or '', flags, fromgrp))
             table.finished()
