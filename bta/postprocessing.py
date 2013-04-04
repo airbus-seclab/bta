@@ -7,6 +7,8 @@ log = logging.getLogger("bta.postprocessing")
 
 class PostProcessing(object):
     PREFIX="postproc_"
+    INIT=["category"]
+    
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
@@ -18,11 +20,15 @@ class PostProcessing(object):
                 if type(proc) is types.FunctionType and pname.startswith(cls.PREFIX)]
 
     def post_process_all(self):
+        for pname in self.INIT:
+            self.post_process_one(pname)
         for pname in self.list_post_processors():
-            log.info("Post-processiong: %s" % pname)
+            if pname in self.INIT:
+                continue
             self.post_process_one(pname)
 
     def post_process_one(self, name):
+        log.info("Post-processiong: %s" % name)
         if not name.startswith(self.PREFIX):
             name = self.PREFIX+name
         proc = getattr(self, name)
