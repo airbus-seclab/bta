@@ -18,9 +18,9 @@ class SDProp(Miner):
         t.append(["cn","type","SID"])
         t.append([])
         for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"0"}}):
-            if int(r["objectCategory"]) == self.idUser:
+            if int(r["objectCategory"]) == self.categories.person:
                 t.append([r["cn"], 'User', r["objectSid"]])
-            elif int(r["objectCategory"]) == self.idGroup:
+            elif int(r["objectCategory"]) == self.categories.group:
                 t.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
@@ -31,9 +31,9 @@ class SDProp(Miner):
         t.append(["cn","type","SID"])
         t.append([])
         for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"1"}}):
-            if int(r["objectCategory"]) == self.idUser:
+            if int(r["objectCategory"]) == self.categories.person:
                 t.append([r["cn"], 'User', r["objectSid"]])
-            elif int(r["objectCategory"]) == self.idGroup:
+            elif int(r["objectCategory"]) == self.categories.person:
                 t.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
@@ -66,10 +66,7 @@ class SDProp(Miner):
             t.append([name, ace['Type'], cible])
         return t
 
-    def run(self, options, doc):
-        self.idGroup = int(self.ct.find_one({"name": "Group"})['id']) # id group
-        self.idUser = int(self.ct.find_one({"name": "Person"})['id']) # id user
-        
+    def run(self, options, doc):        
         if options.list:
             toDisplay = self.list()
             t = doc.create_table("Acount protected by SDHolder")

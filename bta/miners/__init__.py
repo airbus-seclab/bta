@@ -7,6 +7,11 @@ from bta.docstruct import LiveRootDoc, RootDoc
 from bta.formatters import Formatter
 import bta.formatters.rest
 
+class categories(object):
+    def __init__(self, ct):
+        for entry in ct.find():
+            setattr(self, entry['name'].lower(), int(entry['id']))
+
 class Miner(object):
     _miners_ = {}
     _desc_ = "N/A"
@@ -21,7 +26,7 @@ class Miner(object):
     @classmethod
     def create_arg_parser(cls):
         
-        parser = argparse.ArgumentParser()#usage)
+        parser = argparse.ArgumentParser()
 
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
@@ -59,6 +64,9 @@ class Miner(object):
         cls.lt = options.backend.open_table("linktable")
         cls.sd = options.backend.open_table("sdtable")
         cls.ct = options.backend.open_table("category")
+        cls.uid = options.backend.open_table("usersid")
+        cls.dom = options.backend.open_table("domains")
+        cls.categories = categories(cls.ct)
         
         miner = cls.get(options.miner_name)
         m = miner()

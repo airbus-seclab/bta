@@ -1,5 +1,5 @@
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid, Record, CATEGORY_GROUP, CATEGORY_USER
+from bta.miners.tools import User, Group, Sid, Record
 import re
 
 p2h={'00299570-246d-11d0-a768-00aa006e0529': 'User-Force-Change-Password',
@@ -188,7 +188,7 @@ class ListACE(Miner):
                 query = {
                     'nTSecurityDescriptor': securitydescriptor.id,
                     'objectSid': {'$exists': 1},
-                    'objectCategory': {'$in': [str(CATEGORY_USER), str(CATEGORY_GROUP)]}
+                    'objectCategory': {'$in': [str(self.categories.person), str(self.categories.group)]} 
                 }
                 subjects=set()
                 for subject in self.dt.find(query, {'objectSid': True}):

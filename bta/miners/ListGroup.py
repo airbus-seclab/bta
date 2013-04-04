@@ -29,11 +29,11 @@ class ListGroup(Miner):
                 continue
             sid = row['objectSid']
             category = int(row['objectCategory'] )
-            if category == self.idGroup:
+            if category == self.categories.group:
                 if sid not in self.groups_already_saw:
                     self.groups_already_saw[sid] = True
                     members.update(self.get_members_of(sid, recursive=True))
-            elif category == self.idUser:
+            elif category == self.categories.person:
                 fromgrp = grpsid if recursive else ''
                 membership = (row['objectSid'], deleted, fromgrp)
                 members.add(membership)
@@ -64,13 +64,11 @@ class ListGroup(Miner):
             for i in deleteditems:
                 yield i
                 
-        self.idGroup = int(self.ct.find_one({"name": "Group"})['id']) # id group
-        self.idUser = int(self.ct.find_one({"name": "Person"})['id']) # id user
         match = None
         
         doc.add("List of groups matching [%s]" % options.match)
         if options.match:
-            match = {"$and": [{'objectCategory': str(self.idGroup)},
+            match = {"$and": [{'objectCategory': str(self.categories.group)},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]

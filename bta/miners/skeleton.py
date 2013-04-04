@@ -14,7 +14,7 @@ class Skel(Miner):
         #self.dt datatable
         #self.lt linktable
         #self.sd sdtable
-        #self.ct category
+        #self.categories contains all category id
         doc.add("Option dummy is %s" % options.dummy)
 
         table = doc.create_table("my table")
