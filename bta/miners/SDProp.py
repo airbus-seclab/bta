@@ -24,8 +24,8 @@ class SDProp(Miner):
                 group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
-        user.sort()
-        group.sort()
+        user.sort(key=lambda x: x[0].lower())
+        group.sort(key=lambda x: x[0].lower())
         for g in group:
             t.append(g)
         for u in user:
@@ -45,8 +45,8 @@ class SDProp(Miner):
                 group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
-        user.sort()
-        group.sort()
+        user.sort(key=lambda x: x[0].lower())
+        group.sort(key=lambda x: x[0].lower())
         for g in group:
             t.append(g)
         for u in user:
@@ -62,8 +62,6 @@ class SDProp(Miner):
         aceList = hdlACE.extractACE(securitydescriptor)
         
         t = list()
-        t.append(["Entry name","Acces","Target"])
-        t.append([])
         for ace in aceList:
             name = self.dt.find_one({"objectSid": ace['SID']}, {"cn"})['cn']
             if ace['InheritedObjectType'] != None:
@@ -79,12 +77,15 @@ class SDProp(Miner):
             else:
                 cible = 'ALL'
             t.append([name, ace['Type'], cible])
+        t.sort(key=lambda x: x[0].lower())
+        t.insert(0, [])
+        t.insert(0, ["cn","type","SID"])
         return t
 
-    def run(self, options, doc):        
+    def run(self, options, doc):
         if options.list:
             toDisplay = self.list()
-            t = doc.create_table("Acount protected by SDHolder")
+            t = doc.create_table("Account protected by SDHolder")
             for disp in toDisplay:
                 t.add(disp)
             t.flush()
