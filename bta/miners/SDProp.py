@@ -14,29 +14,45 @@ class SDProp(Miner):
         parser.add_argument("--checkACE", action="store_true", help="Check ACE replicated by AdminSDHolder")
     
     def list(self):
+        user = list()
+        group = list()
         t = list()
-        t.append(["cn","type","SID"])
-        t.append([])
         for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"0"}}):
             if int(r["objectCategory"]) == self.categories.person:
-                t.append([r["cn"], 'User', r["objectSid"]])
+                user.append([r["cn"], 'User', r["objectSid"]])
             elif int(r["objectCategory"]) == self.categories.group:
-                t.append([r["cn"], 'Group', r["objectSid"]])
+                group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
+        user.sort()
+        group.sort()
+        for g in group:
+            t.append(g)
+        for u in user:
+            t.append(u)
+        t.insert(0, [])
+        t.insert(0, ["cn","type","SID"])
         return t
         
     def orphanSD(self):
+        user = list()
+        group = list()
         t = list()
-        t.append(["cn","type","SID"])
-        t.append([])
         for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"1"}}):
             if int(r["objectCategory"]) == self.categories.person:
-                t.append([r["cn"], 'User', r["objectSid"]])
+                user.append([r["cn"], 'User', r["objectSid"]])
             elif int(r["objectCategory"]) == self.categories.person:
-                t.append([r["cn"], 'Group', r["objectSid"]])
+                group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
+        user.sort()
+        group.sort()
+        for g in group:
+            t.append(g)
+        for u in user:
+            t.append(u)
+        t.insert(0, [])
+        t.insert(0, ["cn","type","SID"])
         return t
         
     def checkACE(self):
@@ -62,7 +78,6 @@ class SDProp(Miner):
                 cible = cible['cn']
             else:
                 cible = 'ALL'
-                print ace
             t.append([name, ace['Type'], cible])
         return t
 
