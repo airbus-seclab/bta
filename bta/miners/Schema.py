@@ -12,11 +12,11 @@ class Schema(Miner):
         parser.add_argument('--owner', help='Owner of schema and category object', action="store_true")
     
     def timeline(self, option):
-        idShema = self.dt.find_one({"cn": "Class-Schema"})['RecId']
+        idShema = self.dt.find_one({"cn": "Schema"})['RecId']
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.dt.find({"objectCategory": str(idShema)}):
+        for r in self.dt.find({"ParentRecId": idShema}):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
@@ -43,8 +43,8 @@ class Schema(Miner):
         SchemaSecuDescriptor = {}
         root = self.dt.find_one({"cn": "Schema"})
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["RecId"]]
-        idShema = self.dt.find_one({"cn": "Class-Schema"})['RecId']
-        for r in self.dt.find({"objectCategory": str(idShema)}):
+        idShema = self.dt.find_one({"cn": "Schema"})['RecId']
+        for r in self.dt.find({"ParentRecId": idShema}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
             else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
