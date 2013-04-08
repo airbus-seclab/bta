@@ -1,14 +1,15 @@
 #! /usr/bin/env python
 import types
 import bta.backend.mongo
-
+import tools
 import logging
 log = logging.getLogger("bta.postprocessing")
 
+
+class PostProcRegistry(tools.Registry):
+    pass
+
 class PostProcessing(object):
-    PREFIX="postproc_"
-    INIT=["category"]
-    
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
@@ -16,25 +17,27 @@ class PostProcessing(object):
 
     @classmethod
     def list_post_processors(cls):
-        return [pname[len(cls.PREFIX):] for pname,proc in cls.__dict__.iteritems()
-                if type(proc) is types.FunctionType and pname.startswith(cls.PREFIX)]
+        return list(PostProcRegistry.iterkeys())
 
     def post_process_all(self):
-        for pname in self.INIT:
-            self.post_process_one(pname)
-        for pname in self.list_post_processors():
-            if pname in self.INIT:
-                continue
-            self.post_process_one(pname)
+        alln = self.list_post_processors()
+        done=set()
+        while alln:
+            k = alln.pop(0)
+            dep = PostProcRegistry.get(k).get("depends",set())
+            if dep.issubset(done):
+                done.add(k)
+                self.post_process_one(k)
+            else:
+                alln.append(k)
 
     def post_process_one(self, name):
-        log.info("Post-processiong: %s" % name)
-        if not name.startswith(self.PREFIX):
-            name = self.PREFIX+name
+        log.info("Post-processing: %s" % name)
         proc = getattr(self, name)
         proc()
 
-    def postproc_category(self):
+    @PostProcRegistry.register()
+    def category(self):
         category = self.options.backend.open_table("category")
         category.create()
         category.create_index("id")
@@ -44,7 +47,8 @@ class PostProcessing(object):
         for r in self.dt.find({"objectCategory": str(idShema)}):
             category.insert({"id":r["RecId"], "name":r["cn"]})
         
-    def postproc_domains(self):
+    @PostProcRegistry.register(depends={"category"})
+    def domains(self):
         domains = self.options.backend.open_table("domains")
         domains.create()
         domains.create_index("domain")
@@ -65,7 +69,8 @@ class PostProcessing(object):
         for r in self.dt.find({"objectCategory":dom, "objectSid":{"$exists":True}}):
             domains.insert({"domain":find_dn(r), "sid":r["objectSid"]})
 
-    def postproc_usersid(self):
+    @PostProcRegistry.register()
+    def usersid(self):
         usersid = self.options.backend.open_table("usersid")
         usersid.create()
         usersid.create_index("name")
