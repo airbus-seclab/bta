@@ -1,5 +1,5 @@
 from bta.miners import Miner, ListACE
-
+import sys, datetime
 
 @Miner.register
 class Schema(Miner):
@@ -9,14 +9,14 @@ class Schema(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--timeline', choices=['recorded', 'created', 'changed'], help='Timeline of the big change in schema')
+        parser.add_argument('--change', help='Find change not related to the schema', metavar='YYYY-MM-DD')
         parser.add_argument('--owner', help='Owner of schema and category object', action="store_true")
     
     def timeline(self, option):
-        idShema = self.dt.find_one({"cn": "Schema"})['RecId']
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.dt.find({"ParentRecId": idShema}):
+        for r in self.dt.find({"objectCategory": str(self.categories.attributeschema)}):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
@@ -43,14 +43,27 @@ class Schema(Miner):
         SchemaSecuDescriptor = {}
         root = self.dt.find_one({"cn": "Schema"})
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["RecId"]]
-        idShema = self.dt.find_one({"cn": "Schema"})['RecId']
-        for r in self.dt.find({"ParentRecId": idShema}):
+        for r in self.dt.find({"objectCategory": str(self.categories.attributeschema)}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
             else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
         SchemaSecuDescriptor = sorted(SchemaSecuDescriptor.items(), key=lambda x: x[0])
         return SchemaSecuDescriptor
     
+    def change(self, year, month, day):
+        result = list()
+        start = datetime.datetime(year, month, day, 0, 0, 0)
+        end = datetime.datetime(year, month, day, 23, 59, 59)
+        req = {'$and': [
+                {"objectCategory" : {"$in": 
+                    [str(self.categories.person), str(self.categories.group), str(self.categories.computer)]}},
+                {"whenChanged": {"$gt": start, "$lt": end}}],
+              }
+        for entry in self.dt.find(req):
+            result.append([entry['cn'], entry['objectSid']])
+        result.sort(key=lambda x: x[0].lower())
+        return result
+        
     def run(self, options, doc):
         if options.timeline:
             table = doc.create_table("Timeline of %s schema" % (options.timeline))
@@ -72,6 +85,23 @@ class Schema(Miner):
                 ownersid = desc['value']['Owner']
                 name = self.dt.find_one({'objectSid': ownersid})['cn']
                 table.add([name, ownersid, numOwnShema])
+            table.finished()
+        if options.change:
+            try:
+                date = options.change.split('-')
+                year = int(date[0])
+                month = int(date[1])
+                day = int(date[2])
+            except Exception as e:
+                raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
+            change = self.change(year, month, day)
+            table = doc.create_table("Users/groups/computers change at %i-%i-%i" % (year, month, day))
+            table.add(["Name", "SID"])
+            table.add()
+            for user in change:
+                table.add(user)
+            table.finished()
+
             
             
 

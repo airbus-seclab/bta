@@ -10,8 +10,8 @@ import bta.formatters.rest
 class categories(object):
     def __init__(self, ct):
         for entry in ct.find():
-            setattr(self, entry['name'].lower(), int(entry['id']))
-
+            name = entry['name'].lower().replace('-', '')
+            setattr(self, name, int(entry['id']))
 class Miner(object):
     _miners_ = {}
     _desc_ = "N/A"

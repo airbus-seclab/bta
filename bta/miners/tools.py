@@ -5,14 +5,7 @@ FLAG_PASSWD_NEVER_EXPIRE = 0x10000
 FLAG_EXPIRED  = 0x800000
 
 load_rid_path=os.path.join(os.environ['HOME'], 'local_rid.py')
-
 local_relative_domains_sid=None
-try:
-    execfile(load_rid_path)
-    if not local_relative_domains_sid:
-        sys.stderr.write("%s: No local_relative_domains_sid dictionnary?\n" % load_rid_path)
-except:
-    sys.stderr.write("Cannot read local RID files (%s), I will not resolve RID!\n" % load_rid_path)
 
 class Sid(object):
     def __init__(self, datatable, verbose=False, **kwargs):
