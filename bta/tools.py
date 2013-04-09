@@ -31,6 +31,11 @@ class Registry(object):
         return do_reg
     
     @classmethod
+    def register_ref(cls, obj, key="__name__"):
+        cls.registry[cls.__name__][getattr(obj, key)]=obj
+        return obj
+    
+    @classmethod
     def get_all(cls):
         return cls.registry[cls.__name__]
     @classmethod
