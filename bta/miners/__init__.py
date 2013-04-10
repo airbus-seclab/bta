@@ -62,19 +62,12 @@ class Miner(object):
     
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
-        cls.dt = options.backend.open_table("datatable")
-        cls.lt = options.backend.open_table("linktable")
-        cls.sd = options.backend.open_table("sdtable")
-        cls.ct = options.backend.open_table("category")
-        cls.uid = options.backend.open_table("usersid")
-        cls.dom = options.backend.open_table("domains")
-        cls.categories = categories(cls.ct)
         
-        miner = MinerRegistry.get(options.miner_name)
-        m = miner()
-
         if not options.output_type:
             options.live_output = True
+
+        miner = MinerRegistry.get(options.miner_name)
+        m = miner(options.backend)
 
         docC = LiveRootDoc if options.live_output else RootDoc
 
@@ -90,4 +83,12 @@ class Miner(object):
             doc.format_doc(fmt)
             print fmt.finalize()
 
+    def __init__(self, backend):
+        self.dt = backend.open_table("datatable")
+        self.lint = backend.open_table("linktable")
+        self.sd = backend.open_table("sdtable")
+        self.ct = backend.open_table("category")
+        self.uid = backend.open_table("usersid")
+        self.dom = backend.open_table("domains")
+        self.categories = categories(self.ct)
     
