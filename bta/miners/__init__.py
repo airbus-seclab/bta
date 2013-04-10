@@ -106,5 +106,8 @@ class Miner(object):
         self.dom = backend.open_table("domains")
         self.categories = categories(self.ct)
 
+    def run(self, options):
+        raise NotImplementedError("run")
+
     def check_consistency(self):
         raise NotImplementedError("Consistency checks not implemented for [%s] miner. Implement them or use --force-consistency at your own risks" % self._name_)
