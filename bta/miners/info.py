@@ -39,9 +39,4 @@ class Info(Miner):
 
     def check_consistency(self):
         Miner.check_consistency(self)
-        c = self.datatable.find({"objectCategory":{"$exists":True}})
-        assert c.count() > 0, "no record with objectCategory attribute in datatable"
-        octype = type(c.next()["objectCategory"])
-        assert octype is str or octype is unicode, ("unexpected type for objectCategory values (got %r, wanted string)" % octype)
-        
-
+        self.check_field_type(self.datatable,"objectCategory", str, unicode)
