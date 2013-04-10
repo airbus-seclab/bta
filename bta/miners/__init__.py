@@ -7,6 +7,9 @@ from bta.docstruct import LiveRootDoc, RootDoc
 from bta.formatters import Formatter
 import bta.formatters.rest
 from bta.tools import Registry
+import logging
+
+log = logging.getLogger("bta.miner")
 
 class categories(object):
     def __init__(self, ct):
@@ -60,6 +63,9 @@ class Miner(object):
         if options.connection is None:
             parser.error("Missing connection string (-C)")
     
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)-5s: %(message)s")
+
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
         
