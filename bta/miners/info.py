@@ -37,6 +37,6 @@ class Info(Miner):
                 tbl.add((r["id"], r["name"], self.datatable.find({"objectCategory": str(r["id"])}).count()))
             tbl.finished()
 
-    def check_consistency(self):
-        Miner.check_consistency(self)
-        self.check_field_type(self.datatable,"objectCategory", str, unicode)
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_type(self.datatable,"objectCategory", str, unicode)

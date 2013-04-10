@@ -80,7 +80,7 @@ class Miner(object):
             log.warning("Consistency checks disabled by user")
         else:
             try:
-                m.check_consistency()
+                m.assert_consistency()
             except AssertionError,e:
                 log.error("Consistency check failed: %s" %e)
                 raise SystemExit()
@@ -112,7 +112,7 @@ class Miner(object):
     def run(self, options):
         raise NotImplementedError("run")
 
-    def check_consistency(self):
+    def assert_consistency(self):
         assert self.datatable.count() > 0, "datatable is empty"
         assert self.datatable_meta.count() > 0, "datatable_meta is empty"
         assert self.linktable.count() > 0, "linktable is empty"
@@ -122,12 +122,12 @@ class Miner(object):
         assert self.domain.count() > 0, "domain table is empty"
 
     @classmethod
-    def check_field_exists(cls, table, field):
+    def assert_field_exists(cls, table, field):
         c = table.find({field : {"$exists":True}})
         assert c.count() > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
     @classmethod
-    def check_field_type(cls, table, field, *types):
-        cls.check_field_exists(table, field)
+    def assert_field_type(cls, table, field, *types):
+        cls.assert_field_exists(table, field)
         c = table.find({field : {"$exists":True}})
         vtype = type(c.next()["objectCategory"])
         assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)

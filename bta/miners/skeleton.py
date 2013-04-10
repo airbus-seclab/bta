@@ -22,7 +22,7 @@ class Skel(Miner):
             
         table.finished()
 
-    def check_consistency(self):
-        Miner.check_consistency(self)
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
         assert self.datatable.find({"cn":{"$exists":True}}).count() > 10, "less than 10 cn in datatable"
 
