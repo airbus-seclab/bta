@@ -36,7 +36,7 @@ class SDusers(Miner):
                     
         users = defaultdict(lambda:set())
         
-        for r in self.sd.find(match):
+        for r in self.sd_table.find(match):
             for aclt in "SACL","DACL":
                 if r["value"] and aclt in r["value"]:
                     for ace in r["value"][aclt]["ACEList"]:
@@ -49,7 +49,7 @@ class SDusers(Miner):
         table.add()
         
         for sid,lsd in sorted(users.iteritems(), key=lambda (x,y):len(y)):
-            c = self.dt.find({"objectSid":sid}) #, "name":{"$exists":True}})
+            c = self.datatable.find({"objectSid":sid}) #, "name":{"$exists":True}})
             names = set([ r["name"] for r in c if "name" in r])
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])

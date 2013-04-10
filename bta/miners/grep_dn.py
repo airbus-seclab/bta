@@ -18,10 +18,10 @@ class DNGrep(Miner):
             cn = r.get("cn") or r.get("name")
             if cn is None or cn=="$ROOT_OBJECT$":
                 return ""
-            r2 = self.dt.find_one({"RecId":r["ParentRecId"]})
+            r2 = self.datatable.find_one({"RecId":r["ParentRecId"]})
             return find_dn(r2)+"."+cn
     
-        c = self.dt.find({"cn":options.cn})
+        c = self.datatable.find({"cn":options.cn})
         for r in c:
             l.add("%s: %s" % (r.get("cn"),find_dn(r)))
         l.finished()

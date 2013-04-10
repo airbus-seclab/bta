@@ -16,13 +16,13 @@ class Passwords(Miner):
 
     def bad_password_count(self, doc):
         t = doc.create_table("Users whose badPwdCount is non-zero")
-        for r in self.dt.find({"badPwdCount":{"$exists": True, "$ne":"0"}}): #.sort({"badPwdCount":1}):
+        for r in self.datatable.find({"badPwdCount":{"$exists": True, "$ne":"0"}}): #.sort({"badPwdCount":1}):
             t.add(self.get_line(r, ["sAMAccountName", "name", "badPwdCount"]))
             t.flush()
 
     def dump_field(self, doc, field):
         t = doc.create_table("Dump of %s" % field)
-        for r in self.dt.find({field:{"$exists": True}}):
+        for r in self.datatable.find({field:{"$exists": True}}):
             t.add(self.get_line(r, ["sAMAccountName", "name", field]))
             t.flush()
 

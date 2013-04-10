@@ -16,12 +16,12 @@ class MailBoxRights(Miner):
         parser.add_argument("--userid", help="Look user matching the samAccount", metavar="REGEX")
 
     def get_sid(self, sid):
-        objlist = self.dt.find({'objectSid': sid})
+        objlist = self.datatable.find({'objectSid': sid})
         for obj in objlist:
             if 'cn' in obj: return obj['cn']
 
     def getSecurityDescriptor(self, sdId):
-        sd = self.sd.find({'id': sdId})
+        sd = self.sd_table.find({'id': sdId})
         aces = []
         for ace in sd:
             try:
@@ -45,7 +45,7 @@ class MailBoxRights(Miner):
             if options.userid:
                 match =  { "sAMAccountName": { "$regex" : options.userid } } 
 
-        mailboxes=self.dt.find_one(match)
+        mailboxes=self.datatable.find_one(match)
         for mbox in mailboxes:
             userMailboxCN = mailboxes['cn']
             userMailBoxSecurityDescriptor = mailboxes['msExchMailboxSecurityDescriptor']

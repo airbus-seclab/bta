@@ -98,13 +98,13 @@ class Miner(object):
             print fmt.finalize()
 
     def __init__(self, backend):
-        self.dt = backend.open_table("datatable")
-        self.lint = backend.open_table("linktable")
-        self.sd = backend.open_table("sdtable")
-        self.ct = backend.open_table("category")
-        self.uid = backend.open_table("usersid")
-        self.dom = backend.open_table("domains")
-        self.categories = categories(self.ct)
+        self.datatable = backend.open_table("datatable")
+        self.linktable = backend.open_table("linktable")
+        self.sd_table = backend.open_table("sdtable")
+        self.category = backend.open_table("category")
+        self.usersid = backend.open_table("usersid")
+        self.domain = backend.open_table("domains")
+        self.categories = categories(self.category)
 
     def run(self, options):
         raise NotImplementedError("run")

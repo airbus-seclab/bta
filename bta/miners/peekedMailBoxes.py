@@ -11,12 +11,12 @@ class PeekedMailboxes(Miner):
     _desc_ = "List mailboxes whose owner has no exclusive access to"
 
     def get_sid(self, sid):
-        objlist = self.dt.find({'objectSid': sid})
+        objlist = self.datatable.find({'objectSid': sid})
         for obj in objlist:
             if 'cn' in obj: return obj['cn']
 
     def getSecurityDescriptor(self, sdId):
-        sd = self.sd.find({'id': sdId})
+        sd = self.sd_table.find({'id': sdId})
         aces = []
         for ace in sd:
             try:
@@ -34,7 +34,7 @@ class PeekedMailboxes(Miner):
         userAccess = {}     # Permissions per User
         mailboxAccess = {}  # Permissions per mailbox
 
-        mailboxes=self.dt.find({"msExchMailboxSecurityDescriptor": {"$exists":True}}, {"msExchMailboxSecurityDescriptor": True, "cn": True})
+        mailboxes=self.datatable.find({"msExchMailboxSecurityDescriptor": {"$exists":True}}, {"msExchMailboxSecurityDescriptor": True, "cn": True})
         for mbox in mailboxes:
             userMailboxCN = mbox['cn']
             userMailBoxSecurityDescriptor = mbox['msExchMailboxSecurityDescriptor']

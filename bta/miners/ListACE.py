@@ -90,7 +90,7 @@ class ListACE(Miner):
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def type2human(self, objtype):
-        r = self.dt.find_one({"rightsGuid":objtype.lower()})
+        r = self.datatable.find_one({"rightsGuid":objtype.lower()})
         return r["name"] if r else objtype
 
     def summarize_ace(self, trustee, securitydescriptor, aceList):
@@ -103,15 +103,15 @@ class ListACE(Miner):
                 objtype = self.type2human(ace['ObjectType'])
             else:
                 objtype = "No object type /!\ DANGEROUS"
-        return [#str(Sid(self.dt, verbose=self.options.verbose, objectSid=trustee)),
+        return [#str(Sid(self.datatable, verbose=self.options.verbose, objectSid=trustee)),
                 trustee,
-                str(Sid(self.dt, verbose=self.options.verbose, objectSid=ace['SID'])),
+                str(Sid(self.datatable, verbose=self.options.verbose, objectSid=ace['SID'])),
                 objtype,
                 '']
                 #', '.join(perms)]
 
     def getSecurityDescriptor(self, sd_id):
-        raw_securitydescriptor = self.sd.find_one({'id': sd_id})
+        raw_securitydescriptor = self.sd_table.find_one({'id': sd_id})
         if not raw_securitydescriptor:
             raise Exception('No security descriptor matching {id: %r}' % sd_id)
         return Record(**raw_securitydescriptor)
@@ -144,7 +144,7 @@ class ListACE(Miner):
         desc = []
         queries = []
         if options.subject:
-            users = self.dt.find({'objectSid': options.subject})
+            users = self.datatable.find({'objectSid': options.subject})
             desc.append("trustee=%s" % options.subject)
 
             table = doc.create_table(desc)
@@ -183,7 +183,7 @@ class ListACE(Miner):
             table.add(["Subject", "Trustee", "Object type"])
             table.add()
 
-            for raw_sd in self.sd.find(bigquery):
+            for raw_sd in self.sd_table.find(bigquery):
                 securitydescriptor = Record(**raw_sd)
                 query = {
                     'nTSecurityDescriptor': securitydescriptor.id,
@@ -191,7 +191,7 @@ class ListACE(Miner):
                     'objectCategory': {'$in': [str(self.categories.person), str(self.categories.group)]} 
                 }
                 subjects=set()
-                for subject in self.dt.find(query, {'objectSid': True}):
+                for subject in self.datatable.find(query, {'objectSid': True}):
                     subjects.add(subject['objectSid'])
                 if not subjects:
                     continue

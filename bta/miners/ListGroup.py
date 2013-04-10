@@ -15,15 +15,15 @@ class ListGroup(Miner):
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def get_members_of(self, grpsid, recursive=False):
-        group = self.dt.find_one({'objectSid': grpsid})
+        group = self.datatable.find_one({'objectSid': grpsid})
         if not group:
             return set()
         members=set()
-        for link in self.lt.find({'link_DNT': group['RecId']}):
+        for link in self.linktable.find({'link_DNT': group['RecId']}):
             deleted=False
             if 'link_deltime' in link and link['link_deltime'].year > 1970:
                 deleted = link['link_deltime']
-            row = self.dt.find_one({'RecId': link['backlink_DNT']})
+            row = self.datatable.find_one({'RecId': link['backlink_DNT']})
             if not row:
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
@@ -42,7 +42,7 @@ class ListGroup(Miner):
         return members
         
     def getInfo_fromSid(self, sid):
-        return self.dt.find_one({'objectSid': sid})
+        return self.datatable.find_one({'objectSid': sid})
     
     def find_dn(self, r):
         if not r:
@@ -50,7 +50,7 @@ class ListGroup(Miner):
         cn = r.get("cn") or r.get("name")
         if cn is None or cn=="$ROOT_OBJECT$":
             return ""
-        r2 = self.dt.find_one({"RecId":r["ParentRecId"]})
+        r2 = self.datatable.find_one({"RecId":r["ParentRecId"]})
         return self.find_dn(r2)+"."+cn
 
     def run(self, options, doc):
@@ -75,7 +75,7 @@ class ListGroup(Miner):
             }
 
         groups={}
-        for group in self.dt.find(match):
+        for group in self.datatable.find(match):
             groups[group['objectSid']] = set()
             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
@@ -99,10 +99,10 @@ class ListGroup(Miner):
             table.add(headers)
             table.add()
             for sid,deleted,fromgrp in deleted_last(membership):
-                sidobj = Sid(self.dt, objectSid=sid, verbose=options.verbose)
+                sidobj = Sid(self.datatable, objectSid=sid, verbose=options.verbose)
                 member = str(sidobj)
                 if fromgrp:
-                    fromgrp = Sid(self.dt, objectSid=fromgrp)
+                    fromgrp = Sid(self.datatable, objectSid=fromgrp)
                 flags = sidobj.getUserAccountControl()
                 table.add((member, deleted or '', flags, fromgrp))
             table.finished()

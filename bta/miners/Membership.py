@@ -24,16 +24,16 @@ class Membership(Miner):
                              ]
             }
 
-        for user in self.dt.find(match):
-             links = self.lt.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
+        for user in self.datatable.find(match):
+             links = self.linktable.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
              groups=set()
              sid = user['objectSid']
              pgid = sid[:sid.rfind('-') + 1] + user['primaryGroupID']
-             primarygroup = self.dt.find_one({'objectSid': pgid}, {'cn': True})
+             primarygroup = self.datatable.find_one({'objectSid': pgid}, {'cn': True})
              groups.add(primarygroup['cn'])
              for link in links:
                  groupRecId = link['link_DNT']
-                 group = self.dt.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
+                 group = self.datatable.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
                  if group:
                      groups.add(group['cn'])
              table.add([user["objectSid"], user["cn"], ', '.join(groups)])

@@ -16,7 +16,7 @@ class Schema(Miner):
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.dt.find({"objectCategory": str(self.categories.attributeschema)}):
+        for r in self.datatable.find({"objectCategory": str(self.categories.attributeschema)}):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
@@ -41,9 +41,9 @@ class Schema(Miner):
     
     def owner(self):
         SchemaSecuDescriptor = {}
-        root = self.dt.find_one({"cn": "Schema"})
+        root = self.datatable.find_one({"cn": "Schema"})
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["RecId"]]
-        for r in self.dt.find({"objectCategory": str(self.categories.attributeschema)}):
+        for r in self.datatable.find({"objectCategory": str(self.categories.attributeschema)}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
             else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
@@ -59,7 +59,7 @@ class Schema(Miner):
                     [str(self.categories.person), str(self.categories.group), str(self.categories.computer)]}},
                 {"whenChanged": {"$gt": start, "$lt": end}}],
               }
-        for entry in self.dt.find(req):
+        for entry in self.datatable.find(req):
             result.append([entry['cn'], entry['objectSid']])
         result.sort(key=lambda x: x[0].lower())
         return result
@@ -83,7 +83,7 @@ class Schema(Miner):
                 numOwnShema = len(shema[1])
                 desc = hdlACE.getSecurityDescriptor(shema[0])
                 ownersid = desc['value']['Owner']
-                name = self.dt.find_one({'objectSid': ownersid})['cn']
+                name = self.datatable.find_one({'objectSid': ownersid})['cn']
                 table.add([name, ownersid, numOwnShema])
             table.finished()
         if options.change:

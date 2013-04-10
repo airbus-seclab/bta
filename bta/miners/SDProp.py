@@ -17,7 +17,7 @@ class SDProp(Miner):
         user = list()
         group = list()
         t = list()
-        for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"0"}}):
+        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":"0"}}):
             if int(r["objectCategory"]) == self.categories.person:
                 user.append([r["cn"], 'User', r["objectSid"]])
             elif int(r["objectCategory"]) == self.categories.group:
@@ -38,7 +38,7 @@ class SDProp(Miner):
         user = list()
         group = list()
         t = list()
-        for r in self.dt.find({"adminCount":{"$exists": True, "$ne":"1"}}):
+        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":"1"}}):
             if int(r["objectCategory"]) == self.categories.person:
                 user.append([r["cn"], 'User', r["objectSid"]])
             elif int(r["objectCategory"]) == self.categories.person:
@@ -56,23 +56,23 @@ class SDProp(Miner):
         return t
         
     def checkACE(self):
-        secDesc = int(self.dt.find_one({"cn": "AdminSDHolder"})['nTSecurityDescriptor'])
+        secDesc = int(self.datatable.find_one({"cn": "AdminSDHolder"})['nTSecurityDescriptor'])
         hdlACE = ListACE.ListACE()
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
         
         t = list()
         for ace in aceList:
-            name = self.dt.find_one({"objectSid": ace['SID']}, {"cn"})['cn']
+            name = self.datatable.find_one({"objectSid": ace['SID']}, {"cn"})['cn']
             if ace['InheritedObjectType'] != None:
-                cible = self.dt.find_one({"schemaIDGUID" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
+                cible = self.datatable.find_one({"schemaIDGUID" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
                 if cible == None: 
-                    cible = self.dt.find_one({"rightsGuid" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
+                    cible = self.datatable.find_one({"rightsGuid" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
                 cible = cible['cn']
             elif ace['ObjectType'] != None:
-                cible = self.dt.find_one({"schemaIDGUID" : re.compile(ace['ObjectType'], re.IGNORECASE)})
+                cible = self.datatable.find_one({"schemaIDGUID" : re.compile(ace['ObjectType'], re.IGNORECASE)})
                 if cible == None: 
-                    cible = self.dt.find_one({"rightsGuid" : re.compile(ace['ObjectType'], re.IGNORECASE)})
+                    cible = self.datatable.find_one({"rightsGuid" : re.compile(ace['ObjectType'], re.IGNORECASE)})
                 cible = cible['cn']
             else:
                 cible = 'ALL'
