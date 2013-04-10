@@ -99,6 +99,7 @@ class Miner(object):
 
     def __init__(self, backend):
         self.datatable = backend.open_table("datatable")
+        self.datatable_meta = backend.open_table("datatable_meta")
         self.linktable = backend.open_table("linktable")
         self.sd_table = backend.open_table("sdtable")
         self.category = backend.open_table("category")
