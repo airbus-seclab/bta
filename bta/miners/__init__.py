@@ -6,22 +6,24 @@ import bta.docstruct
 from bta.docstruct import LiveRootDoc, RootDoc
 from bta.formatters import Formatter
 import bta.formatters.rest
+from bta.tools import Registry
 
 class categories(object):
     def __init__(self, ct):
         for entry in ct.find():
-            name = entry['name'].lower().replace('-', '')
-            setattr(self, name, int(entry['id']))
+            setattr(self, entry['name'].lower(), int(entry['id']))
+
+
+class MinerRegistry(Registry):
+    pass
+
+
 class Miner(object):
-    _miners_ = {}
     _desc_ = "N/A"
-    @classmethod
-    def register(cls, miner):
-        cls._miners_[miner._name_] = miner
-        return miner
-    @classmethod
-    def get(cls, minername):
-        return cls._miners_[minername]
+
+    @staticmethod
+    def register(f):
+        return MinerRegistry.register_ref(f, key="_name_")
 
     @classmethod
     def create_arg_parser(cls):
@@ -40,7 +42,7 @@ class Miner(object):
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
-        for miner in cls._miners_.itervalues():
+        for miner in MinerRegistry.itervalues():
             p = subparsers.add_parser(miner._name_, help=miner._desc_)
             miner.create_arg_subparser(p)
 
@@ -68,7 +70,7 @@ class Miner(object):
         cls.dom = options.backend.open_table("domains")
         cls.categories = categories(cls.ct)
         
-        miner = cls.get(options.miner_name)
+        miner = MinerRegistry.get(options.miner_name)
         m = miner()
 
         if not options.output_type:
