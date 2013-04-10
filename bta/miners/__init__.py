@@ -38,6 +38,8 @@ class Miner(object):
         parser.add_argument("-B", dest="backend_type", default="mongo",
                             help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
+        parser.add_argument("--force-consistency", dest="force_consistency", action="store_true",
+                            help="Do not run consistency checks")
         parser.add_argument("--live-output", dest="live_output", action="store_true",
                             help="Provides a live output")
         parser.add_argument("-t", "--output-type", dest="output_type",
@@ -74,6 +76,12 @@ class Miner(object):
 
         miner = MinerRegistry.get(options.miner_name)
         m = miner(options.backend)
+        if options.force_consistency:
+            log.warning("Consistency checks disabled by user")
+        else:
+            if not m.check_consistency():
+                log.error("Consistency check failed.")
+                raise SystemExit()
 
         docC = LiveRootDoc if options.live_output else RootDoc
 
@@ -97,4 +105,6 @@ class Miner(object):
         self.uid = backend.open_table("usersid")
         self.dom = backend.open_table("domains")
         self.categories = categories(self.ct)
-    
+
+    def check_consistency(self):
+        raise NotImplementedError("Consistency checks not implemented for [%s] miner. Implement them or use --force-consistency at your own risks" % self._name_)
