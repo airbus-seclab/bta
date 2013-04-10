@@ -11,18 +11,18 @@ class Skel(Miner):
         parser.add_argument("--dummy_flag", help="dummy flag", action="store_true")
     
     def run(self, options, doc):
-        #self.dt datatable
-        #self.lt linktable
-        #self.sd sdtable
-        #self.categories contains all category id
         doc.add("Option dummy is %s" % options.dummy)
 
         table = doc.create_table("my table")
         table.add(["id","hash"])
         table.add()
 
-        for r in self.sd.find({"id": {"$lt":50}}):
+        for r in self.sd_table.find({"id": {"$lt":50}}):
             table.add([r["id"],r["hash"]])
             
         table.finished()
+
+    def check_consistency(self):
+        Miner.check_consistency(self)
+        assert self.datatable.find({"cn":{"$exists":True}}).count() > 10, "less than 10 cn in datatable"
 
