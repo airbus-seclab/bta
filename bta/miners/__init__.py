@@ -79,8 +79,10 @@ class Miner(object):
         if options.force_consistency:
             log.warning("Consistency checks disabled by user")
         else:
-            if not m.check_consistency():
-                log.error("Consistency check failed.")
+            try:
+                m.check_consistency()
+            except AssertionError,e:
+                log.error("Consistency check failed: %s" %e)
                 raise SystemExit()
 
         docC = LiveRootDoc if options.live_output else RootDoc
@@ -111,4 +113,10 @@ class Miner(object):
         raise NotImplementedError("run")
 
     def check_consistency(self):
-        raise NotImplementedError("Consistency checks not implemented for [%s] miner. Implement them or use --force-consistency at your own risks" % self._name_)
+        assert self.datatable.count() > 0, "datatable is empty"
+        assert self.datatable_meta.count() > 0, "datatable_meta is empty"
+        assert self.linktable.count() > 0, "linktable is empty"
+        assert self.sd_table.count() > 0, "sd_table is empty"
+        assert self.category.count() > 0, "category table is empty"
+        assert self.usersid.count() > 0, "usersid table is empty"
+        assert self.domain.count() > 0, "domain table is empty"
