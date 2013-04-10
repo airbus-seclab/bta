@@ -120,3 +120,14 @@ class Miner(object):
         assert self.category.count() > 0, "category table is empty"
         assert self.usersid.count() > 0, "usersid table is empty"
         assert self.domain.count() > 0, "domain table is empty"
+
+    @classmethod
+    def check_field_exists(cls, table, field):
+        c = table.find({field : {"$exists":True}})
+        assert c.count() > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
+    @classmethod
+    def check_field_type(cls, table, field, *types):
+        cls.check_field_exists(table, field)
+        c = table.find({field : {"$exists":True}})
+        vtype = type(c.next()["objectCategory"])
+        assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)
