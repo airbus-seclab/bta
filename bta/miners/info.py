@@ -39,4 +39,5 @@ class Info(Miner):
 
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_type(self.datatable,"objectCategory", str, unicode)
+        Miner.assert_field_exists(self.datatable,"objectCategory")
+        Miner.assert_field_type(self.datatable,"objectCategory", str, unicode)

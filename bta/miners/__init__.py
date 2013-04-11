@@ -124,10 +124,11 @@ class Miner(object):
     @classmethod
     def assert_field_exists(cls, table, field):
         c = table.find({field : {"$exists":True}})
-        assert c.count() > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
+        cnt = c.limit(1).count(with_limit_and_skip=True) # stop counting after the 1st hit
+        assert cnt > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
     @classmethod
     def assert_field_type(cls, table, field, *types):
-        cls.assert_field_exists(table, field)
-        c = table.find({field : {"$exists":True}})
-        vtype = type(c.next()["objectCategory"])
-        assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)
+        r = table.find_one({field : {"$exists":True}},{field:True})
+        if r is not None:
+            vtype = type(r[field])
+            assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)
