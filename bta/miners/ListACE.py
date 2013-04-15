@@ -206,3 +206,12 @@ class ListACE(Miner):
                     table.add(aceobj.get_tuple())
 
             table.finished()
+
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.sd_table, "id")
+        self.assert_field_type(self.datatable, "rightsGuid", str, unicode)
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_type(self.datatable, "nTSecurityDescriptor", int)
+        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+
