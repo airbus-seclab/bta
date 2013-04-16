@@ -31,4 +31,9 @@ class Passwords(Miner):
             self.bad_password_count(doc)
         if options.dump_unicode_pwd:
             self.dump_field(doc, "unicodePwd")
-
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_type(self.datatable, "badPwdCount", str, unicode)
+        self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)
+        self.assert_field_type(self.datatable, "name", str, unicode)

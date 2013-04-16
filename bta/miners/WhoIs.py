@@ -23,3 +23,7 @@ class WhoIs(Miner):
                 t.add([k,v])
             t.finished()
 
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.datatable, "objectSid")
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)

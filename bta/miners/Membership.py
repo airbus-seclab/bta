@@ -38,3 +38,12 @@ class Membership(Miner):
                      groups.add(group['cn'])
              table.add([user["objectSid"], user["cn"], ', '.join(groups)])
         table.finished()
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_type(self.datatable, "cn", str, unicode)
+        self.assert_field_type(self.datatable, "RecId", int)
+        self.assert_field_type(self.datatable, "primaryGroupID", str, unicode)
+        self.assert_field_type(self.linktable, "link_DNT", int)
+        self.assert_field_type(self.linktable, "backlink_DNT", int)

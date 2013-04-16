@@ -1,6 +1,7 @@
 
 from bta.miners import Miner
 from bta.miners.tools import User, Group, Sid
+import datetime
 
 @Miner.register
 class ListGroup(Miner):
@@ -119,4 +120,16 @@ class ListGroup(Miner):
                 guid = info['objectGUID']
                 table.add((name, groupSid, guid))
             table.finished()
-        
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_type(self.datatable, "RecId", int)
+        self.assert_field_type(self.datatable, "ParentRecId", int)
+        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "cn", str, unicode)
+        self.assert_field_type(self.datatable, "name", str, unicode)
+        self.assert_field_type(self.datatable, "objectGUID", str, unicode)
+        self.assert_field_type(self.sd_table, "link_DNT", int)
+        self.assert_field_type(self.sd_table, "link_deltime", datetime.datetime)
+        self.assert_field_type(self.sd_table, "backlink_DNT", int)

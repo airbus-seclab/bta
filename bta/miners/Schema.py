@@ -16,7 +16,7 @@ class Schema(Miner):
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.datatable.find({"objectCategory": str(self.categories.attributeschema)}):
+        for r in self.datatable.find({"objectCategory": str(self.categories.attribute_schema)}):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
@@ -43,7 +43,7 @@ class Schema(Miner):
         SchemaSecuDescriptor = {}
         root = self.datatable.find_one({"cn": "Schema"})
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["RecId"]]
-        for r in self.datatable.find({"objectCategory": str(self.categories.attributeschema)}):
+        for r in self.datatable.find({"objectCategory": str(self.categories.attribute_schema)}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
             else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
@@ -101,7 +101,16 @@ class Schema(Miner):
             for user in change:
                 table.add(user)
             table.finished()
-
-            
-            
-
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.datatable, "objectCategory")
+        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "RecordTime", datetime.datetime)
+        self.assert_field_type(self.datatable, "whenChanged", datetime.datetime)
+        self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
+        self.assert_field_type(self.datatable, "RecId", int)
+        self.assert_field_type(self.datatable, "cn", str, unicode)
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_type(self.datatable, "nTSecurityDescriptor", int)
+        
