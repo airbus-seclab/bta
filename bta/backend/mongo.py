@@ -120,6 +120,10 @@ class MongoTable(BackendTable):
                 raise Exception("Collection [%s] already exists in database [%s]" % (self.name, self.db.name))
         self.col = self.db.create_collection(self.name)
 
+    def ensure_created(self):
+        if self.name not in self.db.collection_names():
+            self.col = self.db.create_collection(self.name)
+
     def create_fields(self, columns):
         self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
         self.create()
@@ -129,6 +133,9 @@ class MongoTable(BackendTable):
         
     def insert(self, values):
         return self.col.insert(values)
+
+    def update(self, *args):
+        return self.col.update(*args)
 
     def insert_fields(self, values):
         d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
