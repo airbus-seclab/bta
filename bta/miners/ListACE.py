@@ -62,19 +62,20 @@ p2h={'00299570-246d-11d0-a768-00aa006e0529': 'User-Force-Change-Password',
 
 
 class AccessControlEntry(object):
-    def __init__(self, trustee=None, subject=None, perm=None):
+    def __init__(self, trustee=None, subject=None, perm=None, verbose=False, dt=None):
         self.trustee = trustee
         self.subject = subject
+        self.verbose = verbose
+        self.dt      = dt
         self.perm    = perm
     def get_tuple(self):
         def r(x):
             if type(x) is set:
                 if len(x) > 3:
                     return '%d items' % len(x)
-                return ', '.join(x)
-            return x
-        return (r(self.trustee), r(self.subject),  r(p2h.get(self.perm, self.perm)))
-
+                return ', '.join(map(lambda s: str(Sid(self.dt, verbose=self.verbose, objectSid=s)), x))
+            return str(Sid(self.dt, verbose=self.verbose, objectSid=x))
+        return (r(self.trustee), r(self.subject),  p2h.get(self.perm, self.perm))
 
 @Miner.register
 class ListACE(Miner):
@@ -180,7 +181,7 @@ class ListACE(Miner):
 
             desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
             table = doc.create_table(desct)
-            table.add(["Subject", "Trustee", "Object type"])
+            table.add(["Trustee", "Subjects", "Object type"])
             table.add()
 
             for raw_sd in self.sd_table.find(bigquery):
@@ -200,9 +201,10 @@ class ListACE(Miner):
                 for ace in aceList:
                     if options.type and ace.ObjectType != options.type: continue
                     if options.trustee and ace.SID != options.trustee: continue
-
+		
                     aceobj = AccessControlEntry(trustee=ace.SID, subject=subjects,
-                                                perm=ace.ObjectType)
+                                                perm=ace.ObjectType, verbose=options.verbose,
+                                                dt=self.datatable)
                     table.add(aceobj.get_tuple())
 
             table.finished()
