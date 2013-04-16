@@ -62,6 +62,7 @@ class ESETable(object):
         except KeyboardInterrupt:
             if self.options.verbosity <= logging.INFO:
                 print >>sys.stderr, "\nInterrupted by user"
+            raise
         else:
             if self.options.verbosity <= logging.INFO:
                 print >>sys.stderr, "\ndone"
