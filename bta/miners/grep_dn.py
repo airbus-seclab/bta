@@ -25,3 +25,10 @@ class DNGrep(Miner):
         for r in c:
             l.add("%s: %s" % (r.get("cn"),find_dn(r)))
         l.finished()
+        
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.datatable, "ParentRecId")
+        self.assert_field_type(self.datatable, "cn", str, unicode)
+        self.assert_field_type(self.datatable, "name", str, unicode)
+        self.assert_field_type(self.datatable, "ParentRecId", str, unicode)

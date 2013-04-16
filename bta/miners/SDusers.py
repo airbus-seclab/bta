@@ -1,5 +1,6 @@
 from bta.miners import Miner
 from collections import defaultdict
+import datetime
 
 class HRec: # wraps sd entries to make them hashable
     def __init__(self, rec):
@@ -54,3 +55,14 @@ class SDusers(Miner):
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])
             table.add([sid, str(len(lsd)), ", ".join(names), ", ".join(dates)])
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.datatable, "objectSid")
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_exists(self.datatable, "name")
+        self.assert_field_type(self.datatable, "name", str, unicode)
+        self.assert_field_exists(self.datatable, "whenCreated")
+        self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
+        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.SID")
+        self.assert_field_exists(self.sd_table, "value.SACL.ACEList.SID")

@@ -14,7 +14,7 @@ log = logging.getLogger("bta.miner")
 class categories(object):
     def __init__(self, ct):
         for entry in ct.find():
-            setattr(self, entry['name'].lower(), int(entry['id']))
+            setattr(self, entry['name'].lower().replace('-','_'), int(entry['id']))
 
 
 class MinerRegistry(Registry):

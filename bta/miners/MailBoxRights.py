@@ -2,8 +2,6 @@ from bta.miners import Miner
 from collections import defaultdict
 from bta.miners.tools import User, Group, Sid, Record
 
-SDTABLE="sdtable"
-DATATABLE="datatable"
 
 @Miner.register
 class MailBoxRights(Miner):
@@ -41,9 +39,8 @@ class MailBoxRights(Miner):
 
         if options.user:
             match =  { "objectSid": options.user }  
-        else:
-            if options.userid:
-                match =  { "sAMAccountName": { "$regex" : options.userid } } 
+        elif options.userid:
+            match =  { "sAMAccountName": { "$regex" : options.userid } } 
 
         mailboxes=self.datatable.find_one(match)
         for mbox in mailboxes:
@@ -71,4 +68,16 @@ class MailBoxRights(Miner):
             table.add([k,  ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items()))])
         table.finished()
         s.finished()
-
+    
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.sd_table, "id")
+        self.assert_field_type(self.sd_table, "id", int)
+        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.AccessMask")
+        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.SID")
+        self.assert_field_type(self.datatable, "objectSid", str, unicode)
+        self.assert_field_type(self.datatable, "cn", str, unicode)
+        self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)
+        self.assert_field_type(self.datatable, "msExchMailboxSecurityDescriptor", int)
+        
+        

@@ -104,3 +104,14 @@ class SDProp(Miner):
                 t.add(disp)
             t.flush()
             t.finished()
+            
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_type(self.datatable, "adminCount", str, unicode)
+        self.assert_field_exists(self.datatable, "objectSid")
+        self.assert_field_exists(self.datatable, "objectCategory")
+        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_exists(self.datatable, "cn")
+        self.assert_field_type(self.datatable, "InheritedObjectType", str, unicode)
+        self.assert_field_type(self.datatable, "schemaIDGUID", str, unicode)
+        self.assert_field_type(self.datatable, "rightsGuid", str, unicode)

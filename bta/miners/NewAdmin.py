@@ -23,7 +23,7 @@ class NewAdmin(Miner):
                 { "userAccountControl": {'$exists': 1}}
             ]}
         
-        for subject in self.dt.find(req):
+        for subject in self.datatable.find(req):
             uAcc = int(subject['userAccountControl'])
             npwdreq = uAcc&0x20
             pwdnoexp = uAcc&0x10000
@@ -51,3 +51,12 @@ class NewAdmin(Miner):
             t.flush()
             t.finished()
         
+    def assert_consistency(self):
+        Miner.assert_consistency(self)
+        self.assert_field_exists(self.datatable, "objectCategory")
+        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_exists(self.datatable, "whenCreated")
+        self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
+        self.assert_field_type(self.datatable, "name", str, unicode)
+        self.assert_field_type(self.datatable, "userAccountControl", str, unicode)
+        self.assert_field_type(self.datatable, "cn", str, unicode)
