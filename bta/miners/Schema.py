@@ -8,15 +8,19 @@ class Schema(Miner):
     
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('--timeline', choices=['recorded', 'created', 'changed'], help='Timeline of the big change in schema')
-        parser.add_argument('--change', help='Find change not related to the schema', metavar='YYYY-MM-DD')
+        parser.add_argument('--timelineAS', choices=['recorded', 'created', 'changed'], help='Timeline of change in attribute schema')
+        parser.add_argument('--timelineCS', choices=['recorded', 'created', 'changed'], help='Timeline of change in class schema')
+        parser.add_argument('--changeAS', help='Find change related to attribute schema', metavar='YYYY-MM-DD')
+        parser.add_argument('--createAS', help='Find creation related to attribute schema', metavar='YYYY-MM-DD')
+        parser.add_argument('--changeCS', help='Find change related to class schema', metavar='YYYY-MM-DD')
+        parser.add_argument('--createCS', help='Find creation related to class schema', metavar='YYYY-MM-DD')
         parser.add_argument('--owner', help='Owner of schema and category object', action="store_true")
     
-    def timeline(self, option):
+    def timeline(self, option, atrib):
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.datatable.find({"objectCategory": str(self.categories.attribute_schema)}):
+        for r in self.datatable.find({"objectCategory": str(atrib)}):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
@@ -47,29 +51,65 @@ class Schema(Miner):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
             else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
+        for r in self.datatable.find({"objectCategory": str(self.categories.class_schema)}):
+            idSecu = r["nTSecurityDescriptor"]
+            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
+            else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
         SchemaSecuDescriptor = sorted(SchemaSecuDescriptor.items(), key=lambda x: x[0])
         return SchemaSecuDescriptor
     
-    def change(self, year, month, day):
+    def change(self, year, month, day, atrib):
         result = list()
         start = datetime.datetime(year, month, day, 0, 0, 0)
         end = datetime.datetime(year, month, day, 23, 59, 59)
         req = {'$and': [
                 {"objectCategory" : {"$in": 
-                    [str(self.categories.person), str(self.categories.group), str(self.categories.computer)]}},
+                    [str(self.categories.class_schema), str(atrib)]}},
                 {"whenChanged": {"$gt": start, "$lt": end}}],
               }
         for entry in self.datatable.find(req):
-            result.append([entry['cn'], entry['objectSid']])
+            result.append([entry['cn'], entry['objectGUID']])
         result.sort(key=lambda x: x[0].lower())
         return result
         
+    def create(self, year, month, day, atrib):
+        result = list()
+        start = datetime.datetime(year, month, day, 0, 0, 0)
+        end = datetime.datetime(year, month, day, 23, 59, 59)
+        req = {'$and': [
+                {"objectCategory" : {"$in": 
+                    [str(self.categories.class_schema), str(atrib)]}},
+                {"whenCreated": {"$gt": start, "$lt": end}}],
+              }
+        for entry in self.datatable.find(req):
+            result.append([entry['cn'], entry['objectGUID']])
+        result.sort(key=lambda x: x[0].lower())
+        return result
+    
+    def parseDate(self, dateToTest):
+        try:
+            date = dateToTest.split('-')
+            year = int(date[0])
+            month = int(date[1])
+            day = int(date[2])
+        except Exception as e:
+            raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
+        return year, month, day
+    
     def run(self, options, doc):
-        if options.timeline:
-            table = doc.create_table("Timeline of %s schema" % (options.timeline))
-            table.add(["Date", "Number of affected schema"])
+        if options.timelineAS:
+            table = doc.create_table("Timeline of %s attribute schema" % (options.timelineAS))
+            table.add(["Date", "Affected attribute schema"])
             table.add()
-            lisTimeline = self.timeline(options.timeline)
+            lisTimeline = self.timeline(options.timelineAS, self.categories.attribute_schema)
+            for x in lisTimeline:
+                table.add([x[0], len(x[1])])
+            table.finished()
+        if options.timelineCS:
+            table = doc.create_table("Timeline of %s class schema" % (options.timelineCS))
+            table.add(["Date", "Affected class schema"])
+            table.add()
+            lisTimeline = self.timeline(options.timelineCS, self.categories.class_schema)
             for x in lisTimeline:
                 table.add([x[0], len(x[1])])
             table.finished()
@@ -86,20 +126,41 @@ class Schema(Miner):
                 name = self.datatable.find_one({'objectSid': ownersid})['cn']
                 table.add([name, ownersid, numOwnShema])
             table.finished()
-        if options.change:
-            try:
-                date = options.change.split('-')
-                year = int(date[0])
-                month = int(date[1])
-                day = int(date[2])
-            except Exception as e:
-                raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
-            change = self.change(year, month, day)
-            table = doc.create_table("Users/groups/computers change at %i-%i-%i" % (year, month, day))
-            table.add(["Name", "SID"])
+        if options.changeAS:
+            year, month, day = self.parseDate(options.changeAS)
+            change = self.change(year, month, day, self.categories.attribute_schema)
+            table = doc.create_table("Schema change at %i-%i-%i" % (year, month, day))
+            table.add(["cn", "GUID"])
             table.add()
-            for user in change:
-                table.add(user)
+            for attr in change:
+                table.add(attr)
+            table.finished()
+        if options.createAS:
+            year, month, day = self.parseDate(options.createAS)
+            create = self.create(year, month, day, self.categories.attribute_schema)
+            table = doc.create_table("Schema created at %i-%i-%i" % (year, month, day))
+            table.add(["cn", "GUID"])
+            table.add()
+            for attr in create:
+                table.add(attr)
+            table.finished()
+        if options.changeCS:
+            year, month, day = self.parseDate(options.changeCS)
+            change = self.change(year, month, day, self.categories.class_schema)
+            table = doc.create_table("Schema change at %i-%i-%i" % (year, month, day))
+            table.add(["cn", "GUID"])
+            table.add()
+            for attr in change:
+                table.add(attr)
+            table.finished()
+        if options.createCS:
+            year, month, day = self.parseDate(options.createCS)
+            create = self.create(year, month, day, self.categories.class_schema)
+            table = doc.create_table("Schema created at %i-%i-%i" % (year, month, day))
+            table.add(["cn", "GUID"])
+            table.add()
+            for attr in create:
+                table.add(attr)
             table.finished()
     
     def assert_consistency(self):
