@@ -8,6 +8,7 @@ import libesedb
 import bta.backend.mongo
 import bta.postprocessing
 import diskcache
+import bta.dblog
 
 import logging
 log = logging.getLogger("bta.ntds2db")
@@ -69,7 +70,7 @@ class ESETable(object):
 
     def create(self):
         log.info("/### Starting importation of %s" % self._tablename_)
-        
+        self.options.dblog.update_entry("Start of importation of [%s]" % self._tablename_)
         columns = self.identify_columns()
 
         metatable = self.backend.open_table(self._tablename_+"_meta")
@@ -80,11 +81,15 @@ class ESETable(object):
             table.create_index(idx)
         self.parse_file(table)
 
+        self.options.dblog.update_entry("End of importation of [%s]. %i records." % (self._tablename_, table.count()))
+        self.options.dblog.update_entry("Start of creation of metatable for [%s]" % self._tablename_)
+
         log.info("Creating metatable")
         for col in columns:
             c = table.find({col.name:{"$exists":True}}).count()
             col.count = c
             metatable.insert(col.to_json())
+        self.options.dblog.update_entry("End of creation of metatable for [%s]" % self._tablename_)
         log.info("\### Importation of %s is done." % self._tablename_)
 
 
@@ -247,26 +252,40 @@ def main():
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
 
-    log.info("Opening [%s]" % options.fname)
-    options.esedb = libesedb.ESEDB(options.fname)
-    log.info("Opening done.")
-    
-    if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
-        sd = SDTable(options)
-        sd.create()
-    if options.only.lower() in ["", "linktable", "link_table", "link"]:
-        lt = LinkTable(options)
-        lt.create()
-    if options.only.lower() in ["", "datatable", "data"]:
-        dt = Datatable(options)
-        dt.create()
+    options.dblog = bta.dblog.DBLogEntry(options.backend)
+    options.dblog.create_entry()
 
-    options.backend.commit()
-
-    if not options.no_post_proc:
-        pp = bta.postprocessing.PostProcessing(options)
-        pp.post_process_all()
+    try:
+        log.info("Opening [%s]" % options.fname)
+        options.esedb = libesedb.ESEDB(options.fname)
+        log.info("Opening done.")
     
+        options.dblog.update_entry("Opened ESEDB file [%s]" % options.fname)
+        
+        if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
+            sd = SDTable(options)
+            sd.create()
+        if options.only.lower() in ["", "linktable", "link_table", "link"]:
+            lt = LinkTable(options)
+            lt.create()
+        if options.only.lower() in ["", "datatable", "data"]:
+            dt = Datatable(options)
+            dt.create()
+    
+        options.backend.commit()
+    
+        if not options.no_post_proc:
+            options.dblog.update_entry("Starting post-processing")
+            pp = bta.postprocessing.PostProcessing(options)
+            pp.post_process_all()
+    except KeyboardInterrupt:
+        options.dblog.update_entry("Interrupted by user (Ctrl-C)")
+        log.info("Interrupted by user (Ctrl-C)")
+    except Exception,e:
+        options.dblog.update_entry("ERROR: %s" % e)
+        raise
+    else:
+        options.dblog.update_entry("Graceful exit")
 
 if __name__ == "__main__":
     main()
