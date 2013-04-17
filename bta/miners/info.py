@@ -17,8 +17,8 @@ class Info(Miner):
         tbl = doc.create_table("sd_table")
         tbl.add(("number of records", self.sd_table.count()))
         tbl.finished()
-        tbl = doc.create_table("linktable")
-        tbl.add(("number of records", self.linktable.count()))
+        tbl = doc.create_table("link_table")
+        tbl.add(("number of records", self.link_table.count()))
         tbl.finished()
 
         if options.verbose:
