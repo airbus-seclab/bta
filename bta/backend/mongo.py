@@ -148,7 +148,7 @@ class MongoTable(BackendTable):
         return self.col.update(*args)
 
     def insert_fields(self, values):
-        d = dict([(name,norm.normal(v)) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)])
+        d = {name:norm.normal(v) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)}
         return self.insert(d)
 
     def count(self):
