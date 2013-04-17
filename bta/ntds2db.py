@@ -122,12 +122,9 @@ class LinkTable(ESETable):
 class Datatable(ESETable):
     _tablename_ = "datatable"
     _columns_ = [
-        ESEColumn("RecId", "DNT_col", "Int", True),
-        ESEColumn("ParentRecId", "PDNT_col", "Int", True),
-        ESEColumn("RecordTime", "time_col", "Timestamp", True),
-        ESEColumn("lDAPDisplayName", "ATTm131532", "Text", False),
-        ESEColumn("attributeID", "ATTc131102", "Int", False),
-        ESEColumn("attributeSyntax", "ATTc131104", "Text", False),
+        ESEColumn("DNT_col", "DNT_col", "Int", True),
+        ESEColumn("PDNT_col", "PDNT_col", "Int", True),
+        ESEColumn("time_col", "time_col", "Timestamp", True),
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
