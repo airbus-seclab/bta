@@ -8,8 +8,17 @@ import bson.binary
 import bta.sd
 import bta.tools
 import logging
+import functools
 
 log = logging.getLogger("bta.backend.mongo")
+
+def vectorize(f):
+    @functools.wraps(f)
+    def vect(self, val):
+        if type(val) is tuple:
+            return [f(self, v) for v in val]
+        return f(self, val)
+    return vect
 
 class MongoNormalizer(Normalizer):
     def empty(self, val):
@@ -43,6 +52,7 @@ class MongoUnknownNormalizer(MongoNormalizer):
         return bson.binary.Binary(val)
 
 class MongoTimestampNormalizer(MongoNormalizer):
+    @vectorize
     def normal(self, val):
         try:
             ts = int(val)-11644473600 # adjust windows timestamp (from 01/01/1601) to unix epoch
