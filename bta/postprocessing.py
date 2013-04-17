@@ -44,8 +44,12 @@ class PostProcessing(object):
         category.create_index("id")
         category.create_index("name")
 
-        idShema = self.dt.find_one({"cn": "Class-Schema"})['RecId']
-        for r in self.dt.find({"objectCategory": str(idShema)}):
+        idSchemaRec = self.dt.find_one({"cn": "Class-Schema"})
+        if idSchemaRec is None:
+            log.warning("No schema id found in datatable for category post processing")
+            return
+        idSchema = idSchemaRec['RecId']
+        for r in self.dt.find({"objectCategory": str(idSchema)}):
             category.insert({"id":r["RecId"], "name":r["cn"]})
         
     @PostProcRegistry.register(depends={"category"})
@@ -56,7 +60,11 @@ class PostProcessing(object):
         domains.create_index("sid")
 
         ct = self.options.backend.open_table("category")
-        dom = str(ct.find_one({"name": "Domain-DNS"})['id'])
+        domRec = ct.find_one({"name": "Domain-DNS"})
+        if domRec is None:
+            log.warning("No domain dns found in datatable for domains post processing")
+            return
+        dom = str(domRec["id"])
         def find_dn(r):
             if not r:
                 return ""
@@ -79,7 +87,11 @@ class PostProcessing(object):
         usersid.create_index("account")
 
         ct = self.options.backend.open_table("category")
-        pers = str(ct.find_one({"name": "Person"})['id'])
+        persRec = ct.find_one({"name": "Person"})
+        if persRec is None:
+            log.warning("No name=Person entry found in datatable for usersid post processing")
+            return
+        pers = str(PersRec['id'])
         for r in self.dt.find({"objectCategory":pers, "objectSid":{"$exists":True}}):
             usersid.insert({"name":r["name"], "account":r["sAMAccountName"], "sid": r["objectSid"]})
 
