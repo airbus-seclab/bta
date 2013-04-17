@@ -138,6 +138,7 @@ class Datatable(ESETable):
     ATTRIBUTE_ID = 131102      # ATTc131102
     ATTRIBUTE_SYNTAX = 131104  # ATTc131104
     LDAP_DISPLAY_NAME = 131532 # ATTm131532
+    MSDS_INTID = 591540        # ATTj591540
 
     attsyntax2type = {
         0x80001: "DN",                   # 2.5.5.1
@@ -180,24 +181,34 @@ class Datatable(ESETable):
         log.info("%i columns to be identified, out of %i" % (len(cols),len(self.esetable.columns)))
 
         try:
-            lcols = [cols[self.ATTRIBUTE_ID], cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
+            lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID], 
+                     cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
         except IndexError:
             raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
 
-        i = j = 0
+        i = 0
         for rec in self.esetable.iter_records(columns=lcols):
+            if i%100 == 0:
+                if self.options.verbosity <= logging.INFO:
+                    sys.stderr.write("                         \rrec=%i remain %i cols" % (i,len(cols)))
             i += 1
-            aid,asy,ldn = list(rec)
+            aid,amsds,asy,ldn = list(rec)
             if not ldn.value:
                 continue
-            if aid.value and asy.value and ldn.value:
-                j+=1
+            if aid.value is None and amsds.value is None or not ldn.value:
+                continue
             cc = cols.pop(aid.value, None)
+            if not cc:
+                cc = cols.pop(amsds.value, None)
             if cc:
-                att2ldn[cc.name] = ldn.value#.decode("utf16")
+                att2ldn[cc.name] = ldn.value
                 att2asy[cc.name] = asy.value
+            if not cols:
+                sys.stderr.write("\n")
+                log.info("All columns found, rec=%i/%i" % (i, self.esetable.number_of_records))
+                break
 
-        log.info("Resolved %i columns out of %i" % (len(att2ldn), len(self.esetable.columns)))
+        log.info("Resolved %i columns." % len(att2ldn))
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
