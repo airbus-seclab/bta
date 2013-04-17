@@ -103,7 +103,7 @@ class Miner(object):
         self.datatable = backend.open_table("datatable")
         self.datatable_meta = backend.open_table("datatable_meta")
         self.link_table = backend.open_table("link_table")
-        self.sd_table = backend.open_table("sdtable")
+        self.sd_table = backend.open_table("sd_table")
         self.category = backend.open_table("category")
         self.usersid = backend.open_table("usersid")
         self.domain = backend.open_table("domains")

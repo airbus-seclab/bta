@@ -108,7 +108,7 @@ def main():
     options.connection = options.connectionB # XXX hack
     options.backendB = backend_classB(options)
     
-    for tablename,otherval,indexcol in [ ("sdtable", ["sdtable", "sd_table", "sd"], "id"),
+    for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "id"),
                                          ("datatable", ["datatable", "data"], "RecId"), 
                                          ]:
         if not options.only or options.only.lowers() in otherval:
