@@ -49,7 +49,8 @@ class PostProcessing(object):
             log.warning("No schema id found in datatable for category post processing")
             return
         idSchema = idSchemaRec['RecId']
-        for r in self.dt.find({"objectCategory": str(idSchema)}):
+        print idSchema
+        for r in self.dt.find({"objectCategory": idSchema}):
             category.insert({"id":r["RecId"], "name":r["cn"]})
         
     @PostProcRegistry.register(depends={"category"})
@@ -64,7 +65,7 @@ class PostProcessing(object):
         if domRec is None:
             log.warning("No domain dns found in datatable for domains post processing")
             return
-        dom = str(domRec["id"])
+        dom = domRec["id"]
         def find_dn(r):
             if not r:
                 return ""
@@ -91,7 +92,7 @@ class PostProcessing(object):
         if persRec is None:
             log.warning("No name=Person entry found in datatable for usersid post processing")
             return
-        pers = str(PersRec['id'])
+        pers = persRec['id']
         for r in self.dt.find({"objectCategory":pers, "objectSid":{"$exists":True}}):
             usersid.insert({"name":r["name"], "account":r["sAMAccountName"], "sid": r["objectSid"]})
 
