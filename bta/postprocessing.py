@@ -72,7 +72,9 @@ class PostProcessing(object):
             cn = r.get("cn") or r.get("name")
             if cn is None or cn=="$ROOT_OBJECT$":
                 return ""
-            r2 = self.dt.find_one({"RecId":r["ParentRecId"]})
+            r2 = self.dt.find_one({"RecId":r.get("ParentRecId")})
+            if not r2:
+                return ""
             return find_dn(r2)+"."+cn
 
 
