@@ -102,7 +102,7 @@ class Miner(object):
     def __init__(self, backend):
         self.datatable = backend.open_table("datatable")
         self.datatable_meta = backend.open_table("datatable_meta")
-        self.linktable = backend.open_table("linktable")
+        self.link_table = backend.open_table("link_table")
         self.sd_table = backend.open_table("sdtable")
         self.category = backend.open_table("category")
         self.usersid = backend.open_table("usersid")
@@ -115,7 +115,7 @@ class Miner(object):
     def assert_consistency(self):
         assert self.datatable.count() > 0, "datatable is empty"
         assert self.datatable_meta.count() > 0, "datatable_meta is empty"
-        assert self.linktable.count() > 0, "linktable is empty"
+        assert self.link_table.count() > 0, "link_table is empty"
         assert self.sd_table.count() > 0, "sd_table is empty"
         assert self.category.count() > 0, "category table is empty"
         assert self.usersid.count() > 0, "usersid table is empty"

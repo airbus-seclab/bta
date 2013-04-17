@@ -20,7 +20,7 @@ class ListGroup(Miner):
         if not group:
             return set()
         members=set()
-        for link in self.linktable.find({'link_DNT': group['RecId']}):
+        for link in self.link_table.find({'link_DNT': group['RecId']}):
             deleted=False
             if 'link_deltime' in link and link['link_deltime'].year > 1970:
                 deleted = link['link_deltime']

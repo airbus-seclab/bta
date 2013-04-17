@@ -25,7 +25,7 @@ class Membership(Miner):
             }
 
         for user in self.datatable.find(match):
-             links = self.linktable.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
+             links = self.link_table.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
              groups=set()
              sid = user['objectSid']
              pgid = sid[:sid.rfind('-') + 1] + user['primaryGroupID']
@@ -45,5 +45,5 @@ class Membership(Miner):
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "RecId", int)
         self.assert_field_type(self.datatable, "primaryGroupID", str, unicode)
-        self.assert_field_type(self.linktable, "link_DNT", int)
-        self.assert_field_type(self.linktable, "backlink_DNT", int)
+        self.assert_field_type(self.link_table, "link_DNT", int)
+        self.assert_field_type(self.link_table, "backlink_DNT", int)
