@@ -50,6 +50,11 @@ def decode_guid(s):
     part2 = "%04x-%08x%04x" % struct.unpack(">HIH", s[8:])
     return part1+part2
 
+def decode_maybe_utf16(val):
+    try:
+        return val.decode("utf16")
+    except UnicodeDecodeError:
+        return val
 
 converters = {
 #    ColumnType.BOOLEAN:
@@ -78,9 +83,9 @@ converters = {
     ColumnType.CURRENCY :
         lambda x: struct.unpack("<Q",x)[0],
     ColumnType.TEXT : 
-        lambda x:x.decode("utf16"),
+        decode_maybe_utf16,
     ColumnType.LARGE_TEXT : 
-        lambda x:x.decode("utf16"),
+        decode_maybe_utf16,
  }
 
 
