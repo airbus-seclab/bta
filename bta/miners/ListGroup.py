@@ -20,11 +20,11 @@ class ListGroup(Miner):
         if not group:
             return set()
         members=set()
-        for link in self.link_table.find({'link_DNT': group['RecId']}):
+        for link in self.link_table.find({'link_DNT': group['DNT_col']}):
             deleted=False
             if 'link_deltime' in link and link['link_deltime'].year > 1970:
                 deleted = link['link_deltime']
-            row = self.datatable.find_one({'RecId': link['backlink_DNT']})
+            row = self.datatable.find_one({'DNT_col': link['backlink_DNT']})
             if not row:
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
@@ -51,7 +51,7 @@ class ListGroup(Miner):
         cn = r.get("cn") or r.get("name")
         if cn is None or cn=="$ROOT_OBJECT$":
             return ""
-        r2 = self.datatable.find_one({"RecId":r["ParentRecId"]})
+        r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
 
     def run(self, options, doc):
@@ -124,8 +124,8 @@ class ListGroup(Miner):
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
-        self.assert_field_type(self.datatable, "RecId", int)
-        self.assert_field_type(self.datatable, "ParentRecId", int)
+        self.assert_field_type(self.datatable, "DNT_col", int)
+        self.assert_field_type(self.datatable, "PDNT_col", int)
         self.assert_field_type(self.datatable, "objectCategory", str, unicode)
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)

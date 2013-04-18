@@ -24,7 +24,7 @@ class Schema(Miner):
             rectime = str(r["RecordTime"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
-            recid = r["RecId"]
+            recid = r["DNT_col"]
             
             if rectime in timerecord: timerecord[rectime].append(recid)
             else: timerecord[rectime] = [recid]
@@ -46,15 +46,15 @@ class Schema(Miner):
     def owner(self):
         SchemaSecuDescriptor = {}
         root = self.datatable.find_one({"cn": "Schema"})
-        SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["RecId"]]
+        SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["DNT_col"]]
         for r in self.datatable.find({"objectCategory": str(self.categories.attribute_schema)}):
             idSecu = r["nTSecurityDescriptor"]
-            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
-            else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
+            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
+            else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
         for r in self.datatable.find({"objectCategory": str(self.categories.class_schema)}):
             idSecu = r["nTSecurityDescriptor"]
-            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["RecId"])
-            else: SchemaSecuDescriptor[idSecu] = [r["RecId"]]
+            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
+            else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
         SchemaSecuDescriptor = sorted(SchemaSecuDescriptor.items(), key=lambda x: x[0])
         return SchemaSecuDescriptor
     
@@ -170,7 +170,7 @@ class Schema(Miner):
         self.assert_field_type(self.datatable, "RecordTime", datetime.datetime)
         self.assert_field_type(self.datatable, "whenChanged", datetime.datetime)
         self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
-        self.assert_field_type(self.datatable, "RecId", int)
+        self.assert_field_type(self.datatable, "DNT_col", int)
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
         self.assert_field_type(self.datatable, "nTSecurityDescriptor", int)

@@ -109,7 +109,7 @@ def main():
     options.backendB = backend_classB(options)
     
     for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "id"),
-                                         ("datatable", ["datatable", "data"], "RecId"), 
+                                         ("datatable", ["datatable", "data"], "DNT_col"), 
                                          ]:
         if not options.only or options.only.lowers() in otherval:
             differ = TableDiff(options, tablename, indexcol)

@@ -25,7 +25,7 @@ class Membership(Miner):
             }
 
         for user in self.datatable.find(match):
-             links = self.link_table.find({'backlink_DNT': user['RecId']}, {'link_DNT': True})
+             links = self.link_table.find({'backlink_DNT': user['DNT_col']}, {'link_DNT': True})
              groups=set()
              sid = user['objectSid']
              pgid = sid[:sid.rfind('-') + 1] + user['primaryGroupID']
@@ -33,7 +33,7 @@ class Membership(Miner):
              groups.add(primarygroup['cn'])
              for link in links:
                  groupRecId = link['link_DNT']
-                 group = self.datatable.find_one({'RecId': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
+                 group = self.datatable.find_one({'DNT_col': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
                  if group:
                      groups.add(group['cn'])
              table.add([user["objectSid"], user["cn"], ', '.join(groups)])
@@ -43,7 +43,7 @@ class Membership(Miner):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
         self.assert_field_type(self.datatable, "cn", str, unicode)
-        self.assert_field_type(self.datatable, "RecId", int)
+        self.assert_field_type(self.datatable, "DNT_col", int)
         self.assert_field_type(self.datatable, "primaryGroupID", str, unicode)
         self.assert_field_type(self.link_table, "link_DNT", int)
         self.assert_field_type(self.link_table, "backlink_DNT", int)

@@ -14,7 +14,7 @@ def do_timeline(options):
     
     c = col.find({"whenChanged":{"$exists":True}})
     for r in c:
-        print u"%7s %s %s %s %s" % (r["RecId"],
+        print u"%7s %s %s %s %s" % (r["DNT_col"],
                                     win2time(r["whenCreated"]),
                                     win2time(r["whenChanged"]),
                                     r.get("name","--"),
