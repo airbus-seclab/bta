@@ -18,7 +18,7 @@ class DNGrep(Miner):
             cn = r.get("cn") or r.get("name")
             if cn is None or cn=="$ROOT_OBJECT$":
                 return ""
-            r2 = self.datatable.find_one({"RecId":r["ParentRecId"]})
+            r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
             return find_dn(r2)+"."+cn
     
         c = self.datatable.find({"cn":options.cn})
@@ -28,7 +28,7 @@ class DNGrep(Miner):
         
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_exists(self.datatable, "ParentRecId")
+        self.assert_field_exists(self.datatable, "PDNT_col")
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)
-        self.assert_field_type(self.datatable, "ParentRecId", str, unicode)
+        self.assert_field_type(self.datatable, "PDNT_col", str, unicode)

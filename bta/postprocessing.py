@@ -48,10 +48,10 @@ class PostProcessing(object):
         if idSchemaRec is None:
             log.warning("No schema id found in datatable for category post processing")
             return
-        idSchema = idSchemaRec['RecId']
+        idSchema = idSchemaRec['DNT_col']
         print idSchema
         for r in self.dt.find({"objectCategory": idSchema}):
-            category.insert({"id":r["RecId"], "name":r["cn"]})
+            category.insert({"id":r["DNT_col"], "name":r["cn"]})
         
     @PostProcRegistry.register(depends={"category"})
     def domains(self):
@@ -72,7 +72,7 @@ class PostProcessing(object):
             cn = r.get("cn") or r.get("name")
             if cn is None or cn=="$ROOT_OBJECT$":
                 return ""
-            r2 = self.dt.find_one({"RecId":r.get("ParentRecId")})
+            r2 = self.dt.find_one({"DNT_col":r.get("PDNT_col")})
             if not r2:
                 return ""
             return find_dn(r2)+"."+cn
