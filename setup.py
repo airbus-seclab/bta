@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'bta',
-    version = '0.1',
+    version = '0.2',
     packages=['bta', 'bta/backend', 'bta/miners', 'bta/formatters', 
               'libesedb'],
     scripts = ['bin/miners', 'bin/ntds2db'],
