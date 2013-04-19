@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import types
 import bta.backend.mongo
+import bta.dblog
 import tools
 import logging
 log = logging.getLogger("bta.postprocessing")
@@ -123,6 +124,8 @@ def main():
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
+    options.dblog = bta.dblog.DBLogEntry(options.backend)
+    options.dblog.create_entry()
 
     pp = PostProcessing(options)
     if options.only:
