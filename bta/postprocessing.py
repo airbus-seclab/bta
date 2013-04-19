@@ -34,9 +34,10 @@ class PostProcessing(object):
 
     def post_process_one(self, name):
         log.info("Post-processing: %s" % name)
-        self.options.dblog.update_entry("Post-processing: %s" % name)
+        self.options.dblog.update_entry("Start Post-processor: %s" % name)
         proc = getattr(self, name)
         proc()
+        self.options.dblog.update_entry("End Post-processor: %s" % name)
 
     @PostProcRegistry.register()
     def category(self):
