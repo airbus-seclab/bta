@@ -124,15 +124,14 @@ def main():
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
     
-    options.dblog = bta.dblog.DBLogEntry(options.backend)
-    options.dblog.create_entry()
+    with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
 
-    pp = PostProcessing(options)
-    if options.only:
-        pp.post_process_one(options.only)
-    else:
-        pp.post_process_all()
-    options.backend.commit()
+        pp = PostProcessing(options)
+        if options.only:
+            pp.post_process_one(options.only)
+        else:
+            pp.post_process_all()
+        options.backend.commit()
     
 
 if __name__ == "__main__":
