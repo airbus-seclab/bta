@@ -15,7 +15,7 @@ class NewAdmin(Miner):
         start = datetime.datetime(year, month, day, 0, 0, 0)
         
         req = {'$and': [
-                {"objectCategory" : str(self.categories.person)},
+                {"objectCategory" : self.categories.person},
                 {"whenCreated": {"$gt": start, "$lt": datetime.datetime.now()}},
                 { "$or" : 
                     [{ "name": { "$regex": "^adm", "$options": 'i'}}, 
@@ -24,7 +24,7 @@ class NewAdmin(Miner):
             ]}
         
         for subject in self.datatable.find(req):
-            uAcc = int(subject['userAccountControl'])
+            uAcc = subject['userAccountControl']
             npwdreq = uAcc&0x20
             pwdnoexp = uAcc&0x10000
             if(npwdreq or pwdnoexp):
@@ -54,9 +54,9 @@ class NewAdmin(Miner):
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.datatable, "objectCategory")
-        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "objectCategory", int)
         self.assert_field_exists(self.datatable, "whenCreated")
         self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
         self.assert_field_type(self.datatable, "name", str, unicode)
-        self.assert_field_type(self.datatable, "userAccountControl", str, unicode)
+        self.assert_field_type(self.datatable, "userAccountControl", int)
         self.assert_field_type(self.datatable, "cn", str, unicode)

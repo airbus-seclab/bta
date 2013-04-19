@@ -6,7 +6,7 @@ class HRec: # wraps sd entries to make them hashable
     def __init__(self, rec):
         self.rec = rec
     def __hash__(self):
-        return hash(self.rec["hash"])
+        return hash(self.rec["sd_hash"])
 
 
 
@@ -23,12 +23,12 @@ class SDusers(Miner):
         match = None
         if options.match:
             match = {"$or": [
-                    { "value.DACL.ACEList":
+                    { "sd_value.DACL.ACEList":
                           {"$elemMatch":
                                {"SID": { "$regex": options.match } }
                            }
                       },
-                    { "value.SACL.ACEList":
+                    { "sd_value.SACL.ACEList":
                           {"$elemMatch":
                                {"SID": { "$regex": options.match } }
                            }
@@ -39,8 +39,8 @@ class SDusers(Miner):
         
         for r in self.sd_table.find(match):
             for aclt in "SACL","DACL":
-                if r["value"] and aclt in r["value"]:
-                    for ace in r["value"][aclt]["ACEList"]:
+                if r["sd_value"] and aclt in r["sd_value"]:
+                    for ace in r["sd_value"][aclt]["ACEList"]:
                         sid = ace["SID"]
                         # XXX check sid matches regex
                         users[sid].add(HRec(r))
@@ -64,5 +64,5 @@ class SDusers(Miner):
         self.assert_field_type(self.datatable, "name", str, unicode)
         self.assert_field_exists(self.datatable, "whenCreated")
         self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
-        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.SID")
-        self.assert_field_exists(self.sd_table, "value.SACL.ACEList.SID")
+        self.assert_field_exists(self.sd_table, "sd_value.DACL.ACEList.SID")
+        self.assert_field_exists(self.sd_table, "sd_value.SACL.ACEList.SID")

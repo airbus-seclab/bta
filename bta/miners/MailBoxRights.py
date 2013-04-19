@@ -19,11 +19,11 @@ class MailBoxRights(Miner):
             if 'cn' in obj: return obj['cn']
 
     def getSecurityDescriptor(self, sdId):
-        sd = self.sd_table.find({'id': sdId})
+        sd = self.sd_table.find({'sd_id': sdId})
         aces = []
         for ace in sd:
             try:
-                acl = ace['value']["DACL"]["ACEList"]
+                acl = ace['sd_value']["DACL"]["ACEList"]
                 for truc in acl:
                     if truc['SID'] == 'S-1-5-10': # myself
                         continue
@@ -71,10 +71,10 @@ class MailBoxRights(Miner):
     
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_exists(self.sd_table, "id")
-        self.assert_field_type(self.sd_table, "id", int)
-        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.AccessMask")
-        self.assert_field_exists(self.sd_table, "value.DACL.ACEList.SID")
+        self.assert_field_exists(self.sd_table, "sd_id")
+        self.assert_field_type(self.sd_table, "sd_id", int)
+        self.assert_field_exists(self.sd_table, "sd_value.DACL.ACEList.AccessMask")
+        self.assert_field_exists(self.sd_table, "sd_value.DACL.ACEList.SID")
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)

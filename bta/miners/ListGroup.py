@@ -29,7 +29,7 @@ class ListGroup(Miner):
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
             sid = row['objectSid']
-            category = int(row['objectCategory'] )
+            category = row['objectCategory']
             if category == self.categories.group:
                 if sid not in self.groups_already_saw:
                     self.groups_already_saw[sid] = True
@@ -49,7 +49,7 @@ class ListGroup(Miner):
         if not r:
             return ""
         cn = r.get("cn") or r.get("name")
-        if cn is None or cn=="$ROOT_OBJECT$":
+        if cn is None or cn.startswith("$ROOT_OBJECT$"):
             return ""
         r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
@@ -69,7 +69,7 @@ class ListGroup(Miner):
         
         doc.add("List of groups matching [%s]" % options.match)
         if options.match:
-            match = {"$and": [{'objectCategory': str(self.categories.group)},
+            match = {"$and": [{'objectCategory': self.categories.group},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]
@@ -126,7 +126,7 @@ class ListGroup(Miner):
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
         self.assert_field_type(self.datatable, "DNT_col", int)
         self.assert_field_type(self.datatable, "PDNT_col", int)
-        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "objectCategory", int)
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)
         self.assert_field_type(self.datatable, "objectGUID", str, unicode)

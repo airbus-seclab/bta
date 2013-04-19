@@ -16,7 +16,7 @@ class Passwords(Miner):
 
     def bad_password_count(self, doc):
         t = doc.create_table("Users whose badPwdCount is non-zero")
-        for r in self.datatable.find({"badPwdCount":{"$exists": True, "$ne":"0"}}): #.sort({"badPwdCount":1}):
+        for r in self.datatable.find({"badPwdCount":{"$exists": True, "$ne":0}}): #.sort({"badPwdCount":1}):
             t.add(self.get_line(r, ["sAMAccountName", "name", "badPwdCount"]))
             t.flush()
 
@@ -34,6 +34,6 @@ class Passwords(Miner):
     
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_type(self.datatable, "badPwdCount", str, unicode)
+        self.assert_field_type(self.datatable, "badPwdCount", int)
         self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)

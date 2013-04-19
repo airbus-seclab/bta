@@ -17,8 +17,8 @@ class Skel(Miner):
         table.add(["id","hash"])
         table.add()
 
-        for r in self.sd_table.find({"id": {"$lt":50}}):
-            table.add([r["id"],r["hash"]])
+        for r in self.sd_table.find({"sd_id": {"$lt":50}}):
+            table.add([r["sd_id"],r["hash"]])
             
         table.finished()
 

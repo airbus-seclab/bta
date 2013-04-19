@@ -17,10 +17,10 @@ class SDProp(Miner):
         user = list()
         group = list()
         t = list()
-        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":"0"}}):
-            if int(r["objectCategory"]) == self.categories.person:
+        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":0}}):
+            if r["objectCategory"] == self.categories.person:
                 user.append([r["cn"], 'User', r["objectSid"]])
-            elif int(r["objectCategory"]) == self.categories.group:
+            elif r["objectCategory"] == self.categories.group:
                 group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
@@ -38,10 +38,10 @@ class SDProp(Miner):
         user = list()
         group = list()
         t = list()
-        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":"1"}}):
-            if int(r["objectCategory"]) == self.categories.person:
+        for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":1}}):
+            if r["objectCategory"] == self.categories.person:
                 user.append([r["cn"], 'User', r["objectSid"]])
-            elif int(r["objectCategory"]) == self.categories.person:
+            elif r["objectCategory"] == self.categories.person:
                 group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
@@ -107,10 +107,10 @@ class SDProp(Miner):
             
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_type(self.datatable, "adminCount", str, unicode)
+        self.assert_field_type(self.datatable, "adminCount", int)
         self.assert_field_exists(self.datatable, "objectSid")
         self.assert_field_exists(self.datatable, "objectCategory")
-        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "objectCategory", int)
         self.assert_field_exists(self.datatable, "cn")
         self.assert_field_type(self.datatable, "InheritedObjectType", str, unicode)
         self.assert_field_type(self.datatable, "schemaIDGUID", str, unicode)

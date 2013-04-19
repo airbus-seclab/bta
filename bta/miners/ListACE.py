@@ -1,5 +1,5 @@
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid, Record
+from bta.miners.tools import Sid, Record
 import re
 
 p2h={'00299570-246d-11d0-a768-00aa006e0529': 'User-Force-Change-Password',
@@ -73,8 +73,8 @@ class AccessControlEntry(object):
             if type(x) is set:
                 if len(x) > 3:
                     return '%d items' % len(x)
-                return ', '.join(map(lambda s: str(Sid(self.dt, verbose=self.verbose, objectSid=s)), x))
-            return str(Sid(self.dt, verbose=self.verbose, objectSid=x))
+                return ', '.join(map(lambda s: unicode(Sid(s, self.dt)), x))
+            return unicode(Sid(x, self.dt))
         return (r(self.trustee), r(self.subject),  p2h.get(self.perm, self.perm))
 
 @Miner.register
@@ -106,24 +106,24 @@ class ListACE(Miner):
                 objtype = "No object type /!\ DANGEROUS"
         return [#str(Sid(self.datatable, verbose=self.options.verbose, objectSid=trustee)),
                 trustee,
-                str(Sid(self.datatable, verbose=self.options.verbose, objectSid=ace['SID'])),
+                str(Sid(ace['SID'], self.datatable), self.usersid),
                 objtype,
                 '']
                 #', '.join(perms)]
 
     def getSecurityDescriptor(self, sd_id):
-        raw_securitydescriptor = self.sd_table.find_one({'id': sd_id})
+        raw_securitydescriptor = self.sd_table.find_one({'sd_id': sd_id})
         if not raw_securitydescriptor:
             raise Exception('No security descriptor matching {id: %r}' % sd_id)
         return Record(**raw_securitydescriptor)
 
     def _extractACE(self, sd, l=None):
-        if not (sd and sd.value):
+        if not (sd and sd.sd_value):
             return []
-        if not (l in sd.value and 'ACEList' in sd.value[l]):
+        if not (l in sd.sd_value and 'ACEList' in sd.sd_value[l]):
             return []
         acelist = []
-        for ace in sd.value[l]['ACEList']:
+        for ace in sd.sd_value[l]['ACEList']:
             acelist.append(Record(**ace))
         return acelist
 
@@ -175,8 +175,8 @@ class ListACE(Miner):
                 desc.append("trustee=%s" % options.trustee)
 
             bigquery = {'$or': [
-                        {"value.DACL.ACEList": {'$elemMatch': query}},
-                        {"value.SACL.ACEList": {'$elemMatch': query}}],
+                        {"sd_value.DACL.ACEList": {'$elemMatch': query}},
+                        {"sd_value.SACL.ACEList": {'$elemMatch': query}}],
                        }
 
             desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
@@ -187,9 +187,9 @@ class ListACE(Miner):
             for raw_sd in self.sd_table.find(bigquery):
                 securitydescriptor = Record(**raw_sd)
                 query = {
-                    'nTSecurityDescriptor': securitydescriptor.id,
+                    'nTSecurityDescriptor': securitydescriptor.sd_id,
                     'objectSid': {'$exists': 1},
-                    'objectCategory': {'$in': [str(self.categories.person), str(self.categories.group)]} 
+                    'objectCategory': {'$in': [self.categories.person, self.categories.group]} 
                 }
                 subjects=set()
                 for subject in self.datatable.find(query, {'objectSid': True}):
@@ -211,9 +211,10 @@ class ListACE(Miner):
 
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        self.assert_field_exists(self.sd_table, "id")
+        self.assert_field_exists(self.sd_table, "sd_id")
+        self.assert_field_exists(self.sd_table, "sd_value")
         self.assert_field_type(self.datatable, "rightsGuid", str, unicode)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)
         self.assert_field_type(self.datatable, "nTSecurityDescriptor", int)
-        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
+        self.assert_field_type(self.datatable, "objectCategory", int)
 

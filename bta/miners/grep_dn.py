@@ -16,7 +16,7 @@ class DNGrep(Miner):
             if not r:
                 return ""
             cn = r.get("cn") or r.get("name")
-            if cn is None or cn=="$ROOT_OBJECT$":
+            if cn is None or cn.startswith("$ROOT_OBJECT$"):
                 return ""
             r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
             return find_dn(r2)+"."+cn
@@ -31,4 +31,4 @@ class DNGrep(Miner):
         self.assert_field_exists(self.datatable, "PDNT_col")
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)
-        self.assert_field_type(self.datatable, "PDNT_col", str, unicode)
+        self.assert_field_type(self.datatable, "PDNT_col", int)

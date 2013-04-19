@@ -20,8 +20,8 @@ class Schema(Miner):
         timecreated = {}
         timechanged = {}
         timerecord = {}
-        for r in self.datatable.find({"objectCategory": str(atrib)}):
-            rectime = str(r["RecordTime"])[:-6]
+        for r in self.datatable.find({"objectCategory": atrib}):
+            rectime = str(r["time_col"])[:-6]
             changetime = str(r["whenChanged"])[:-6]
             createtime = str(r["whenCreated"])[:-6]
             recid = r["DNT_col"]
@@ -47,11 +47,11 @@ class Schema(Miner):
         SchemaSecuDescriptor = {}
         root = self.datatable.find_one({"cn": "Schema"})
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["DNT_col"]]
-        for r in self.datatable.find({"objectCategory": str(self.categories.attribute_schema)}):
+        for r in self.datatable.find({"objectCategory": self.categories.attribute_schema}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
             else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
-        for r in self.datatable.find({"objectCategory": str(self.categories.class_schema)}):
+        for r in self.datatable.find({"objectCategory": self.categories.class_schema}):
             idSecu = r["nTSecurityDescriptor"]
             if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
             else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
@@ -63,8 +63,7 @@ class Schema(Miner):
         start = datetime.datetime(year, month, day, 0, 0, 0)
         end = datetime.datetime(year, month, day, 23, 59, 59)
         req = {'$and': [
-                {"objectCategory" : {"$in": 
-                    [str(self.categories.class_schema), str(atrib)]}},
+                {"objectCategory" : atrib},
                 {"whenChanged": {"$gt": start, "$lt": end}}],
               }
         for entry in self.datatable.find(req):
@@ -77,8 +76,7 @@ class Schema(Miner):
         start = datetime.datetime(year, month, day, 0, 0, 0)
         end = datetime.datetime(year, month, day, 23, 59, 59)
         req = {'$and': [
-                {"objectCategory" : {"$in": 
-                    [str(self.categories.class_schema), str(atrib)]}},
+                {"objectCategory" : atrib},
                 {"whenCreated": {"$gt": start, "$lt": end}}],
               }
         for entry in self.datatable.find(req):
@@ -166,8 +164,10 @@ class Schema(Miner):
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.datatable, "objectCategory")
-        self.assert_field_type(self.datatable, "objectCategory", str, unicode)
-        self.assert_field_type(self.datatable, "RecordTime", datetime.datetime)
+        self.assert_field_exists(self.datatable, "DNT_col")
+        self.assert_field_exists(self.datatable, "cn")
+        self.assert_field_type(self.datatable, "objectCategory", int)
+        self.assert_field_type(self.datatable, "time_col", datetime.datetime)
         self.assert_field_type(self.datatable, "whenChanged", datetime.datetime)
         self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
         self.assert_field_type(self.datatable, "DNT_col", int)
