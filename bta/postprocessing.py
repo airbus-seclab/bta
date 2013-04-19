@@ -51,7 +51,6 @@ class PostProcessing(object):
             log.warning("No schema id found in datatable for category post processing")
             return
         idSchema = idSchemaRec['DNT_col']
-        print idSchema
         for r in self.dt.find({"objectCategory": idSchema}):
             category.insert({"id":r["DNT_col"], "name":r["cn"]})
         
