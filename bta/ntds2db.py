@@ -266,41 +266,33 @@ def main():
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
 
-    options.dblog = bta.dblog.DBLogEntry(options.backend)
-    options.dblog.create_entry()
-
     try:
-        if not options.only_post_proc:
-            log.info("Opening [%s]" % options.fname)
-            options.esedb = libesedb.ESEDB(options.fname)
-            log.info("Opening done.")
+        with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
+            if not options.only_post_proc:
+                log.info("Opening [%s]" % options.fname)
+                options.esedb = libesedb.ESEDB(options.fname)
+                log.info("Opening done.")
+            
+                options.dblog.update_entry("Opened ESEDB file [%s]" % options.fname)
+                
+                if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
+                    sd = SDTable(options)
+                    sd.create()
+                if options.only.lower() in ["", "linktable", "link_table", "link"]:
+                    lt = LinkTable(options)
+                    lt.create()
+                if options.only.lower() in ["", "datatable", "data"]:
+                    dt = Datatable(options)
+                    dt.create()
+                
+                options.backend.commit()
         
-            options.dblog.update_entry("Opened ESEDB file [%s]" % options.fname)
-            
-            if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
-                sd = SDTable(options)
-                sd.create()
-            if options.only.lower() in ["", "linktable", "link_table", "link"]:
-                lt = LinkTable(options)
-                lt.create()
-            if options.only.lower() in ["", "datatable", "data"]:
-                dt = Datatable(options)
-                dt.create()
-            
-            options.backend.commit()
-    
-        if not options.no_post_proc:
-            options.dblog.update_entry("Starting post-processing")
-            pp = bta.postprocessing.PostProcessing(options)
-            pp.post_process_all()
+            if not options.no_post_proc:
+                options.dblog.update_entry("Starting post-processing")
+                pp = bta.postprocessing.PostProcessing(options)
+                pp.post_process_all()
     except KeyboardInterrupt:
-        options.dblog.update_entry("Interrupted by user (Ctrl-C)")
         log.info("Interrupted by user (Ctrl-C)")
-    except Exception,e:
-        options.dblog.update_entry("ERROR: %s" % e)
-        raise
-    else:
-        options.dblog.update_entry("Graceful exit")
 
 if __name__ == "__main__":
     main()
