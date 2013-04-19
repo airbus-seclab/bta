@@ -1,6 +1,6 @@
 
 from bta.miners import Miner
-from bta.miners.tools import User, Group, Sid
+from bta.miners.tools import Sid
 import datetime
 
 @Miner.register
@@ -100,10 +100,10 @@ class ListGroup(Miner):
             table.add(headers)
             table.add()
             for sid,deleted,fromgrp in deleted_last(membership):
-                sidobj = Sid(self.datatable, objectSid=sid, verbose=options.verbose)
+                sidobj = Sid(sid, self.datatable)
                 member = str(sidobj)
                 if fromgrp:
-                    fromgrp = Sid(self.datatable, objectSid=fromgrp)
+                    fromgrp = Sid(fromgrp, self.datatable)
                 flags = sidobj.getUserAccountControl()
                 table.add((member, deleted or '', flags, fromgrp))
             table.finished()

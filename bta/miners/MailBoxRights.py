@@ -1,6 +1,6 @@
 from bta.miners import Miner
 from collections import defaultdict
-from bta.miners.tools import User, Group, Sid, Record
+from bta.miners.tools import Sid, Record
 
 
 @Miner.register

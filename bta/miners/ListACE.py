@@ -106,7 +106,7 @@ class ListACE(Miner):
                 objtype = "No object type /!\ DANGEROUS"
         return [#str(Sid(self.datatable, verbose=self.options.verbose, objectSid=trustee)),
                 trustee,
-                str(Sid(ace['SID'], self.datatable), self.usersid),
+                unicode(Sid(ace['SID'], self.datatable), self.usersid),
                 objtype,
                 '']
                 #', '.join(perms)]

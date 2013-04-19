@@ -8,10 +8,9 @@ load_rid_path=os.path.join(os.environ['HOME'], 'local_rid.py')
 local_relative_domains_sid=None
 
 class Sid(object):
-    def __init__(self, datatable, verbose=False, **kwargs):
-        self.verbose = verbose
+    def __init__(self, sid, dt):
         try:
-            self.obj = datatable.find_one(kwargs)
+            self.obj = dt.find_one({"objectSid": sid})
         except:
             self.obj = {'cn': '(null)', 'objectSid': '(null)'}
 
@@ -19,15 +18,12 @@ class Sid(object):
         if not self.obj:
             return '(null obj)'
         try:
-            if self.verbose:
-                s =u'{0[cn]} ({0[objectSid]})'.format(self.obj)
-            else:
-                s =u'{0[cn]}'.format(self.obj)
+            s =u'{0[name]}'.format(self.obj)
         except:
-            s = self.obj['objectSid']
-        return s.encode('utf-8')
+            s = self.obj['sid']
+        return s
 
-    def getUserAccountControl(self):
+    def getUserAccountControl(self): #to replace
         if 'userAccountControl' in self.obj:
             uac = int(self.obj['userAccountControl'])
             flags=[]
@@ -42,7 +38,7 @@ class Sid(object):
         return ''
 
     @staticmethod
-    def resolveRID(sid):
+    def resolveRID(sid): # to replace
         pos = sid.rfind('-')
         domainpart = sid[:pos]
         userpart = sid[pos:]
@@ -71,38 +67,3 @@ class Record(object):
     def __str__(self):
         return self.obj.__str__()
 
-
-class Group(object):
-    def __init__(self, datatable, **kwargs):
-        kwargs['objectCategory'] = '5945'
-        self.obj = datatable.find_one(kwargs)
-        if not self.obj:
-            raise Exception("No such group: %r" % kwargs)
-
-    def __str__(self):
-        return '{0[objectSid]:50} {0[cn]}'.format(self.obj).encode('utf-8')
-
-    def __getattr__(self, attr):
-        return self.obj.get(attr, None)
-
-    def __getitem__(self, attr):
-        return self.obj.get(attr, None)
-
-class User(object):
-    def __init__(self, datatable, **kwargs):
-        self.obj = datatable.find_one(kwargs)
-        if not self.obj:
-            raise Exception("No such user: %r" % kwargs)
-
-    def __str__(self):
-        return '{0[objectSid]:50} {0[cn]}'.format(self.obj).encode('utf-8')
-
-    def __getattr__(self, attr):
-        if attr in self.obj:
-            return self.obj[attr]
-        return super(User, self).__getattr__(self, attr)
-
-    def __getitem__(self, attr):
-        if attr in self.obj:
-            return self.obj[attr]
-        return super(User, self).__getitem__(self, attr)
