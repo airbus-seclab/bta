@@ -17,7 +17,7 @@ class Info(Miner):
         s1 = doc.create_subsection("logs")
         lst = s1.create_list("logs")
 
-        c = self.dblog.find()
+        c = self.dblog.find().sort("date",1)
         for entry in c:
             lst.add("%(date)s: %(args)s" % entry)
             lst2 = lst.create_list("actions")
