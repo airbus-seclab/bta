@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+# This file is part of the BTA toolset
+# (c) EADS CERT and EADS Innovation Works
+
+
 import bta.backend.mongo
 
 DEFAULT_IGNORE_LIST = {'whenChanged', 'replPropertyMetaData', 'dSCorePropagationData',
