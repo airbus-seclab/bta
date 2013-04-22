@@ -61,7 +61,7 @@ class TableDiff(object):
                 nameA, nameB = rA.get("name",""), rB.get("name","")
                 name = nameA if nameA == nameB else "A:[%s]/B:[%s]" % (nameA,nameB)
                 if AnotB or BnotA or ABdiff:
-                    descr = ["-%s" % k for k in AnotB]+["+%s" % k for k in BnotA]+["*%s[%s=>%s]" % (k,str(rA[k])[:20],str(rB[k])[:20]) for k in ABdiff]
+                    descr = ["-%s" % k for k in AnotB]+["+%s" % k for k in BnotA]+["*%s[%r=>%r]" % (k,str(rA[k])[:20],str(rB[k])[:20]) for k in ABdiff]
                     print "AB,%i: [%s] %s" % (icA, name, ", ".join(descr))
                     diff += 1
                 icA = icB = None
@@ -108,7 +108,7 @@ def main():
     options.connection = options.connectionB # XXX hack
     options.backendB = backend_classB(options)
     
-    for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "id"),
+    for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "sd_id"),
                                          ("datatable", ["datatable", "data"], "DNT_col"), 
                                          ]:
         if not options.only or options.only.lowers() in otherval:
