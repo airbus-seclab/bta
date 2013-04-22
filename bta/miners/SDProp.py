@@ -57,7 +57,7 @@ class SDProp(Miner):
         
     def checkACE(self):
         secDesc = int(self.datatable.find_one({"cn": "AdminSDHolder"})['nTSecurityDescriptor'])
-        hdlACE = ListACE.ListACE()
+        hdlACE = ListACE.ListACE(self.backend)
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
         

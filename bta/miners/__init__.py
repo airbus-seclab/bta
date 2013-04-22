@@ -108,6 +108,7 @@ class Miner(object):
         self.usersid = backend.open_table("usersid")
         self.domain = backend.open_table("domains")
         self.categories = categories(self.category)
+        self.backend = backend
 
     def run(self, options):
         raise NotImplementedError("run")
