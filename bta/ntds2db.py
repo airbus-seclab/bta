@@ -52,14 +52,15 @@ class ESETable(object):
         return columns
 
     def parse_file(self, dbtable):
-        log.info("Parsing ESE table records")
+        total = self.esetable.number_of_records
+        log.info("Parsing ESE table. %i records." % total)
         i = 0
         try:
             for rec in self.esetable.iter_records():
                 dbtable.insert_fields([val.value for val in rec])
                 i+=1
                 if i%100 == 0 and self.options.verbosity <= logging.INFO:
-                    sys.stderr.write("         \r%i %i" % (i, dbtable.count()))
+                    sys.stderr.write("\r\033[Kread=%i written=%i total=%i" % (i, dbtable.count(), total))
         except KeyboardInterrupt:
             if self.options.verbosity <= logging.INFO:
                 print >>sys.stderr, "\nInterrupted by user"
@@ -69,7 +70,7 @@ class ESETable(object):
                 print >>sys.stderr, "\ndone"
 
     def create(self):
-        log.info("/### Starting importation of %s" % self._tablename_)
+        log.info("### Starting importation of %s ###" % self._tablename_)
         self.options.dblog.update_entry("Start of importation of [%s]" % self._tablename_)
         columns = self.identify_columns()
 
@@ -88,7 +89,7 @@ class ESETable(object):
         for col in columns:
             metatable.insert(col.to_json())
         self.options.dblog.update_entry("End of creation of metatable for [%s]" % self._tablename_)
-        log.info("\### Importation of %s is done." % self._tablename_)
+        log.info("Importation of %s is done." % self._tablename_)
 
 
 
@@ -185,7 +186,7 @@ class Datatable(ESETable):
         for rec in self.esetable.iter_records(columns=lcols):
             if i%100 == 0:
                 if self.options.verbosity <= logging.INFO:
-                    sys.stderr.write("                         \rrec=%i remain %i cols" % (i,len(cols)))
+                    sys.stderr.write("\r\033[Krec=%i remain %i cols" % (i,len(cols)))
             i += 1
             aid,amsds,asy,ldn = list(rec)
             if not ldn.value:
