@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+# This file is part of the BTA toolset
+# (c) EADS CERT and EADS Innovation Works
+
+
 import sys,os
 import datetime,time
 import itertools

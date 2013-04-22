@@ -1,5 +1,9 @@
 #! /usr/bin/env python
 
+# This file is part of the BTA toolset
+# (c) EADS CERT and EADS Innovation Works
+
+
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
 from esetypes import ColumnType,ValueFlags,native_type,multi_native_type
 

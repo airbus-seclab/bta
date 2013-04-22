@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+# This file is part of the BTA toolset
+# (c) EADS CERT and EADS Innovation Works
+
 import pymongo
 from ntds2db import Mongo
 import time
