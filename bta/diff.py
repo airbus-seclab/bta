@@ -2,6 +2,10 @@
 
 import bta.backend.mongo
 
+DEFAULT_IGNORE_LIST = {'whenChanged', 'replPropertyMetaData', 'dSCorePropagationData',
+                       'nTSecurityDescriptor', 'dnsRecord', 'uSNChanged', 'Ancestors_col', 
+                       'recycle_time_col', 'cnt_col', 'time_col', 'PDNT_col', 'dNSTombstoned',
+                       }
 
 class TableDiff(object):
     def __init__(self, options, table, indexcol):
@@ -45,23 +49,23 @@ class TableDiff(object):
                 break
 
             if icB is None or icA is not None and icA < icB:
-                print "A ,%i: [%s]" % (icA, rA.get("name",""))
+                print "A ,%i: [%r]" % (icA, rA.get("name",""))
                 icA = None
                 old += 1
             elif icA is None or icA > icB:
-                print " B,%i: [%s]" % (icB, rB.get("name",""))
+                print " B,%i: [%r]" % (icB, rB.get("name",""))
                 icB = None
                 new += 1
             else:
-                sA = set(rA)-{"_id"}
-                sB = set(rB)-{"_id"}
+                sA = set(rA)-{"_id"}-self.options.ignore_list
+                sB = set(rB)-{"_id"}-self.options.ignore_list
                 AnotB = sA-sB
                 BnotA = sB-sA
                 ABdiff = [k for k in sA&sB if rA[k] != rB[k]]
                 nameA, nameB = rA.get("name",""), rB.get("name","")
-                name = nameA if nameA == nameB else "A:[%s]/B:[%s]" % (nameA,nameB)
+                name = nameA if nameA == nameB else "A:[%r]/B:[%r]" % (nameA,nameB)
                 if AnotB or BnotA or ABdiff:
-                    descr = ["-%s" % k for k in AnotB]+["+%s" % k for k in BnotA]+["*%s[%r=>%r]" % (k,str(rA[k])[:20],str(rB[k])[:20]) for k in ABdiff]
+                    descr = ["-%r" % k for k in AnotB]+["+%r" % k for k in BnotA]+["*%s[%r=>%r]" % (k,str(rA[k])[:20],str(rB[k])[:20]) for k in ABdiff]
                     print "AB,%i: [%s] %s" % (icA, name, ", ".join(descr))
                     diff += 1
                 icA = icB = None
@@ -91,6 +95,14 @@ def main():
     parser.add_option("--only", dest="only", default="",
                       help="Diff only TABLENAME", metavar="TABLENAME")
     
+    parser.add_option("-X", "--ignore-field", dest="ignore_list", action="append", default=[],
+                      help="Add a field name to be ignored", metavar="FIELD")
+    parser.add_option("-A", "--consider-field", dest="consider_list", action="append", default=[],
+                      help="Add a field name to be considered even if present in default ignore list", metavar="FIELD")
+    parser.add_option("--ignore-defaults", dest="ignore_defaults", action="store_true",
+                      help="Add %s to list of ignored fields" % ", ".join(DEFAULT_IGNORE_LIST))
+
+
     options, args = parser.parse_args()
 
     
@@ -99,6 +111,11 @@ def main():
     if options.connectionA is None:
         parser.error("Missing connection string B (--CB)")
     
+    options.ignore_list = set(options.ignore_list)
+    options.consider_list = set(options.consider_list)
+    if options.ignore_defaults:
+        options.ignore_list |= DEFAULT_IGNORE_LIST
+        options.ignore_list -= options.consider_list
 
     backend_classA = bta.backend.Backend.get_backend(options.backend_classA)
     options.connection = options.connectionA # XXX hack
