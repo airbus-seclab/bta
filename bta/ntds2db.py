@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys,os
+import datetime,time
 import itertools
 
 import libesedb
@@ -55,12 +56,19 @@ class ESETable(object):
         total = self.esetable.number_of_records
         log.info("Parsing ESE table. %i records." % total)
         i = 0
+        t0 = ti = time.time()
         try:
             for rec in self.esetable.iter_records():
                 dbtable.insert_fields([val.value for val in rec])
                 i+=1
-                if i%100 == 0 and self.options.verbosity <= logging.INFO:
-                    sys.stderr.write("\r\033[Kread=%i written=%i total=%i" % (i, dbtable.count(), total))
+                if i%100 == 0 or i == total and self.options.verbosity <= logging.INFO:
+                    t = time.time()
+                    avg = i/(t-t0)
+                    inst = 100/(t-ti)
+                    eta = datetime.timedelta(seconds=int((total-i)/inst))
+                    ti = t
+                    sys.stderr.write("\r\033[Kread=%i written=%i total=%i. avg=%.2f rec/s inst=%.2f rec/s  ETA=%s" % 
+                                     (i, dbtable.count(), total, avg, inst, eta))
         except KeyboardInterrupt:
             if self.options.verbosity <= logging.INFO:
                 print >>sys.stderr, "\nInterrupted by user"
