@@ -86,8 +86,6 @@ class ESETable(object):
 
         log.info("Creating metatable")
         for col in columns:
-            c = table.find({col.name:{"$exists":True}}).count()
-            col.count = c
             metatable.insert(col.to_json())
         self.options.dblog.update_entry("End of creation of metatable for [%s]" % self._tablename_)
         log.info("\### Importation of %s is done." % self._tablename_)
