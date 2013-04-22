@@ -1,0 +1,35 @@
+#! /usr/bin/env python
+
+import pymongo
+
+def list_db(options):
+    cnx = pymongo.Connection(host=options.host, port=options.port)
+    for dbn in cnx.database_names():
+        db = cnx[dbn]
+        if db.log.count() == 0:
+            continue
+        acts = db.log.find().sort("date",-1).limit(1).next()
+        print "%-15s: %s" % (dbn, acts["actions"][-1]["action"])
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-C", dest="connection")
+
+    options,args = parser.parse_args()
+
+    host = port = None
+    if options.connection:
+        if ":" in options.connection:
+            host,port = options.connection.split(":",1)
+        else:
+            host = options.connection
+    options.host = host if host else "127.0.0.1"
+    options.port = int(port) if port else 27017
+   
+    list_db(options)
+
+
+if __name__ == "__main__":
+    main()
