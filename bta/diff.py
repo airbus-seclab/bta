@@ -49,11 +49,11 @@ class TableDiff(object):
                 break
 
             if icB is None or icA is not None and icA < icB:
-                print "A ,%i: [%r]" % (icA, rA.get("name",""))
+                print "A ,%i: [%s]" % (icA, rA.get("name",""))
                 icA = None
                 old += 1
             elif icA is None or icA > icB:
-                print " B,%i: [%r]" % (icB, rB.get("name",""))
+                print " B,%i: [%s]" % (icB, rB.get("name",""))
                 icB = None
                 new += 1
             else:
@@ -63,9 +63,9 @@ class TableDiff(object):
                 BnotA = sB-sA
                 ABdiff = [k for k in sA&sB if rA[k] != rB[k]]
                 nameA, nameB = rA.get("name",""), rB.get("name","")
-                name = nameA if nameA == nameB else "A:[%r]/B:[%r]" % (nameA,nameB)
+                name = nameA if nameA == nameB else "A:[%s]/B:[%s]" % (nameA,nameB)
                 if AnotB or BnotA or ABdiff:
-                    descr = ["-%r" % k for k in AnotB]+["+%r" % k for k in BnotA]+["*%s[%r=>%r]" % (k,str(rA[k])[:20],str(rB[k])[:20]) for k in ABdiff]
+                    descr = ["-%s" % k for k in AnotB]+["+%s" % k for k in BnotA]+["*%s[%r=>%r]" % (k,repr(rA[k])[:20],repr(rB[k])[:20]) for k in ABdiff]
                     print "AB,%i: [%s] %s" % (icA, name, ", ".join(descr))
                     diff += 1
                 icA = icB = None
