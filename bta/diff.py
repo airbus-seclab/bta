@@ -128,7 +128,7 @@ def main():
     for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "sd_id"),
                                          ("datatable", ["datatable", "data"], "DNT_col"), 
                                          ]:
-        if not options.only or options.only.lowers() in otherval:
+        if not options.only or options.only.lower() in otherval:
             differ = TableDiff(options, tablename, indexcol)
             differ.run()
 
