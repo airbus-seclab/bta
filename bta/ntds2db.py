@@ -17,8 +17,6 @@ def win2epoch(x):
     return x-11644473600
 
 def dbsanecolname(x):
-    if "\0" in x:
-        raise Exception("???")
     return x.replace("-","_")
 
 
@@ -60,8 +58,6 @@ class ESETable(object):
             for rec in self.esetable.iter_records():
                 dbtable.insert_fields([val.value for val in rec])
                 i+=1
-#                if i > 500:
-#                    break
                 if i%100 == 0 and self.options.verbosity <= logging.INFO:
                     sys.stderr.write("         \r%i %i" % (i, dbtable.count()))
         except KeyboardInterrupt:
