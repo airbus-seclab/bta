@@ -7,7 +7,7 @@ setup(
     version = '0.2',
     packages=['bta', 'bta/backend', 'bta/miners', 'bta/formatters', 
               'libesedb'],
-    scripts = ['bin/miners', 'bin/ntds2db'],
+    scripts = ['bin/miners', 'bin/ntds2db', 'bin/btadiff'],
 
     # Metadata
     author = 'Philippe Biondi',
