@@ -21,7 +21,7 @@ class LibESEDB(object):
         def _call(*args):
             args += (self.error_p,)
             if func(*args) != 1:
-                raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(e)))
+                raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(self.error)))
         return _call
 
     def get_error(self, error):
