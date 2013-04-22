@@ -14,6 +14,15 @@ class Info(Miner):
         self.dblog = backend.open_table("log")
     
     def run(self, options, doc):
+        s0 = doc.create_subsection("collections in this database")
+        tbl = s0.create_table("collections")
+        tbl.add(("name", "number of records"))
+        tbl.add()
+        for c in self.backend.list_tables():
+            tbl.add((c, self.backend.open_table(c).count()))
+        tbl.finished()
+        s0.finished()
+
         s1 = doc.create_subsection("logs")
         lst = s1.create_list("logs")
 
