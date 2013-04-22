@@ -18,11 +18,12 @@ class Skel(Miner):
         table.add()
 
         for r in self.sd_table.find({"sd_id": {"$lt":50}}):
-            table.add([r["sd_id"],r["hash"]])
+            table.add([r["sd_id"],r["sd_hash"]])
             
         table.finished()
 
     def assert_consistency(self):
         Miner.assert_consistency(self)
+        self.assert_field_exists(self.sd_table, "sd_id")
         assert self.datatable.find({"cn":{"$exists":True}}).count() > 10, "less than 10 cn in datatable"
 

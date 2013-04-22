@@ -116,11 +116,11 @@ class Schema(Miner):
             table.add(["Name", "SID", "Number of schema owned"])
             table.add()
             SchemaSecuDescriptor = self.owner()
-            hdlACE = ListACE.ListACE()
+            hdlACE = ListACE.ListACE(self.backend)
             for shema in SchemaSecuDescriptor:
                 numOwnShema = len(shema[1])
                 desc = hdlACE.getSecurityDescriptor(shema[0])
-                ownersid = desc['value']['Owner']
+                ownersid = desc['sd_value']['Owner']
                 name = self.datatable.find_one({'objectSid': ownersid})['cn']
                 table.add([name, ownersid, numOwnShema])
             table.finished()
