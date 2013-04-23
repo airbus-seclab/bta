@@ -32,10 +32,13 @@ class ListObject(Miner):
         end = datetime.datetime(year, month, day, 23, 59, 59)
         req = {'$and': [
                 {"objectCategory" : category},
-                {"whenChanged": {"$gt": start, "$lt": end}}],
+                {"whenCreated": {"$gt": start, "$lt": end}}],
               }
         for entry in self.datatable.find(req):
-            result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
+            if 'objectSid' in entry:
+                result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
+            else:
+                result.append([entry['cn'], 'NULL', entry['objectGUID']])
         result.sort(key=lambda x: x[0].lower())
         return result
         
@@ -48,13 +51,16 @@ class ListObject(Miner):
                 {"whenChanged": {"$gt": start, "$lt": end}}],
               }
         for entry in self.datatable.find(req):
-            result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
+            if 'objectSid' in entry:
+                result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
+            else:
+                result.append([entry['cn'], 'NULL', entry['objectGUID']])
         result.sort(key=lambda x: x[0].lower())
         return result
         
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument("--match", help="Look only for object which categorie match REGEX", metavar="REGEX", required=True)
+        parser.add_argument("--catego", help="Look only for object which categorie match REGEX", metavar="REGEX", required=True)
         parser.add_argument('--change', help='Find all changed object at a given date', metavar='YYYY-MM-DD')
         parser.add_argument('--create', help='Find all creation object at a given date', metavar='YYYY-MM-DD')
     

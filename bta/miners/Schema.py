@@ -60,6 +60,13 @@ class Schema(Miner):
             else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
         SchemaSecuDescriptor = sorted(SchemaSecuDescriptor.items(), key=lambda x: x[0])
         return SchemaSecuDescriptor
+        
+    def catName(self, id):
+        idSchema = self.datatable.find_one({"cn": "Schema"})['DNT_col']
+        if id == idSchema:
+            return 'Schema'
+        cat = self.datatable.find_one({"DNT_col": id})['objectCategory']
+        return self.category.find_one({'id': cat})['name']
     
     def change(self, year, month, day, atrib):
         result = list()
@@ -116,7 +123,7 @@ class Schema(Miner):
             table.finished()
         if options.owner:
             table = doc.create_table("Owner of schema")
-            table.add(["Name", "SID", "Number of schema owned"])
+            table.add(["Name", "SID", "Number owned", "Schema type"])
             table.add()
             SchemaSecuDescriptor = self.owner()
             hdlACE = ListACE.ListACE(self.backend)
@@ -125,7 +132,8 @@ class Schema(Miner):
                 desc = hdlACE.getSecurityDescriptor(shema[0])
                 ownersid = desc['sd_value']['Owner']
                 name = self.datatable.find_one({'objectSid': ownersid})['cn']
-                table.add([name, ownersid, numOwnShema])
+                catego = self.catName(shema[1][0])
+                table.add([name, ownersid, numOwnShema, catego])
             table.finished()
         if options.changeAS:
             year, month, day = self.parseDate(options.changeAS)
