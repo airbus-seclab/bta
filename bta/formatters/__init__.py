@@ -14,9 +14,9 @@ class Formatter(object):
 
     def add_content(self, content):
         raise NotImplementedError
-    def add_table(self, table):
+    def add_table(self, name, table):
         raise NotImplementedError
-    def add_list(self, lst):
+    def add_list(self, name, lst):
         raise NotImplementedError
     def add_section(self, seciton, lvl):
         raise NotImplementedError

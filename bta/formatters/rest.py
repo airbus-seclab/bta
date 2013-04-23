@@ -33,7 +33,7 @@ class ReST(Formatter):
     def __init__(self):
         self.doc = []
 
-    def add_table(self, table):
+    def add_table(self, name, table):
         t = []
         fmt,hline,hhline = format_table(table)
 
@@ -49,7 +49,7 @@ class ReST(Formatter):
         t.append(hline)
         self.doc.append("\n".join(t))
 
-    def add_list(self, lst):
+    def add_list(self, name, lst):
         for lvl, content in lst:
             self.doc.append("%s %s" % (get_bullet(lvl), content))
 
