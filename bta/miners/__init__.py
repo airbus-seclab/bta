@@ -46,6 +46,8 @@ class Miner(object):
                             help="Provides a live output")
         parser.add_argument("-t", "--output-type", dest="output_type",
                             help="output document type (amongst: %s)" % (", ".join(Formatter._formatters_.keys())))
+        parser.add_argument("-o", "--output-file", dest="output",
+                            help="output file", metavar="FILENAME")
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
@@ -99,7 +101,11 @@ class Miner(object):
         if options.output_type:
             fmt = Formatter.get(options.output_type)()
             doc.format_doc(fmt)
-            print fmt.finalize()
+            fin = fmt.finalize()
+            if options.output:
+                open(options.output, "w").write(fin)
+            else:
+                print fin
 
     def __init__(self, backend):
         self.backend = backend
