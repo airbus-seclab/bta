@@ -1,9 +1,10 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-from bta.miners import Miner
+from bta.miners import Miner, ListACE
 from bta.miners.tools import Sid
 import datetime
+import subprocess 
 
 @Miner.register
 class ListGroup(Miner):
@@ -56,6 +57,30 @@ class ListGroup(Miner):
         r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
 
+###########################################
+
+    def checkACE(self,membersid):
+        secDesc = int(self.datatable.find_one({"objectSid": membersid })['nTSecurityDescriptor'])
+        hdlACE = ListACE.ListACE(self.backend)
+        securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
+        aceList = hdlACE.extractACE(securitydescriptor)
+
+	Mylist = list()	
+	for ace in aceList:
+	    #Mylist.append([ace["SID"], membersid, ace["ObjectType"]])
+	    info = self.getInfo_fromSid(ace['SID'])
+            trustee = info['cn']
+	    info2 = self.getInfo_fromSid(membersid)
+	    subject = info2['cn'] 
+            if ace['ObjectType']:
+	        objtype = hdlACE.type2human(ace['ObjectType'])    
+            else:
+                objtype = '(none)'
+	    Mylist.append([trustee, subject, objtype])
+	return Mylist
+	    	
+###########################################
+
     def run(self, options, doc):
         def deleted_last(l):
             deleteditems=[]
@@ -102,15 +127,25 @@ class ListGroup(Miner):
             table.add(headers)
             table.add()
             for sid,deleted,fromgrp in deleted_last(membership):
-                sidobj = Sid(sid, self.datatable)
+		sidobj = Sid(sid, self.datatable)
                 member = str(sidobj)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
                 flags = sidobj.getUserAccountControl()
                 table.add((member, deleted or '', flags, fromgrp))
             table.finished()
+
+            for sid,deleted,fromgrp in deleted_last(membership):
+               	sec.add("User %s" % (sid))
+                table = sec.create_table("ACE")
+                table.add(["Trustee", "Member", "Object type"])
+                table.add()
+		listACE=self.checkACE(sid)
+		for ace in listACE:
+			table.add(ace)
+	    	table.finished()
             sec.finished()
-        
+
         if len(listemptyGroup) > 0:
             headers=['Group', 'SID', 'Guid']
             table = doc.create_table("Empty groups")
