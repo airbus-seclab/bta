@@ -57,8 +57,6 @@ class ListGroup(Miner):
         r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
 
-###########################################
-
     def checkACE(self,membersid):
         secDesc = int(self.datatable.find_one({"objectSid": membersid })['nTSecurityDescriptor'])
         hdlACE = ListACE.ListACE(self.backend)
@@ -67,7 +65,6 @@ class ListGroup(Miner):
 
 	Mylist = list()	
 	for ace in aceList:
-	    #Mylist.append([ace["SID"], membersid, ace["ObjectType"]])
 	    info = self.getInfo_fromSid(ace['SID'])
             trustee = info['cn']
 	    info2 = self.getInfo_fromSid(membersid)
@@ -76,10 +73,8 @@ class ListGroup(Miner):
 	        objtype = hdlACE.type2human(ace['ObjectType'])    
             else:
                 objtype = '(none)'
-	    Mylist.append([trustee, subject, objtype])
+	    Mylist.append([trustee, subject, ace['Type'], objtype])
 	return Mylist
-	    	
-###########################################
 
     def run(self, options, doc):
         def deleted_last(l):
@@ -138,7 +133,7 @@ class ListGroup(Miner):
             for sid,deleted,fromgrp in deleted_last(membership):
                	sec.add("User %s" % (sid))
                 table = sec.create_table("ACE")
-                table.add(["Trustee", "Member", "Object type"])
+                table.add(["Trustee", "Member", "ACE Type", "Object type"])
                 table.add()
 		listACE=self.checkACE(sid)
 		for ace in listACE:
