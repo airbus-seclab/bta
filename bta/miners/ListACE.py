@@ -165,7 +165,7 @@ class ListACE(Miner):
                         continue
                     if options.trustee and ace.SID != options.trustee:
                         continue
-                    aceobj = AccessControlEntry(trustee=ace.SID, subject=options.subject, perm=ace.ObjectType)
+                    aceobj = AccessControlEntry(trustee=ace.SID, subject=options.subject, perm=ace.ObjectType, dt=self.datatable)
                     table.add(aceobj.get_tuple())
             table.finished()
         else:
