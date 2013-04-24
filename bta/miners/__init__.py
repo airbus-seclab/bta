@@ -117,6 +117,7 @@ class Miner(object):
         self.category = backend.open_table("category")
         self.usersid = backend.open_table("usersid")
         self.domain = backend.open_table("domains")
+        self.guid = backend.open_table("guid")
         self.categories = categories(self.category)
 
     def run(self, options):

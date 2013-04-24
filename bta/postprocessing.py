@@ -57,6 +57,22 @@ class PostProcessing(object):
         idSchema = idSchemaRec['DNT_col']
         for r in self.dt.find({"objectCategory": idSchema}):
             category.insert({"id":r["DNT_col"], "name":r["cn"]})
+    
+    @PostProcRegistry.register()
+    def rightsGuids(self):
+        guid = self.options.backend.open_table("guid")
+        guid.create()
+        guid.create_index("id")
+        guid.create_index("name")
+        # guid for shema
+        for id in self.dt.find({"schemaIDGUID": {"$exists": 1}}):
+            guid.insert({"id":id["schemaIDGUID"].lower(), "name":id["name"]})
+        # guid for object
+        for id in self.dt.find({"objectGUID": {"$exists": 1}}):
+            guid.insert({"id":id["objectGUID"].lower(), "name":id["name"]})
+        #guid for rights
+        for id in self.dt.find({"rightsGuid": {"$exists": 1}}):
+            guid.insert({"id":id["rightsGuid"].lower(), "name":id["name"]})
         
     @PostProcRegistry.register(depends={"category"})
     def domains(self):
