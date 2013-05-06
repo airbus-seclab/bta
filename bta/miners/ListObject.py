@@ -65,15 +65,15 @@ class ListObject(Miner):
         parser.add_argument('--create', help='Find all creation object at a given date', metavar='YYYY-MM-DD')
     
     def run(self, options, doc):
-        category = self.getCategory(options.match)
+        category = self.getCategory(options.catego)
         if category < 0:
-            doc.add("No categories match [%s]" % options.match)
+            doc.add("No categories match [%s]" % options.catego)
             return
 
         if options.create:
             year, month, day = self.parseDate(options.create)
             create = self.create(year, month, day, category)
-            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.match, year, month, day))
+            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.catego, year, month, day))
             table.add(["cn", "SID", "GUID"])
             table.add()
             for attr in create:
@@ -82,7 +82,7 @@ class ListObject(Miner):
         if options.change:
             year, month, day = self.parseDate(options.change)
             change = self.change(year, month, day, category)
-            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.match, year, month, day))
+            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.catego, year, month, day))
             table.add(["cn", "SID", "GUID"])
             table.add()
             for attr in change:

@@ -123,7 +123,7 @@ class ListGroup(Miner):
             table.add()
             for sid,deleted,fromgrp in deleted_last(membership):
 		sidobj = Sid(sid, self.datatable)
-                member = str(sidobj)
+                member = unicode(sidobj)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
                 flags = sidobj.getUserAccountControl()
