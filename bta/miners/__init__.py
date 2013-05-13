@@ -49,6 +49,8 @@ class Miner(object):
                             help="output document type (amongst: %s)" % (", ".join(Formatter._formatters_.keys())))
         parser.add_argument("-o", "--output-file", dest="output",
                             help="output file", metavar="FILENAME")
+        parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",
+                            help="output encoding. Default: utf8", metavar="ENCODING")
         
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
@@ -103,10 +105,15 @@ class Miner(object):
             fmt = Formatter.get(options.output_type)()
             doc.format_doc(fmt)
             fin = fmt.finalize()
-            if options.output:
-                open(options.output, "w").write(fin)
+            try:
+                fin = fin.encode(options.encoding)
+            except UnicodeEncodeError, e:
+                log.error("The chosen output encoding (%s) cannot encode the generated output: %s" % (options.encoding, e))
             else:
-                print fin
+                if options.output:
+                    open(options.output, "w").write(fin)
+                else:
+                    print fin
 
     def __init__(self, backend):
         self.backend = backend
