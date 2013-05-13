@@ -51,6 +51,6 @@ class CSVZIP(Formatter):
         self.desc += 1
 
 
-    def finalize(self):
+    def finalize(self, encoding=None):
         self.zip.close()
         return self.output.getvalue()

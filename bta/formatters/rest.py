@@ -65,6 +65,9 @@ class ReST(Formatter):
         self.doc.append(str(content))
 
 
-    def finalize(self):
-        return "\n".join(self.doc)
-    
+    def finalize(self, encoding=None):
+        fin = "\n".join(self.doc)
+        if encoding:
+            fin = fin.encode(encoding)
+        return fin
+

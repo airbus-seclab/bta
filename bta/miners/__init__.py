@@ -104,9 +104,8 @@ class Miner(object):
         if options.output_type:
             fmt = Formatter.get(options.output_type)()
             doc.format_doc(fmt)
-            fin = fmt.finalize()
             try:
-                fin = fin.encode(options.encoding)
+                fin = fmt.finalize(encoding=options.encoding)
             except UnicodeEncodeError, e:
                 log.error("The chosen output encoding (%s) cannot encode the generated output: %s" % (options.encoding, e))
             else:
