@@ -4,12 +4,11 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import sys,os
-import datetime,time
-import itertools
+import os
 
 import libesedb
 
+import bta.tools
 import bta.backend.mongo
 import bta.postprocessing
 import diskcache
@@ -59,27 +58,17 @@ class ESETable(object):
     def parse_file(self, dbtable):
         total = self.esetable.number_of_records
         log.info("Parsing ESE table. %i records." % total)
-        i = 0
-        t0 = ti = time.time()
+        pbar  = self.options.progress_bar(total, desc="Importing [%s]" % self._tablename_, step=100, obj="rec")
+        next(pbar)
         try:
             for rec in self.esetable.iter_records():
                 dbtable.insert_fields([val.value for val in rec])
-                i+=1
-                if i%100 == 0 or i == total and self.options.verbosity <= logging.INFO:
-                    t = time.time()
-                    avg = i/(t-t0)
-                    inst = 100/(t-ti)
-                    eta = datetime.timedelta(seconds=int((total-i)/inst))
-                    ti = t
-                    sys.stderr.write("\r\033[Kread=%i written=%i total=%i. avg=%.2f rec/s inst=%.2f rec/s  ETA=%s" % 
-                                     (i, dbtable.count(), total, avg, inst, eta))
+                next(pbar)
         except KeyboardInterrupt:
-            if self.options.verbosity <= logging.INFO:
-                print >>sys.stderr, "\nInterrupted by user"
+            log.info("Interrupted by user")
             raise
         else:
-            if self.options.verbosity <= logging.INFO:
-                print >>sys.stderr, "\ndone"
+            log.info("done.")
 
     def create(self):
         log.info("### Starting importation of %s ###" % self._tablename_)
@@ -186,7 +175,8 @@ class Datatable(ESETable):
         att2ldn = {}
         att2asy = {}
         cols = { int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
-        log.info("%i columns to be identified, out of %i" % (len(cols),len(self.esetable.columns)))
+        nbcols = len(cols)
+        log.info("%i columns to be identified, out of %i" % (nbcols,len(self.esetable.columns)))
 
         try:
             lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID], 
@@ -194,12 +184,10 @@ class Datatable(ESETable):
         except IndexError:
             raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
 
-        i = 0
+        pbar = self.options.progress_bar(self.esetable.number_of_records, desc="Scanning for column names", step=100, obj="recs")
+        next(pbar)
         for rec in self.esetable.iter_records(columns=lcols):
-            if i%100 == 0:
-                if self.options.verbosity <= logging.INFO:
-                    sys.stderr.write("\r\033[Krec=%i remain %i cols" % (i,len(cols)))
-            i += 1
+            next(pbar)
             aid,amsds,asy,ldn = list(rec)
             if not ldn.value:
                 continue
@@ -212,11 +200,10 @@ class Datatable(ESETable):
                 att2ldn[cc.name] = ldn.value
                 att2asy[cc.name] = asy.value
             if not cols:
-                sys.stderr.write("\n")
-                log.info("All columns found, rec=%i/%i" % (i, self.esetable.number_of_records))
+                log.info("All columns found! Ending scan early!")
                 break
 
-        log.info("Resolved %i columns." % len(att2ldn))
+        log.info("Resolved %i / %i columns." % (len(att2ldn),nbcols))
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
@@ -272,6 +259,8 @@ def main():
 
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options)
+
+    options.progress_bar = bta.tools.stderr_progress_bar
 
     try:
         with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
