@@ -9,7 +9,7 @@ from bta.docstruct import LiveRootDoc, RootDoc
 from bta.formatters import Formatter
 import bta.formatters.rest
 import bta.formatters.csvzip
-from bta.tools import Registry
+from bta.tools.registry import Registry
 import logging
 
 log = logging.getLogger("bta.miner")

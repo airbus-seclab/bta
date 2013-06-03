@@ -8,7 +8,7 @@ import os
 
 import libesedb
 
-import bta.tools
+import bta.tools.progressbar
 import bta.backend.mongo
 import bta.postprocessing
 import diskcache
@@ -290,7 +290,7 @@ def main():
     options.verbosity = max(1,50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
-    options.progress_bar = bta.tools.stderr_progress_bar
+    options.progress_bar = bta.tools.progressbar.stderr_progress_bar
 
     for fname,cnx in zip(args, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx,fname))

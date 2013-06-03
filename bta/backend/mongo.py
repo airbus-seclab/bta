@@ -8,7 +8,7 @@ from bta.normalization import TypeFactory,Normalizer
 from bta.backend import Backend, BackendTable
 import bson.binary
 import bta.sd
-import bta.tools
+import bta.tools.decoding
 import logging
 import functools
 
@@ -69,13 +69,13 @@ class MongoNTSecDesc(MongoNormalizer):
 class MongoSID(MongoNormalizer):
     def normal(self, val):
         if val:
-            return bta.tools.decode_sid(val,">")
+            return bta.tools.decoding.decode_sid(val,">")
         return None
     
 class MongoGUID(MongoNormalizer):
     def normal(self, val):
         if val:
-            return bta.tools.decode_guid(val)
+            return bta.tools.decoding.decode_guid(val)
         return None
     
 class MongoSecurityDescriptor(MongoNormalizer):

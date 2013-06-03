@@ -2,7 +2,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 import struct
-import tools
+import tools.decoding
 
 # Heavily inspired by reading WinNT.h
 
@@ -192,14 +192,14 @@ def acl_to_json(acl):
             ACE["ObjectFlagsRaw"] = objflagsraw
             ACE["ObjectFlags"] = objflags.to_json()
             if objflags.ObjectTypePresent:
-                ACE["ObjectType"] = tools.decode_guid(sstr[:16])
+                ACE["ObjectType"] = tools.decoding.decode_guid(sstr[:16])
                 sstr = sstr[16:]
             if objflags.InheritedObjectTypePresent:
-                ACE["InheritedObjectType"] = tools.decode_guid(sstr[:16])
+                ACE["InheritedObjectType"] = tools.decoding.decode_guid(sstr[:16])
                 sstr = sstr[16:]
 
         if typeraw in [0, 1, 2, 3, 5, 6, 7, 8]:
-            ACE["SID"] = tools.decode_sid(sstr)
+            ACE["SID"] = tools.decoding.decode_sid(sstr)
 
 
         if type == 0: # ACCESS_ALLOWED
@@ -239,8 +239,8 @@ def sd_to_json(sd):
     jsd["ControlRaw"] = rctrl
     jsd["Control"] = ctrl.to_json()
     if ctrl.SelfRelative:
-        jsd["Owner"] = tools.decode_sid(sd[owner:])
-        jsd["Group"] = tools.decode_sid(sd[group:])
+        jsd["Owner"] = tools.decoding.decode_sid(sd[owner:])
+        jsd["Group"] = tools.decoding.decode_sid(sd[group:])
         if ctrl.SACLPresent:
             jsd["SACL"] = acl_to_json(sd[saclofs:])
         if ctrl.DACLPresent:

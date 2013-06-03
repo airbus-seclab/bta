@@ -6,12 +6,12 @@
 import types
 import bta.backend.mongo
 import bta.dblog
-import tools
+import tools.registry
 import logging
 log = logging.getLogger("bta.postprocessing")
 
 
-class PostProcRegistry(tools.Registry):
+class PostProcRegistry(tools.registry.Registry):
     pass
 
 class PostProcessing(object):
