@@ -217,9 +217,44 @@ class Datatable(ESETable):
         return columns
 
 
+def import_file(options, fname):
+
+    backend_class = bta.backend.Backend.get_backend(options.backend_class)
+    options.backend = backend_class(options)
+
+    try:
+        with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
+            if not options.only_post_proc:
+                log.info("Opening [%s]" % fname)
+                options.esedb = libesedb.ESEDB(fname)
+                log.info("Opening done.")
+            
+                options.dblog.update_entry("Opened ESEDB file [%s]" % fname)
+                
+                if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
+                    sd = SDTable(options)
+                    sd.create()
+                if options.only.lower() in ["", "linktable", "link_table", "link"]:
+                    lt = LinkTable(options)
+                    lt.create()
+                if options.only.lower() in ["", "datatable", "data"]:
+                    dt = Datatable(options)
+                    dt.create()
+                
+                options.backend.commit()
+        
+            if not options.no_post_proc:
+                options.dblog.update_entry("Starting post-processing")
+                pp = bta.postprocessing.PostProcessing(options)
+                pp.post_process_all()
+    except KeyboardInterrupt:
+        log.info("Interrupted by user (Ctrl-C)")
+
+
+
 def main():
     import optparse
-    parser = optparse.OptionParser()
+    parser = optparse.OptionParser("Usage: %prog -C <dbcnx> [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
     
     parser.add_option("-C", dest="connection",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
@@ -244,51 +279,21 @@ def main():
     parser.add_option("-q", dest="quiet", action="count", default=0,
                       help="be more quiet (can be used many times)")
 
-    
-    parser.add_option("-f", "--ntds-file", dest="fname", default="ntds.dit",
-                      help="Path to ntds.dit file", metavar="FILENAME")
-
     options, args = parser.parse_args()
-
     
     if options.connection is None:
         parser.error("Missing connection string (-C)")
+    if not args:
+        parser.error("Missing paths to ntds.dit files to import")
     
     options.verbosity = max(1,50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
-    backend_class = bta.backend.Backend.get_backend(options.backend_class)
-    options.backend = backend_class(options)
-
     options.progress_bar = bta.tools.stderr_progress_bar
 
-    try:
-        with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
-            if not options.only_post_proc:
-                log.info("Opening [%s]" % options.fname)
-                options.esedb = libesedb.ESEDB(options.fname)
-                log.info("Opening done.")
-            
-                options.dblog.update_entry("Opened ESEDB file [%s]" % options.fname)
-                
-                if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
-                    sd = SDTable(options)
-                    sd.create()
-                if options.only.lower() in ["", "linktable", "link_table", "link"]:
-                    lt = LinkTable(options)
-                    lt.create()
-                if options.only.lower() in ["", "datatable", "data"]:
-                    dt = Datatable(options)
-                    dt.create()
-                
-                options.backend.commit()
-        
-            if not options.no_post_proc:
-                options.dblog.update_entry("Starting post-processing")
-                pp = bta.postprocessing.PostProcessing(options)
-                pp.post_process_all()
-    except KeyboardInterrupt:
-        log.info("Interrupted by user (Ctrl-C)")
+    for fname in args:
+        import_file(options, fname)
+
 
 if __name__ == "__main__":
     main()
