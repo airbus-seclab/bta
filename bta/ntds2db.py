@@ -4,11 +4,12 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import os
+import os,sys
 
 import libesedb
 
 import bta.tools.progressbar
+import bta.tools.RPNedit
 import bta.backend.mongo
 import bta.postprocessing
 import diskcache
@@ -254,10 +255,16 @@ def import_file(options, fname, connection):
 
 def main():
     import optparse
-    parser = optparse.OptionParser("Usage: %prog -C <dbcnx> [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
+    parser = optparse.OptionParser("Usage: %prog {-C <dbcnx>|--C-list <dbcnxlist>|--C-from <dbcnxfmt> <rpnprog>} [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
     
     parser.add_option("-C", dest="connections", default=[], action="append",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
+    parser.add_option("--C-list", dest="connection_list",
+                      help="Comma seaparated list of backend connection strings, one for each file to import")
+    parser.add_option("--C-from-filename", nargs=2, dest="connection_from_filename",
+                      help="RPN program to infer connection name from filename. "
+                      + 'Ex: -C-from "::%s" "basename rmext - '' replace upper"', metavar="CNXFMT RPNPROG")
+
     parser.add_option("-B", dest="backend_class", default="mongo",
                       help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
 
@@ -273,7 +280,8 @@ def main():
     parser.add_option("--only-post-processing", dest="only_post_proc", action="store_true",
                       help="Do not import any tables, only post-process data")
 
-
+    parser.add_option("-y", dest="yes", action="store_true",
+                      help="Do not ask for validations")
     parser.add_option("-v", dest="verbose", action="count", default=3,
                       help="be more verbose (can be used many times)")
     parser.add_option("-q", dest="quiet", action="count", default=0,
@@ -283,17 +291,39 @@ def main():
     
     if not args:
         parser.error("Missing paths to ntds.dit files to import")
+
+    if (int(bool(options.connection_list))+
+        int(bool(options.connections))+
+        int(bool(options.connection_from_filename))) > 1:
+        parser.error("-C, --Clist and --Cfromfilename are incompatible")
+
+    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
+    logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
+
+    if options.connection_list:
+        options.connections = options.connection_list.split(",")
+    if options.connection_from_filename:
+        cnxfmt,dbprog = options.connection_from_filename
+        ed = bta.tools.RPNedit.RPNFilenameEditor(dbprog)
+        options.connections = [cnxfmt % ed(fname) for fname in args]
+
     if len(args) != len(options.connections):
         parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
                      (len(args), len(options.connections)))
     
-    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
-    logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
-
     options.progress_bar = bta.tools.progressbar.stderr_progress_bar
 
     for fname,cnx in zip(args, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx,fname))
+    if not options.yes and len(options.connections) > 1:
+        while True:
+            print >>sys.stderr,"Can I carry on ? (y/n)",
+            r = raw_input().lower().strip()
+            if r == "y":
+                break
+            elif r == "n":
+                log.error("Interrupted by user.")
+                raise SystemExit
     for fname,cnx in zip(args, options.connections):
         import_file(options, fname, cnx)
 
