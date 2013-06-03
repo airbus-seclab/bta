@@ -164,9 +164,9 @@ class MongoTable(BackendTable):
 
 @Backend.register("mongo")
 class Mongo(Backend):
-    def __init__(self, options):
-        Backend.__init__(self, options)
-        ip,port,self.dbname,_ = (options.connection+":::").split(":",3)
+    def __init__(self, options, connection=None):
+        Backend.__init__(self, options, connection)
+        ip,port,self.dbname,_ = (self.connection+":::").split(":",3)
         ip = ip if ip else "127.0.0.1"
         port = int(port) if port else 27017
         self.cnxstr = (ip,port)
