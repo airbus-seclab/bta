@@ -218,7 +218,7 @@ class Datatable(ESETable):
         return columns
 
 
-def import_file(options, fname, connection):
+def import_file((options, fname, connection)):
 
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
     options.backend = backend_class(options, connection)
@@ -280,6 +280,10 @@ def main():
     parser.add_option("--only-post-processing", dest="only_post_proc", action="store_true",
                       help="Do not import any tables, only post-process data")
 
+    parser.add_option("--multi", dest="multi", action="store_true",
+                      help="Spawn many workers")
+    parser.add_option("--proc-num", dest="procnb", default=None,
+                      help="Number of workers. Default: as much as processors")
     parser.add_option("-y", dest="yes", action="store_true",
                       help="Do not ask for validations")
     parser.add_option("-v", dest="verbose", action="count", default=3,
@@ -324,8 +328,16 @@ def main():
             elif r == "n":
                 log.error("Interrupted by user.")
                 raise SystemExit
-    for fname,cnx in zip(args, options.connections):
-        import_file(options, fname, cnx)
+
+    jobs = [ (options, fname, cnx) 
+             for fname,cnx in zip(args, options.connections) ]
+
+    if options.multi:
+        import multiprocessing
+        pool = multiprocessing.Pool(options.procnb)
+        pool.map(import_file, jobs)
+    else:
+        map(import_file, jobs)
 
 
 if __name__ == "__main__":
