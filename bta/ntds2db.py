@@ -217,10 +217,10 @@ class Datatable(ESETable):
         return columns
 
 
-def import_file(options, fname):
+def import_file(options, fname, connection):
 
     backend_class = bta.backend.Backend.get_backend(options.backend_class)
-    options.backend = backend_class(options)
+    options.backend = backend_class(options, connection)
 
     try:
         with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
@@ -256,7 +256,7 @@ def main():
     import optparse
     parser = optparse.OptionParser("Usage: %prog -C <dbcnx> [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
     
-    parser.add_option("-C", dest="connection",
+    parser.add_option("-C", dest="connections", default=[], action="append",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
     parser.add_option("-B", dest="backend_class", default="mongo",
                       help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
@@ -281,18 +281,21 @@ def main():
 
     options, args = parser.parse_args()
     
-    if options.connection is None:
-        parser.error("Missing connection string (-C)")
     if not args:
         parser.error("Missing paths to ntds.dit files to import")
+    if len(args) != len(options.connections):
+        parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
+                     (len(args), len(options.connections)))
     
     options.verbosity = max(1,50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
     options.progress_bar = bta.tools.stderr_progress_bar
 
-    for fname in args:
-        import_file(options, fname)
+    for fname,cnx in zip(args, options.connections):
+        log.info("Going to import %-15s <- %s" % (cnx,fname))
+    for fname,cnx in zip(args, options.connections):
+        import_file(options, fname, cnx)
 
 
 if __name__ == "__main__":
