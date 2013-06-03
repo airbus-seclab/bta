@@ -122,12 +122,10 @@ def main():
         options.ignore_list -= options.consider_list
 
     backend_classA = bta.backend.Backend.get_backend(options.backend_classA)
-    options.connection = options.connectionA # XXX hack
-    options.backendA = backend_classA(options)
+    options.backendA = backend_classA(options, options.connectionA)
     
     backend_classB = bta.backend.Backend.get_backend(options.backend_classB)
-    options.connection = options.connectionB # XXX hack
-    options.backendB = backend_classB(options)
+    options.backendB = backend_classB(options, options.connectionB)
     
     for tablename,otherval,indexcol in [ ("sd_table", ["sdtable", "sd_table", "sd"], "sd_id"),
                                          ("datatable", ["datatable", "data"], "DNT_col"), 
