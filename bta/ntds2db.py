@@ -59,7 +59,8 @@ class ESETable(object):
     def parse_file(self, dbtable):
         total = self.esetable.number_of_records
         log.info("Parsing ESE table. %i records." % total)
-        pbar  = self.options.progress_bar(total, desc="Importing [%s]" % self._tablename_, step=100, obj="rec")
+        pbar  = self.options.progress_bar(total, desc="Importing [%s.%s]" % (dbtable.db.name,self._tablename_), 
+                                          step=100, obj="rec")
         next(pbar)
         try:
             for rec in self.esetable.iter_records():
@@ -320,7 +321,7 @@ def main():
         log.info("Going to import %-15s <- %s" % (cnx,fname))
     if not options.yes and len(options.connections) > 1:
         while True:
-            print >>sys.stderr,"Can I carry on ? (y/n)",
+            print >>sys.stderr,"Can I carry on ? (y/n) ",
             r = raw_input().lower().strip()
             if r == "y":
                 break
