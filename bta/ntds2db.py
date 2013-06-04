@@ -315,7 +315,6 @@ def main():
         parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
                      (len(args), len(options.connections)))
     
-    options.progress_bar = bta.tools.progressbar.stderr_progress_bar
 
     for fname,cnx in zip(args, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx,fname))
@@ -334,9 +333,12 @@ def main():
 
     if options.multi:
         import multiprocessing
+        manager = multiprocessing.Manager()
+        options.progress_bar = bta.tools.progressbar.StderrMultiProgressBarMothership(manager)
         pool = multiprocessing.Pool(options.procnb)
         pool.map(import_file, jobs)
     else:
+        options.progress_bar = bta.tools.progressbar.stderr_progress_bar
         map(import_file, jobs)
 
 
