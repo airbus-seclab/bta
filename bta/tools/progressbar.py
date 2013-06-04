@@ -4,14 +4,16 @@
 import sys
 import time, datetime
 
-def stderr_progress_bar(total, desc="Progress", step=100, obj="rec"):
+def string_progress_bar(total, desc="Progress", step=100, obj="rec"):
     t0 = time.time()
     tprevstep = t0-0.01 # t0-tprevstem must always be != 0
     i = 0
     iprevstep = 0
     iprevcall = -1
+    progress = None
     while True:
-        new_i = yield
+        new_i = yield progress
+        progress = None
         i = new_i if new_i is not None else i+1
         if iprevcall/step != i/step or i >= total:
             t = time.time()
@@ -21,6 +23,14 @@ def stderr_progress_bar(total, desc="Progress", step=100, obj="rec"):
             elapsed = datetime.timedelta(seconds=int(t-t0))
             tprevstep = t
             iprevstep = i
-            sys.stderr.write("\033[A\033[K%s: %i / %i  --  avg=%.2f %s/s inst=%.2f %s/s  --  ETA=%s elapsed=%s\n" % 
-                             (desc, i, total, avg, obj, inst, obj, eta, elapsed))
+            progress = "%s: %i / %i  --  avg=%.2f %s/s inst=%.2f %s/s  --  ETA=%s elapsed=%s" % (desc, i, total, avg, obj, inst, obj, eta, elapsed)
         iprevcall = i
+
+def stderr_progress_bar(*args, **kargs):
+    spb = string_progress_bar(*args, **kargs)
+    nval = None
+    while True:
+        r = spb.send(nval)
+        if r is not None:
+            sys.stderr.write("\033[A\033[K%s\n" % r)
+        nval = yield
