@@ -37,6 +37,11 @@ def stderr_progress_bar(*args, **kargs):
         nval = yield
 
 
+def null_progress_bar(total, desc="Progress", step=100, obj="rec"):
+    while True:
+        yield
+
+
 class MultiProgressBar(object):
     def __init__(self, mothership, *args, **kargs):
         self.mothership = mothership
