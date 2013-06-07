@@ -1,7 +1,0 @@
-#! /usr/bin/env python
-
-import bta.miners.all
-
-
-if __name__ == "__main__":
-    bta.miners.Miner.main()

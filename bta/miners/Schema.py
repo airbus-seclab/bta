@@ -1,7 +1,8 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-from bta.miners import Miner, ListACE
+from bta.miner import Miner
+from bta.miners import ListACE
 import sys, datetime
 
 @Miner.register

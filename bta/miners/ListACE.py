@@ -1,7 +1,7 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-from bta.miners import Miner
+from bta.miner import Miner
 from bta.miners.tools import Sid, Record
 import re
 
