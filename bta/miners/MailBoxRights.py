@@ -3,7 +3,6 @@
 
 from bta.miner import Miner
 from collections import defaultdict
-from bta.miners.tools import Sid, Record
 
 
 @Miner.register

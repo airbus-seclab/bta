@@ -12,7 +12,6 @@ import bta.tools.progressbar
 import bta.tools.RPNedit
 import bta.backend.mongo
 import bta.postprocessing
-import diskcache
 import bta.dblog
 
 import logging
