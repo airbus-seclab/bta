@@ -62,7 +62,7 @@ class ReST(Formatter):
             self.doc.append("")
 
     def add_content(self, content):
-        self.doc.append(str(content))
+        self.doc.append(unicode(content))
 
 
     def finalize(self, encoding=None):
