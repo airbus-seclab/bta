@@ -14,8 +14,8 @@ Installation:
 
 * ``python setup.py install`` 
 
-Active Directory Analysis
-=========================
+Active Directory Security Analysis
+==================================
 
 Goal:
 
@@ -38,8 +38,8 @@ Protocol
 
 Audit steps:
 
-#. Extract [#SSTIC]_ the``ntds.dit`` file
-#. Import the``ntds.dit`` file in a database
+#. Extract [#SSTIC]_ the ``ntds.dit`` file
+#. Import the ``ntds.dit`` file in a database
 #. Look for control points in the database
 
 .. [#SSTIC] https://www.sstic.org/2012/presentation/audit_ace_active_directory/
@@ -103,7 +103,7 @@ Analysing differences
 
 * diff
 
-  + diff (naive for the moment) between 2 imports at different moments
+  + diff (naive for the moment) between 2 imports at different points in time
   + noise filtering
 
 .. code-block ::
@@ -157,9 +157,9 @@ Other features
 
 * can give reports in different formats:
 
-  + dump live
-  + documents ReST
-  + zip de CSV
+  + live dump
+  + ReST document
+  + zipped tree of CSV files
 
 * audit log of writings in a database
 * table consistency checks before *mining*
