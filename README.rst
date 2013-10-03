@@ -2,6 +2,34 @@
 BTA
 ===
 
+About BTA
+=========
+
+BTA is an open-source Active Directory security audit framework. Its goal is to help
+auditors harvest the information they need to answer such questions as:
+
+* Who has rights over a given object (computer, user account, etc.) ?
+* Who can read a given mailbox ?
+* Which are the accounts with domain admin rights ?
+* Who has extended rights (``userForceChangePassword``, ``SendAs``, etc.) ?
+* What are the changes done on an AD between two points in time ?
+
+The framework is made of
+
+* an importer able to translate a ``ntds.dit`` file, containing all the AD data, into a database
+* tools to query the database
+
+  + AD miner framework
+  + AD diff utility
+  + small utilities (list of databases, etc.)
+
+
+The comprehensive set of attributes are imported and can be querried
+including all schema extensions (Exchange, Sharepoint, etc.).
+
+Each question can be crystallized by an AD expert as a miner, so that
+it can be used during all audits without doing the hard work again.
+
 Installing BTA
 ==============
 
@@ -45,7 +73,7 @@ Audit steps:
 .. [#SSTIC] https://www.sstic.org/2012/presentation/audit_ace_active_directory/
 
 Importing
-=========
+---------
 
 * ``ntds.dit`` is unusable as-is. 
 * one ``ntds.dit`` is imported into one MongoDB *database*
@@ -62,7 +90,7 @@ Examples:
 
 
 Analysing
-=========
+---------
 
 * Querying the database
 
@@ -71,12 +99,12 @@ Analysing
 
 
 Analysing control points
-========================
+------------------------
 
-* miners cristalize expertise
+* miners crystallize expertise
 
   + list of admin accounts
-  + list of accounts with delegations
+  + list of accounts with extended rights
   + list of accounts with password errors
   + list of various timelines
 
@@ -164,4 +192,9 @@ Other features
 * audit log of writings in a database
 * table consistency checks before *mining*
 
+Authors
+=======
+
+* EADS CERT
+* EADS Innovation Works
 
