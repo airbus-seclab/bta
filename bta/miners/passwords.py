@@ -15,8 +15,7 @@ class Passwords(Miner):
         parser.add_argument("--dump-unicode-pwd", action="store_true", help="Dump unicodePwd AD field")
     
     def get_line(self, record, line):
-	return [record.get(x,"-") if type(record.get(x,"-"))==unicode else unicode(record.get(x,"-"), errors='ignore').encode('hex') for x in line]
-        #return [unicode(record.get(x,"-")) for x in line]
+	return [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
 
     def bad_password_count(self, doc):
         t = doc.create_table("Users whose badPwdCount is non-zero")
