@@ -12,6 +12,8 @@ class DNTree(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")
+        parser.add_argument("--siblings", help="Display siblings")
+        parser.add_argument("--ace", help="Display ACEs")
     
     def run(self, options, doc):
         doc.add("Display the tree of all objects in the database")
@@ -35,6 +37,43 @@ class DNTree(Miner):
 
 		return siblings
 
+	def pretty(d, indent=0):
+   		for key, value in d.iteritems():
+      			print '\t' * indent + str(key),
+      			if isinstance(value, dict):
+				print ""
+         			pretty(value, indent+1)
+      			elif isinstance(value, list):
+				print ""
+				for i in value:
+					pretty(i, indent+1)
+      			else:
+         			print ' : %s'% str(value)
+
+	def find_ACE(node):
+		ace=list()
+		id_sd = node.get('nTSecurityDescriptor')
+		print "My security desciptor : %s"%id_sd
+		sd = self.sd_table.find({"sd_id":id_sd}).limit(1)[0]
+		pretty(sd)
+		return sd
+
+	def find_distinguish_name(node):
+		ancestors=find_parents(the_node)
+		# Making distinguishe name:
+		dn=list()
+		for p in ancestors:
+			if p.get('name')=="$ROOT_OBJECT$\x00":
+				continue
+			if p.get('dc'):
+				dn.append("DC=%s"%p['name'])
+			elif p.get('cn'):
+				dn.append("CN=%s"%p['name'])
+			elif p.get('name'):
+				dn.append("DC=%s"%p['name'])
+		dn.reverse()
+		return dn
+		
 
 	try:
 		steps=options.cn.split(":")
@@ -52,16 +91,22 @@ class DNTree(Miner):
 		l.finished()
 		return
 
-
-
-	l.add("Ancectors:")
-	ancestors=find_parents(the_node)
-	l.add("/".join([a['name'] for a in ancestors]))
-
-	l.add("\n\nSiblings:")
+	# Displaying dinstinguish name
+	l.add("Ancestors:")
+	dn = find_distinguish_name(node)
+	l.add(",".join(dn))
+	l.add("")
+	
+	# Displaying Siblings
+	l.add("Siblings:")
 	siblings=find_siblings(the_node)
-	l.add("\n".join([s['name'] for s in siblings]))
-        
+	for n in sorted([ str(s['name']) for s in siblings], key=str.lower):
+		l.add(n)
+
+	if options.ace:
+		# Displaying ACE
+		acl = find_ACE(node)  
+
         l.finished()
     def assert_consistency(self):
         Miner.assert_consistency(self)

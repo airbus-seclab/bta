@@ -84,6 +84,12 @@ class MongoSecurityDescriptor(MongoNormalizer):
             return bta.sd.sd_to_json(val)
         return None
 
+class MongoAncestors(MongoNormalizer):
+    def normal(self, val):
+        if val:
+            return bta.tools.decoding.decode_ancestors(val)
+        return None
+
 
 class MongoTypeFactory(TypeFactory):
     def Text(self):
@@ -102,6 +108,8 @@ class MongoTypeFactory(TypeFactory):
         return MongoGUID()
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
+    def Ancestors(self):
+	return MongoAncestors()
     def UnknownType(self):
         return MongoUnknownNormalizer()
 

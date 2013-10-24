@@ -21,3 +21,8 @@ def decode_guid(s):
     part1 =  "%08x-%04x-%04x-" % struct.unpack("<IHH", s[:8])
     part2 = "%04x-%08x%04x" % struct.unpack(">HIH", s[8:])
     return part1+part2
+
+def decode_ancestors(ancestors):
+        nb_ancestors = len(ancestors)/4
+        id_ancestors = struct.unpack_from('i'*nb_ancestors,ancestors)
+        return id_ancestors

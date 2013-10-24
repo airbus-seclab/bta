@@ -129,6 +129,7 @@ class Datatable(ESETable):
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
+        ESEColumn("Ancestors_col", "Ancestors_col", "Ancestors", True),
         ]
     _indexes_ = [ "rightsGuid" ]
 
