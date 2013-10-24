@@ -103,6 +103,30 @@ class PostProcessing(object):
             domains.insert({"domain":find_dn(r), "sid":r["objectSid"]})
 
     @PostProcRegistry.register()
+    def dnames(self):
+        dnames = self.options.backend.open_table("dnames")
+        dnames.create()
+        dnames.create_index("name")
+        dnames.create_index("DNT_col")
+        dnames.create_index("DName")
+
+        for r in self.dt.find({"Ancestors_col":{"$exists":True}}):
+		dn=list()
+		for p in r["Ancestors_col"]:
+			p=self.dt.find({"DNT_col":p}).limit(1)[0]
+                        if p.get('name')=="$ROOT_OBJECT$\x00":
+                                continue
+                        if p.get('dc'):
+                                dn.append("DC=%s"%p['name'])
+                        elif p.get('cn'):
+                                dn.append("CN=%s"%p['name'])
+                        elif p.get('name'):
+                                dn.append("DC=%s"%p['name'])
+                dn.reverse()
+		dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
+
+
+    @PostProcRegistry.register()
     def usersid(self):
         usersid = self.options.backend.open_table("usersid")
         usersid.create()
