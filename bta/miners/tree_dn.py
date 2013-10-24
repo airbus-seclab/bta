@@ -22,10 +22,7 @@ class DNTree(Miner):
 
 	def find_parents(node):
 		parents=list()
-		ancestors = node['Ancestors_col']
-		nb_ancestors = len(ancestors.encode('hex'))/8
-		id_ancestors = unpack_from('i'*nb_ancestors,ancestors)
-		for a in id_ancestors:
+		for a in node['Ancestors_col']:
 			parents.append(self.datatable.find({"DNT_col":a}).limit(1)[0])
 		return parents
 
@@ -57,23 +54,7 @@ class DNTree(Miner):
 		sd = self.sd_table.find({"sd_id":id_sd}).limit(1)[0]
 		pretty(sd)
 		return sd
-
-	def find_distinguish_name(node):
-		ancestors=find_parents(the_node)
-		# Making distinguishe name:
-		dn=list()
-		for p in ancestors:
-			if p.get('name')=="$ROOT_OBJECT$\x00":
-				continue
-			if p.get('dc'):
-				dn.append("DC=%s"%p['name'])
-			elif p.get('cn'):
-				dn.append("CN=%s"%p['name'])
-			elif p.get('name'):
-				dn.append("DC=%s"%p['name'])
-		dn.reverse()
 		return dn
-		
 
 	try:
 		steps=options.cn.split(":")
@@ -93,8 +74,8 @@ class DNTree(Miner):
 
 	# Displaying dinstinguish name
 	l.add("Ancestors:")
-	dn = find_distinguish_name(node)
-	l.add(",".join(dn))
+	dn = self.dnames.find({"DNT_col":node['DNT_col']}).limit(1)[0]
+	l.add(dn['DName'])
 	l.add("")
 	
 	# Displaying Siblings
