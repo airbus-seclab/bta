@@ -141,7 +141,7 @@ class List(DocPart):
     list_level = 0
     
     def format_content(self, c):
-        return "%s%s %s\n" % ("    "*self.list_level,
+        return "%s%s %s\n" % (" "*self.list_level,
                               ["*","+","-"][self.list_level%3],
                               c)
 
@@ -150,18 +150,19 @@ class List(DocPart):
         sublist.list_level = self.list_level+1
         return sublist
 
-    def make_formatter_list(self, lvl=0):
-        l = []
-        for c in self.content:
-            if hasattr(c, "make_formatter_list"):
-                l += c.make_formatter_list(lvl+1)
-            else:
-                l.append( (lvl, c) )
-        return l
+    def format_doc(self, formatter, lvl=0, sublist=None):
 
-    def format_doc(self, formatter, lvl=0):
-        formatter.add_list(self.name, self.make_formatter_list())
+        if sublist is None:
+            sublist=self
+        # Print all unicode in my content
+        import bta.docstruct
+        all_unicodes= [a for a in sublist.content if type(a) is unicode or type(a) is str]
 
+        formatter.add_list(sublist.name, lvl , all_unicodes)
+        # Launch the function on all remaining lists in the content
+        c = [ v for v in sublist.content if type(v) is bta.docstruct.List]
+        for t in c:
+            self.format_doc(formatter, lvl+1, sublist=t)
 
 def w():
     import time
