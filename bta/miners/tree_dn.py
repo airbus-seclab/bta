@@ -18,7 +18,6 @@ class DNTree(Miner):
     def run(self, options, doc):
         doc.add("Display the tree of all objects in the database")
 
-        l = doc.create_list("List of objects")
 
 	def find_parents(node):
 		parents=list()
@@ -34,27 +33,31 @@ class DNTree(Miner):
 
 		return siblings
 
-	def pretty(d, indent=0):
+	def pretty(d, doc, indent=0):
    		for key, value in d.iteritems():
-      			print '\t' * indent + str(key),
+      			#l_o.add('\t' * indent + str(key),)
       			if isinstance(value, dict):
-				print ""
-         			pretty(value, indent+1)
+				#print ""
+				l_o=doc.create_list(key)
+         			pretty(value, l_o, indent+1)
+				l_o.finished()
       			elif isinstance(value, list):
-				print ""
+				#print ""
 				for i in value:
-					pretty(i, indent+1)
+					l_o=doc.create_list(key)
+					pretty(i, l_o, indent+1)
+					l_o.finished()
       			else:
-         			print ' : %s'% str(value)
+         			doc.add("%s:%s"%(str(key), str(value)))
 
 	def find_ACE(node):
 		ace=list()
 		id_sd = node.get('nTSecurityDescriptor')
 		print "My security desciptor : %s"%id_sd
 		sd = self.sd_table.find({"sd_id":id_sd}).limit(1)[0]
-		pretty(sd)
 		return sd
-		return dn
+
+        l_l = doc.create_list("Node information")
 
 	try:
 		steps=options.cn.split(":")
@@ -66,29 +69,31 @@ class DNTree(Miner):
 			if ["$ROOT_OBJECT$\x00"]+steps == [a['name'] for a in ancestors]:
 				the_node=node
 				break
-		the_node['name']	
+		l_l.add("Node '%s' security descriptor %s DNT_col: %s" % (the_node['name'], the_node.get('nTSecurityDescriptor'), the_node.get('DNT_col')))
+		l_l.finished()
 	except:
-		l.add("No such node %s"%options.cn)
-		l.finished()
+		l_l.add("No such node %s"%options.cn)
+		l_l.finished()
 		return
 
 	# Displaying dinstinguish name
-	l.add("Ancestors:")
+        l_m = doc.create_list("Distinguished name")
 	dn = self.dnames.find({"DNT_col":node['DNT_col']}).limit(1)[0]
-	l.add(dn['DName'])
-	l.add("")
+	l_m.add(dn['DName'])
+	l_m.finished()
 	
 	# Displaying Siblings
-	l.add("Siblings:")
+        l_n = doc.create_list("Siblings")
 	siblings=find_siblings(the_node)
 	for n in sorted([ str(s['name']) for s in siblings], key=str.lower):
-		l.add(n)
+		l_n.add(n)
+        l_n.finished()
 
 	if options.ace:
 		# Displaying ACE
 		acl = find_ACE(node)  
+		pretty(acl, doc)
 
-        l.finished()
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.datatable, "name")
