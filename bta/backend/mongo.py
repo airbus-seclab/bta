@@ -8,6 +8,7 @@ from bta.normalization import TypeFactory,Normalizer
 from bta.backend import Backend, BackendTable
 import bson.binary
 import bta.sd
+import bta.datatable
 import bta.tools.decoding
 import logging
 import functools
@@ -77,6 +78,12 @@ class MongoGUID(MongoNormalizer):
         if val:
             return bta.tools.decoding.decode_guid(val)
         return None
+
+class MongoUserAccountControl(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.UserAccountControl(val).to_json()
+        return None
     
 class MongoSecurityDescriptor(MongoNormalizer):
     def normal(self, val):
@@ -102,6 +109,8 @@ class MongoTypeFactory(TypeFactory):
         return MongoGUID()
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
+    def UserAccountControl(self):
+        return MongoUserAccountControl()
     def UnknownType(self):
         return MongoUnknownNormalizer()
 
