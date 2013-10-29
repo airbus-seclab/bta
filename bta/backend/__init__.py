@@ -39,8 +39,8 @@ class BackendTable(object):
     def create(self):
         raise NotImplementedError("Table.create()")
 
-    def create_fields(self, columns):
-        raise NotImplementedError("Table.create_fields()")
+    def create_with_fields(self, columns):
+        raise NotImplementedError("Table.create_with_fields()")
     def insert_fields(self, values):
         raise NotImplementedError("Table.insert_fields()")
     def create_index(self, colname):

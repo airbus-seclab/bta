@@ -79,7 +79,7 @@ class ESETable(object):
         metatable = self.backend.open_table(self._tablename_+"_meta")
 
         table = self.backend.open_table(self._tablename_)
-        table.create_fields(columns)
+        table.create_with_fields(columns)
         for idx in self._indexes_:
             table.create_index(idx)
         self.parse_file(table)
