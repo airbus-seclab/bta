@@ -34,6 +34,19 @@ class DNTree(Miner):
 
             return siblings
 
+        # Displaying Siblings
+        def display_siblings(node, l_n, recursive):
+            siblings=find_siblings(node)
+            if recursive!=0:
+                for s in siblings:
+                    if len(find_siblings(s))==0 or recursive==1:
+                        l_n.add(u"%s"%s['name'])
+                    else:
+                        l_m=l_n.create_list(s['name'])
+                        display_siblings(s, l_m, recursive-1)
+                        l_m.finished()
+
+        # Display all value nicely (human readable)
         def pretty(d, doc, indent=0):
             for key, value in d.iteritems():
                 if isinstance(value, dict):
@@ -56,7 +69,26 @@ class DNTree(Miner):
                         if type(value) is bson.binary.Binary:
                             doc.add(u"%s:%s"%(str(key), value.encode('hex')))
                         else:
-                            doc.add(u"%s:%s"%(str(key), str(value)))
+                            if str(key) == "SID":
+                                # Find object
+                                c = self.datatable.find({"objectSid":str(value)},{"name":1,"PDNT_col":1})
+                                good=c[0]
+                                # If several choice we take the one under WellKnown Security Principals
+                                if c.count()>1:
+                                    #Wellknown security Principals id:
+                                    WSP_id = self.datatable.find({"name":"WellKnown Security Principals"},{"DNT_col":1}).limit(1)[0].get('DNT_col')
+                                    for o in c:
+                                        if o.get('PDNT_col')==WSP_id:
+                                            good=o
+                                            break
+                                doc.add(u"%s:%s (%s)"%(str(key), good.get('name'), str(value)))
+
+                            elif str(key) == "ObjectType":
+                                doc.add(u"%s:%s (%s)"%(str(key), self.guid.find({"id":str(value)},{"name":1}).limit(1)[0].get('name'), str(value)))
+                            elif str(key) == "InheritedObjectType":
+                                doc.add(u"%s:%s (%s)"%(str(key), self.guid.find({"id":str(value)},{"name":1}).limit(1)[0].get('name'), str(value)))
+                            else:
+                                doc.add(u"%s:%s"%(str(key), str(value)))
 
         def find_ACE(node):
             ace=list()
@@ -89,23 +121,12 @@ class DNTree(Miner):
         l_m.add(dn['DName'])
         l_m.finished()
     
-        # Displaying Siblings
-        def display_siblings(node, l_n, recursive):
-            siblings=find_siblings(node)
-            if recursive!=0:
-                for s in siblings:
-                    if len(find_siblings(s))==0 or recursive==1:
-                        l_n.add(u"%s"%s['name'])
-                    else:
-                        l_m=l_n.create_list(s['name'])
-                        display_siblings(s, l_m, recursive-1)
-                        l_m.finished()
-            #if len(siblings)==0:
-            #    for n in sorted([ str(s['name']) for s in siblings], key=str.lower):
-            #        l_n.add(n)
 
+        depth = 1
+        if options.rec:
+            depth=int(options.rec)
         l_n = doc.create_list("Siblings")
-        display_siblings(the_node, l_n, recursive=int(options.rec))
+        display_siblings(the_node, l_n, recursive=depth)
         l_n.finished()
 
 

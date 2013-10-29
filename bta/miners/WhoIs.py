@@ -3,6 +3,7 @@
 
 from bta.miner import Miner
 from pprint import pprint
+import bson.binary
 
 @Miner.register
 class WhoIs(Miner):
@@ -22,7 +23,10 @@ class WhoIs(Miner):
         for r in c:
             t = sec.create_table("Name=[%s]" % r.get("name",""))
             for k,v in r.iteritems():
-                t.add([k,v])
+                if type(v) is bson.binary.Binary:
+                    t.add([k, v.encode('hex')])
+                else:
+                    t.add([k,v])
             t.finished()
 
     def assert_consistency(self):
