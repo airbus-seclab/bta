@@ -139,13 +139,10 @@ def acl_to_json(acl):
         typeraw,flags,size = struct.unpack_from("<BBH", acestr)
         type_ = ACEType(typeraw)
         ACE = {}
-        ACE["TypeRaw"] = typeraw
         ACE["Type"] = type_.to_json()
-        ACE["FlagsRaw"] = flags
         ACE["Flags"] = ACEFlags(flags).to_json()
         ACE["Size"] = size
         amask, = struct.unpack_from("<I", acestr[4:])
-        ACE["AccessMaskRaw"] = amask
         ACE["AccessMask"] = AccessMask(amask).to_json()
         
         
@@ -155,7 +152,6 @@ def acl_to_json(acl):
             objflagsraw, = struct.unpack_from("<I", sstr)
             sstr = sstr[4:]
             objflags = ACEObjectFlags(objflagsraw)
-            ACE["ObjectFlagsRaw"] = objflagsraw
             ACE["ObjectFlags"] = objflags.to_json()
             if objflags.ObjectTypePresent:
                 ACE["ObjectType"] = tools.decoding.decode_guid(sstr[:16])
@@ -202,7 +198,6 @@ def sd_to_json(sd):
     ctrl = ControlFlags(rctrl)
     
     jsd["Revision"] = rev
-    jsd["ControlRaw"] = rctrl
     jsd["Control"] = ctrl.to_json()
     if ctrl.SelfRelative:
         jsd["Owner"] = tools.decoding.decode_sid(sd[owner:])

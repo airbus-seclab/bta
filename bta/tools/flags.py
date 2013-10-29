@@ -18,7 +18,7 @@ class Flags(object):
         j = {}
         for k,v in self._flags_.iteritems():
             j[k] = self.test_flag(v)
-        return j
+        return {"value":self.flags,"flags":j}
 
 
 class Enums(object):
