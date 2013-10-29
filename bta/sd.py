@@ -3,6 +3,7 @@
 
 import struct
 import tools.decoding
+from tools.flags import Flags, Enums
 
 # Heavily inspired by reading WinNT.h
 
@@ -49,41 +50,6 @@ class ACE(object):
         type,flags,size = struct.unpack_from("<BBH", ace)
         
     
-
-
-class Flags(object):
-    _flags_ = {}
-    def __init__(self, flags):
-        self.flags = flags
-
-    def test_flag(self, f):
-        return bool(self.flags & f == f)
-
-    def __getattr__(self, attr):
-        if attr in self._flags_:
-            return self.test_flag(self._flags_[attr])
-        raise AttributeError(attr)
-
-    def to_json(self):
-        j = {}
-        for k,v in self._flags_.iteritems():
-            j[k] = self.test_flag(v)
-        return j
-    
-        
-
-
-class Enums(object):
-    def __init__(self, val):
-        renum = {}
-        for k,v in self._enum_.iteritems():
-            renum[v] = k
-        self.renum = renum
-        self.val = val
-        self.text = self.renum.get(val, "unk:%r" % val)
-    def to_json(self):
-        return self.text
-        
 
 class ACEType(Enums):
     _enum_ = {
@@ -186,13 +152,10 @@ def acl_to_json(acl):
         typeraw,flags,size = struct.unpack_from("<BBH", acestr)
         type_ = ACEType(typeraw)
         ACE = {}
-        ACE["TypeRaw"] = typeraw
         ACE["Type"] = type_.to_json()
-        ACE["FlagsRaw"] = flags
         ACE["Flags"] = ACEFlags(flags).to_json()
         ACE["Size"] = size
         amask, = struct.unpack_from("<I", acestr[4:])
-        ACE["AccessMaskRaw"] = amask
         ACE["AccessMask"] = AccessMask(amask).to_json()
         
         
@@ -202,7 +165,6 @@ def acl_to_json(acl):
             objflagsraw, = struct.unpack_from("<I", sstr)
             sstr = sstr[4:]
             objflags = ACEObjectFlags(objflagsraw)
-            ACE["ObjectFlagsRaw"] = objflagsraw
             ACE["ObjectFlags"] = objflags.to_json()
             if objflags.ObjectTypePresent:
                 ACE["ObjectType"] = tools.decoding.decode_guid(sstr[:16])
@@ -249,7 +211,6 @@ def sd_to_json(sd):
     ctrl = ControlFlags(rctrl)
     
     jsd["Revision"] = rev
-    jsd["ControlRaw"] = rctrl
     jsd["Control"] = ctrl.to_json()
     if ctrl.SelfRelative:
         jsd["Owner"] = tools.decoding.decode_sid(sd[owner:])

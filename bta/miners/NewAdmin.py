@@ -27,10 +27,8 @@ class NewAdmin(Miner):
             ]}
         
         for subject in self.datatable.find(req):
-            uAcc = subject['userAccountControl']
-            npwdreq = uAcc&0x20
-            pwdnoexp = uAcc&0x10000
-            if(npwdreq or pwdnoexp):
+            uAcc = subject['userAccountControl']['flags']
+            if(uAcc['passwdNotrequired'] or uAcc['dontExpirePassword']):
                 result.append([subject['cn'], 'STRANGE', subject['objectSid']])
             else:
                 result.append([subject['cn'], subject['userAccountControl'], subject['objectSid']])
@@ -61,5 +59,5 @@ class NewAdmin(Miner):
         self.assert_field_exists(self.datatable, "whenCreated")
         self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
         self.assert_field_type(self.datatable, "name", str, unicode)
-        self.assert_field_type(self.datatable, "userAccountControl", int)
+        self.assert_field_type(self.datatable, "userAccountControl", dict)
         self.assert_field_type(self.datatable, "cn", str, unicode)

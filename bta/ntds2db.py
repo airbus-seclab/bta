@@ -130,9 +130,9 @@ class Datatable(ESETable):
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
         ESEColumn("Ancestors_col", "Ancestors_col", "Ancestors", True),
+        ESEColumn("userAccountControl", "ATTj589832", "UserAccountControl", False),
         ]
     _indexes_ = [ "rightsGuid" ]
-
 
     ATTRIBUTE_ID = 131102      # ATTc131102
     ATTRIBUTE_SYNTAX = 131104  # ATTc131104

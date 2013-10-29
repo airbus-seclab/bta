@@ -22,13 +22,11 @@ class Backend(object):
         pass
         
     def create_table(self):
-        pass
-
+        raise NotImplementedError("Backend.create_table()")
     def open_table(self):
-        pass
-
-    def add_col(self, coldef):
-        self.columns.append(coldef)
+        raise NotImplementedError("Backend.open_table()")
+    def list_tables(self):
+        raise NotImplementedError("Backend.list_tables()")
 
 
 
@@ -38,7 +36,26 @@ class BackendTable(object):
         self.db = db
         self.name = name
 
-    def insert(self, values):
-        raise NotImplementedError("Table.insert()")
+    def create(self):
+        raise NotImplementedError("Table.create()")
+
+    def create_fields(self, columns):
+        raise NotImplementedError("Table.create_fields()")
+    def insert_fields(self, values):
+        raise NotImplementedError("Table.insert_fields()")
+    def create_index(self, colname):
+        raise NotImplementedError("Table.create_index()")
+
     def count(self):
         raise NotImplementedError("Table.count()")
+    def find(self, *args, **kargs):
+        raise NotImplementedError("Table.find()")
+    def find_one(self, *args, **kargs):
+        raise NotImplementedError("Table.find_one()")
+
+    def insert(self, values):
+        raise NotImplementedError("Table.insert()")
+    def update(self, *args):
+        raise NotImplementedError("Table.update()")
+
+
