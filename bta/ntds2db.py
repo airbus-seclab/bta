@@ -88,6 +88,7 @@ class ESETable(object):
         self.options.dblog.update_entry("Start of creation of metatable for [%s]" % self._tablename_)
 
         log.info("Creating metatable")
+        metatable.create()
         for col in columns:
             metatable.insert(col.to_json())
         self.options.dblog.update_entry("End of creation of metatable for [%s]" % self._tablename_)
