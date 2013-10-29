@@ -54,10 +54,10 @@ class Info(Miner):
 
         if options.verbose:
             tbl = s2.create_table("datatable columns")
-            tbl.add(("name", "attname", "type", "number of records"))
+            tbl.add(("name", "attname", "type"))
             tbl.add()
             for r in self.datatable_meta.find():
-                tbl.add((r["name"], r["attname"], r["type"],r["count"] ))
+                tbl.add((r["name"], r["attname"], r["type"] ))
             tbl.finished()
         
         if options.verbose:
