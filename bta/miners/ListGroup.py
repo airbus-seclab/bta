@@ -44,6 +44,8 @@ class ListGroup(Miner):
                 members.add(membership)
             else:
                 print '***** Unknown category (%d) for %s' % (category, sid)
+        if len(members)==0:
+            members.add((grpsid,'empty',''))
         return members
         
     def getInfo_fromSid(self, sid):
@@ -107,7 +109,7 @@ class ListGroup(Miner):
         
         listemptyGroup=[]
         for groupSid,membership in groups.items():
-            if len(membership) == 0: 
+            if len(membership)==0: 
                 listemptyGroup.append(groupSid)
                 continue
                 
@@ -128,7 +130,7 @@ class ListGroup(Miner):
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
                 flags = sidobj.getUserAccountControl()
-                table.add((member, deleted or '', flags, fromgrp))
+                table.add((member, deleted or '', flags if flags!='' else 'emptygroup', fromgrp))
             table.finished()
 
             for sid,deleted,fromgrp in deleted_last(membership):
@@ -147,6 +149,7 @@ class ListGroup(Miner):
             table = doc.create_table("Empty groups")
             table.add(headers)
             table.add()
+            print "@@@",listemptyGroup
             for groupSid in listemptyGroup:
                 info = self.getInfo_fromSid(groupSid)
                 name = info['cn']
