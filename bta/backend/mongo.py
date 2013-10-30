@@ -153,7 +153,7 @@ class MongoTable(BackendTable):
         if self.name not in self.db.collection_names():
             self.col = self.db.create_collection(self.name)
 
-    def create_fields(self, columns):
+    def create_with_fields(self, columns):
         self.fields = [(c.name, getattr(self.typefactory, c.type)())  for c in columns]
         self.create()
         for c in columns:
