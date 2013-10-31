@@ -79,6 +79,24 @@ class MongoGUID(MongoNormalizer):
             return bta.tools.decoding.decode_guid(val)
         return None
 
+class MongoTrustAttributes(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustAttributes(val).to_json()
+        return None
+
+class MongoTrustType(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustType(val).to_json()
+        return None
+
+class MongoTrustDirection(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustDirection(val).to_json()
+        return None
+
 class MongoUserAccountControl(MongoNormalizer):
     def normal(self, val):
         if val is not None:
@@ -117,6 +135,12 @@ class MongoTypeFactory(TypeFactory):
         return MongoSecurityDescriptor()
     def Ancestors(self):
 	    return MongoAncestors()
+    def TrustAttributes(self):
+        return MongoTrustAttributes()
+    def TrustType(self):
+        return MongoTrustType()
+    def TrustDirection(self):
+        return MongoTrustDirection()
     def UserAccountControl(self):
         return MongoUserAccountControl()
     def UnknownType(self):

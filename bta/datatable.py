@@ -28,3 +28,28 @@ class UserAccountControl(Flags):
         "trustedToAuthForDelegation":   0x01000000,
         "partialSecretsAccount":        0x04000000,
     }
+
+class TrustAttributes(Flags):
+    _flags_ = {
+        "NON_TRANSITIVE": 0x00000001,
+        "UPLEVEL_ONLY": 0x00000002,
+        "QUARANTINED_DOMAIN": 0x00000004,
+        "FOREST_TRANSITIVE": 0x00000008,
+        "CROSS_ORGANIZATION": 0x00000010,
+        "WITHIN_FOREST": 0x00000020,
+        "TREAT_AS_EXTERNAL": 0x00000040,
+        "USES_RC4_ENCRYPTION": 0x00000080,
+    }
+class TrustType(Enums):
+    _enum_ = {
+        "DOWNLEVEL": 0x00000001,
+        "UPLEVEL": 0x00000002,
+        "MIT": 0x00000003,
+    }
+class TrustDirection(Enums):
+    _enum_ = {
+        "DISABLED": 0x00000000,
+        "INBOUND": 0x00000001,
+        "OUTBOUND": 0x00000002,
+        "BIDIRECTIONAL": 0x00000003,
+    }

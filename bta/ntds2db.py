@@ -130,7 +130,10 @@ class Datatable(ESETable):
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
-        ESEColumn("Ancestors_col", "Ancestors_col", "Ancestors", True),
+        ESEColumn("Ancestors_col", "Ancestors_col", "Ancestors", False),
+        ESEColumn("trustAttributes", "ATTj590294", "TrustAttributes", False),
+        ESEColumn("trustType", "ATTj589960", "TrustType", False),
+        ESEColumn("trustDirection", "ATTj589956", "TrustDirection", False),
         ESEColumn("userAccountControl", "ATTj589832", "UserAccountControl", False),
         ]
     _indexes_ = [ "rightsGuid" ]
