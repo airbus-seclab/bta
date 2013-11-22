@@ -64,7 +64,8 @@ class DNTree(Miner):
                     if value == True:
                         doc.add(u'%s'%key)
                     elif value == False:
-                        doc.add(u'NOT %s'%key)
+                        continue
+                    #    doc.add(u'NOT %s'%key)
                     else:
                         if type(value) is bson.binary.Binary:
                             doc.add(u"%s:%s"%(str(key), value.encode('hex')))
