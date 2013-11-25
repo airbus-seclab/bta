@@ -106,6 +106,7 @@ def SID2String(sid):
 
 def SID2StringFull(sid, datatable):
   import re
+
   for k,v in WellKnownSID.items():
     if re.match("^%s$"%v,sid) is not None:
       # Do we have a variable part to retreive ?
@@ -113,6 +114,11 @@ def SID2StringFull(sid, datatable):
       if v.count(".*")==1:
         variable = "of %s "%str(datatable.find_one({"objectSid":sid[:-4]},{"name":1})["name"])
       return "%s %s(%s)"%(k, variable, sid)
+
+  obj = datatable.find_one({"objectSid":sid})
+  if obj is not None:
+      return "%s (%s)"%(obj["cn"], sid)
+
   return sid
 
 def String2SID(name):
