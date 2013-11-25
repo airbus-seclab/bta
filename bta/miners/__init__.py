@@ -3,5 +3,5 @@
 
 __all__ = [ "info", "grep_dn", "SDusers", "passwords", "MailBoxRights", "Membership", 
             "ListGroup", "ListACE", "WhoIs", "SDProp", "Schema", "NewAdmin", "ListObject",
-	        "tree_dn", "CheckUAC", "AdminCountCheck", "TrustLink",
+	        "DNTree", "CheckUAC", "AdminCountCheck", "TrustLink",
             ]
