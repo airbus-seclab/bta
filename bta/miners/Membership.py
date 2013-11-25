@@ -3,6 +3,7 @@
 
 from bta.miner import Miner
 from collections import defaultdict
+from bta.tools.WellKnownSID import SID2StringFull
 
 @Miner.register
 class Membership(Miner):
@@ -39,7 +40,8 @@ class Membership(Miner):
                 group = self.datatable.find_one({'DNT_col': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
                 if group:
                     groups.add(group['cn'])
-            table.add([user["objectSid"], user["cn"], ', '.join(groups)])
+
+            table.add([SID2StringFull(user["objectSid"], self.datatable), user["cn"], ', '.join(groups)])
         table.finished()
     
     def assert_consistency(self):
