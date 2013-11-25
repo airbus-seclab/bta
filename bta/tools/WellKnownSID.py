@@ -105,8 +105,8 @@ def SID2String(sid):
   return sid
 
 def SID2StringFull(sid, datatable):
+  # Try to resolve with well known SID
   import re
-
   for k,v in WellKnownSID.items():
     if re.match("^%s$"%v,sid) is not None:
       # Do we have a variable part to retreive ?
@@ -115,10 +115,17 @@ def SID2StringFull(sid, datatable):
         variable = "of %s "%str(datatable.find_one({"objectSid":sid[:-4]},{"name":1})["name"])
       return "%s %s(%s)"%(k, variable, sid)
 
+  # Try to resolve if it's an user in datatable
   obj = datatable.find_one({"objectSid":sid})
   if obj is not None:
       return "%s (%s)"%(obj["cn"], sid)
 
+  #Try to resolve if it is an object type
+  obj = datatable.find_one({"schemaIDGUID":sid})
+  if obj is not None:
+      return "%s (%s)"%(obj["cn"], sid)
+
+  # If everything failed just return the sid
   return sid
 
 def String2SID(name):
@@ -126,4 +133,3 @@ def String2SID(name):
     return WellKnownSID[name]
   else:
     return name
-
