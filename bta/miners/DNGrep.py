@@ -24,9 +24,9 @@ class DNGrep(Miner):
             r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
             return find_dn(r2)+"."+cn
     
-        c = self.datatable.find({"cn":options.cn})
+        c = self.datatable.find({"cn":{"$regex":".*%s.*"%options.cn, "$options": 'i'}})
         for r in c:
-            l.add("%s: %s" % (r.get("cn"),find_dn(r)))
+            l.add("%s: %s" % ((r.get("cn")if not "None" else ""),find_dn(r)))
         l.finished()
         
     def assert_consistency(self):
