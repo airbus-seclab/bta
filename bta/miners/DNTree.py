@@ -4,6 +4,7 @@
 from bta.miner import Miner
 from struct import unpack_from
 from base64 import b64decode
+from bta.miners.tools import Family
 import bson.binary
 
 @Miner.register
@@ -19,27 +20,12 @@ class DNTree(Miner):
     def run(self, options, doc):
         doc.add("Display the tree of all objects in the database")
 
-
-        def find_parents(node):
-            parents=list()
-            for a in node['Ancestors_col']:
-                parents.append(self.datatable.find({"DNT_col":a}).limit(1)[0])
-            return parents
-
-        def find_siblings(node):
-            siblings=list()
-            id_siblings=[s["DNT_col"] for s in self.datatable.find({"PDNT_col":node['DNT_col']},{"DNT_col":1})]
-            for i in id_siblings:
-                siblings.append(self.datatable.find({"DNT_col":i}).limit(1)[0])
-
-            return siblings
-
         # Displaying Siblings
         def display_siblings(node, l_n, recursive):
-            siblings=find_siblings(node)
+            siblings=Family.find_siblings(node, self.datatable)
             if recursive!=0:
                 for s in siblings:
-                    if len(find_siblings(s))==0 or recursive==1:
+                    if len(Family.find_siblings(s, self.datatable))==0 or recursive==1:
                         l_n.add(u"%s"%s['name'])
                     else:
                         l_m=l_n.create_list(s['name'])
@@ -104,7 +90,7 @@ class DNTree(Miner):
             the_node=None
             nodes = self.datatable.find({"name":steps[-1]})
             for node in nodes:
-                ancestors=find_parents(node)
+                ancestors=Family.find_parents(node, self.datatable)
                 #print "I compare %s to %s"%(["$ROOT_OBJECT$"]+steps,[a['name'].rstrip() for a in ancestors])
                 if ["$ROOT_OBJECT$\x00"]+steps == [a['name'] for a in ancestors]:
                     the_node=node

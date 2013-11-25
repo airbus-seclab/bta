@@ -6,6 +6,24 @@ import os, sys
 load_rid_path=os.path.join(os.environ['HOME'], 'local_rid.py')
 local_relative_domains_sid=None
 
+class Family(object):
+    @classmethod
+    def find_siblings(cls, node, datatable):
+        siblings=list()
+        id_siblings=[s["DNT_col"] for s in datatable.find({"PDNT_col":node['DNT_col']},{"DNT_col":1})]
+        for i in id_siblings:
+            siblings.append(datatable.find({"DNT_col":i}).limit(1)[0])
+        return siblings
+
+    @classmethod
+    def find_parents(cls, node, datatable):
+        parents=list()
+        for a in node['Ancestors_col']:
+            parents.append(datatable.find({"DNT_col":a}).limit(1)[0])
+        return parents
+
+
+
 class Sid(object):
     def __init__(self, sid, dt):
         try:
