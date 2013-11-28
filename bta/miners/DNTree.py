@@ -21,15 +21,15 @@ class DNTree(Miner):
         doc.add("Display the tree of all objects in the database")
 
         # Displaying Siblings
-        def display_siblings(node, l_n, recursive):
-            siblings=Family.find_siblings(node, self.datatable)
+        def display_childs(node, l_n, recursive):
+            childs=Family.find_childs(node, self.datatable)
             if recursive!=0:
-                for s in siblings:
-                    if len(Family.find_siblings(s, self.datatable))==0 or recursive==1:
+                for s in childs:
+                    if len(Family.find_childs(s, self.datatable))==0 or recursive==1:
                         l_n.add(u"%s"%s['name'])
                     else:
                         l_m=l_n.create_list(s['name'])
-                        display_siblings(s, l_m, recursive-1)
+                        display_childs(s, l_m, recursive-1)
                         l_m.finished()
 
         # Display all value nicely (human readable)
@@ -86,25 +86,18 @@ class DNTree(Miner):
         l_l = doc.create_list("Node information")
 
         try:
-            steps=options.cn.split(":")
-            the_node=None
-            nodes = self.datatable.find({"name":steps[-1]})
-            for node in nodes:
-                ancestors=Family.find_parents(node, self.datatable)
-                #print "I compare %s to %s"%(["$ROOT_OBJECT$"]+steps,[a['name'].rstrip() for a in ancestors])
-                if ["$ROOT_OBJECT$\x00"]+steps == [a['name'] for a in ancestors]:
-                    the_node=node
-                    break
+            the_node=Family.find_the_one(options.cn, self.datatable)
             l_l.add("Node '%s' security descriptor %s DNT_col: %s" % (the_node['name'], the_node.get('nTSecurityDescriptor'), the_node.get('DNT_col')))
             l_l.finished()
-        except:
+        except Exception as e:
             l_l.add("No such node %s"%options.cn)
             l_l.finished()
+            print e
             return
 
         # Displaying dinstinguish name
         l_m = doc.create_list("Distinguished name")
-        dn = self.dnames.find({"DNT_col":node['DNT_col']}).limit(1)[0]
+        dn = self.dnames.find({"DNT_col":the_node['DNT_col']}).limit(1)[0]
         l_m.add(dn['DName'])
         l_m.finished()
     
@@ -112,14 +105,14 @@ class DNTree(Miner):
         depth = 1
         if options.rec:
             depth=int(options.rec)
-        l_n = doc.create_list("Siblings")
-        display_siblings(the_node, l_n, recursive=depth)
+        l_n = doc.create_list("Childs")
+        display_childs(the_node, l_n, recursive=depth)
         l_n.finished()
 
 
         if options.ace:
         # Displaying ACE
-            acl = find_ACE(node) 
+            acl = find_ACE(the_node) 
             l_n=doc.create_list("ACEs") 
             pretty(acl, l_n)
             l_n.finished()
