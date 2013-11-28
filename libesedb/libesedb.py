@@ -243,7 +243,7 @@ class ESEValue(object):
                     value = "".join(segs)
 
             if self.flags & ValueFlags.MULTI_VALUE:
-                self.value = multi_native_type(self.type, value)
+                self.value = multi_native_type(self.flags, self.type, value)
             else:
                 self.value = native_type(self.type, value)
                 

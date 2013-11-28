@@ -18,7 +18,7 @@ log = logging.getLogger("bta.backend.mongo")
 def vectorize(f):
     @functools.wraps(f)
     def vect(self, val):
-        if type(val) is tuple:
+        if type(val) is tuple or type(val) is list:
             return [f(self, v) for v in val]
         return f(self, val)
     return vect
@@ -37,10 +37,12 @@ class MongoIntNormalizer(MongoNormalizer):
         return str(val)
 
 class MongoBinaryNormalizer(MongoNormalizer):
+    @vectorize
     def normal(self, val):
         return bson.binary.Binary(val)
 
 class MongoUnknownNormalizer(MongoNormalizer):
+    @vectorize
     def normal(self, val):
         if type(val) in [int, long]:
             if -0x8000000000000000 <= val < 0x8000000000000000:

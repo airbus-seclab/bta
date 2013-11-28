@@ -2,6 +2,8 @@
 # (c) EADS CERT and EADS Innovation Works
 
 import struct
+import logging
+log = logging.getLogger("libesedb.types")
 
 class Identifiers(object):
     class __metaclass__(type):
@@ -47,6 +49,7 @@ class ValueFlags(Identifiers):
     COMPRESSED      = 0x02
     LONG_VALUE      = 0x04
     MULTI_VALUE     = 0x08
+    FLAG_0x10       = 0x10 # from libesedb
 
 def decode_guid(s):
     part1 =  "%08x-%04x-%04x-" % struct.unpack("<IHH", s[:8])
@@ -91,43 +94,33 @@ converters = {
         decode_maybe_utf16,
  }
 
-
-multi_converters = {
-#    ColumnType.BOOLEAN:
-#        lambda x: bool(struct.unpack("c",x)[0]),
-#    ColumnType.FLOAT_32BIT :
-#        lambda x: struct.unpack("<f",x)[0],
-#    ColumnType.DOUBLE_64BIT :
-#        lambda x: struct.unpack("<d",x)[0],
-#    ColumnType.DATE_TIME :
-#        lambda x: datetime.datetime(x),
-
-#    ColumnType.GUID:
-#        lambda x: decode_guid(x),
-    ColumnType.INTEGER_8BIT_UNSIGNED:
-        lambda x: struct.unpack_from("<%iB"%len(x), x),
-    ColumnType.INTEGER_16BIT_SIGNED :
-        lambda x: struct.unpack_from("<%ih"%(len(x)/2), x),
-    ColumnType.INTEGER_16BIT_UNSIGNED :
-        lambda x: struct.unpack_from("<%iH"%(len(x)/2), x),
-    ColumnType.INTEGER_32BIT_SIGNED :
-        lambda x: struct.unpack_from("<%ii"%(len(x)/4), x),
-    ColumnType.INTEGER_32BIT_UNSIGNED :
-        lambda x: struct.unpack_from("<%iI"%(len(x)/4), x),
-    ColumnType.INTEGER_64BIT_SIGNED :
-        lambda x: struct.unpack_from("<%iq"%(len(x)/8), x),
-    ColumnType.CURRENCY :
-        lambda x: struct.unpack_from("<%iQ"%(len(x)/8), x),
- }
-
-
-
 def native_type(typ, val):
     if typ in converters:
         return converters[typ](val)
     return val
 
-def multi_native_type(typ, val):
-    if typ in multi_converters:
-        return multi_converters[typ](val)
-    return val
+def multi_native_type(flags, typ, val):
+    if flags & ValueFlags.FLAG_0x10 == 0:
+        try:
+            first, = struct.unpack_from("<H", val)
+            ofsb = list(struct.unpack_from("<%iH" % (first/2), val))
+        except Exception,e:
+            log.warning("ERROR decoding multivalue header: %s" % e)
+            return [val]
+    else:
+        length = ord(val[0])
+        ofsb = range(1, len(val), length)
+    ofse = ofsb[1:]+[len(val)]
+
+    try:
+        sval = [val[start:end] for start,end in zip(ofsb,ofse)]
+    except Exception,e:
+        log.warning("ERROR splitting multivalue: %s" % e)
+        return [val]
+
+    if typ in converters:
+        try:
+            sval = map(converters[typ], sval)
+        except Exception,e:
+            log.warning("ERROR converting multivalue: %s" % e)
+    return sval
