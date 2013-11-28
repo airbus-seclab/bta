@@ -117,6 +117,13 @@ class MongoAncestors(MongoNormalizer):
             return bta.tools.decoding.decode_ancestors(val)
         return None
 
+class MongoOID(MongoNormalizer):
+    @vectorize
+    def normal(self, val):
+        if val is not None:
+            return bta.tools.decoding.decode_OID(val)
+        return None
+
 
 class MongoTypeFactory(TypeFactory):
     def Text(self):
@@ -135,8 +142,6 @@ class MongoTypeFactory(TypeFactory):
         return MongoGUID()
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
-    def Ancestors(self):
-	    return MongoAncestors()
     def TrustAttributes(self):
         return MongoTrustAttributes()
     def TrustType(self):
@@ -147,6 +152,10 @@ class MongoTypeFactory(TypeFactory):
         return MongoUserAccountControl()
     def UnknownType(self):
         return MongoUnknownNormalizer()
+    def Ancestors(self):
+	    return MongoAncestors()
+    def OID(self):
+	    return MongoOID()
 
 class MongoTable(BackendTable):
     def __init__(self, options, db, name):

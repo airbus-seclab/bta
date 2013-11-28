@@ -165,7 +165,7 @@ class Datatable(ESETable):
 
     type2type = {
         "DN": ("Text",False),
-        "OID": ("Text",False),
+        "OID": ("OID",False),
         "CaseExactString" : ("Text",False),
         "GeneralizedTime" : ("Timestamp",False),
         "Integer8": ("Int",False),

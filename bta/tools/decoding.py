@@ -2,6 +2,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 import struct
+import bta.datatable
 
 def decode_sid(s, endianness="<"):
     "Depending on the source, last sub-authority will be little or big endian"
@@ -23,6 +24,11 @@ def decode_guid(s):
     return part1+part2
 
 def decode_ancestors(ancestors):
-        nb_ancestors = len(ancestors)/4
-        id_ancestors = struct.unpack_from('i'*nb_ancestors,ancestors)
-        return id_ancestors
+    nb_ancestors = len(ancestors)/4
+    id_ancestors = struct.unpack_from('i'*nb_ancestors,ancestors)
+    return id_ancestors
+
+def decode_OID(OID_interger):
+    return "%s%s"%(bta.datatable.OIDPrefix(OID_interger&0xffff0000).to_json(), OID_interger&0xffff)
+    
+    
