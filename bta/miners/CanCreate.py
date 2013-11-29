@@ -24,17 +24,22 @@ class CanCreate(Miner):
         req_filter = {'sd_value.DACL.ACEList.SID':1, 
                   'sd_value.DACL.ACEList.AccessMask.flags.ADSRightDSCreateChild':1, 
                   'sd_id':1,
-                  'sd_value.DACL.ACEList.ObjectType':1}
-                   
+                  'sd_value.DACL.ACEList.ObjectType':1,
+                  'sd_value.DACL.ACEList.Type':1}
         for sd in self.sd_table.find(req,req_filter):
-            #print "With sd number %s "%(sd["sd_id"])
+            # Making the list of deny access
+            denied_ace=list()
+            for ace in sd["sd_value"]["DACL"]["ACEList"]:
+                if ace["Type"] == "AccessDeniedObject" and ace["AccessMask"]["flags"]["ADSRightDSCreateChild"]:
+                    denied_ace.append((ace["SID"],SID2StringFull(ace["ObjectType"],self.datatable,only_converted=True)))
+
             result[u"%s"%sd["sd_id"]]=list()
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
                 who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING !"
-                string_who=SID2StringFull(who,self.datatable,only_converted=True)
-                if (ace["AccessMask"]["flags"]["ADSRightDSCreateChild"] and string_who in [searchedType, "EVERYTHING !"]):
-                    result[u"%s"%sd["sd_id"]].append("%s have the right to create %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
-                    #print "\t%s have the right to create %s"%(SID2StringFull(ace["SID"], self.datatable),SID2StringFull(who, self.datatable))
+                if (ace["SID"],searchedType) not in denied_ace:
+                    string_who=SID2StringFull(who,self.datatable,only_converted=True)
+                    if (ace["AccessMask"]["flags"]["ADSRightDSCreateChild"] and string_who in [searchedType, "EVERYTHING !"]):
+                        result[u"%s"%sd["sd_id"]].append("%s have the right to create %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
         return result
 
     def run(self, options, doc):
