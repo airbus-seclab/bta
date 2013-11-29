@@ -98,38 +98,47 @@ WellKnownSID = {'ML_PROTECTED_PROCESS': 'S-1-16-20480',
                 'CLONEABLE_CONTROLLERS': 'S-1-5-21-.*-522',} 
 
 def SID2String(sid):
-  import re
-  for k,v in WellKnownSID.items():
-    if re.match("^%s$"%v,sid) is not None:
-      return k
-  return sid
+    import re
+    for k,v in WellKnownSID.items():
+        if re.match("^%s$"%v,sid) is not None:
+            return k
+    return sid
 
-def SID2StringFull(sid, datatable):
+def SID2StringFull(sid, datatable, only_converted=False):
   # Try to resolve with well known SID
-  import re
-  for k,v in WellKnownSID.items():
-    if re.match("^%s$"%v,sid) is not None:
-      # Do we have a variable part to retreive ?
-      variable=""
-      if v.count(".*")==1:
-        variable = "of %s "%str(datatable.find_one({"objectSid":sid[:-4]},{"name":1})["name"])
-      return "%s %s(%s)"%(k, variable, sid)
+    import re
+    for k,v in WellKnownSID.items():
+        if re.match("^%s$"%v,sid) is not None:
+          # Do we have a variable part to retreive ?
+          variable=""
+          if v.count(".*")==1:
+              variable = "of %s "%str(datatable.find_one({"objectSid":sid[:-4]},{"name":1})["name"])
+          if only_converted:
+              return u"%s"%k
+          else:
+              return "%s %s(%s)"%(k, variable, sid)
 
-  # Try to resolve if it's an user in datatable
-  obj = datatable.find_one({"objectSid":sid})
-  if obj is not None:
-      return "%s (%s)"%(obj["cn"], sid)
+      # Try to resolve if it's an user in datatable
+    obj = datatable.find_one({"objectSid":sid})
+    if obj is not None:
+        if only_converted:
+            return obj["cn"]
+        else:
+            return "%s (%s)"%(obj["cn"], sid)
 
-  #Try to resolve if it is an object type
-  obj = datatable.find_one({"schemaIDGUID":sid})
-  if obj is not None:
-      return "%s (%s)"%(obj["cn"], sid)
+    #Try to resolve if it is an object type
+    obj = datatable.find_one({"schemaIDGUID":sid})
+    if obj is not None:
+        if only_converted:
+            return obj["cn"]
+        else:
+            return "%s (%s)"%(obj["cn"], sid)
 
-  # If everything failed just return the sid
-  return sid
+    # If everything failed just return the sid
+    return sid
 
 def String2SID(name):
-  if name in WellKnownSID.keys():
-    return WellKnownSID[name]
-  else:
-    return name
+    if name in WellKnownSID.keys():
+        return WellKnownSID[name]
+    else:
+        return name
