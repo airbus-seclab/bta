@@ -200,15 +200,15 @@ class ESERecord(object):
         self.record = self.lib.table_get_record(self.table.table, record_num)
         try:
             self.value_entries = limit if limit is not None else range(self.lib.record_get_number_of_values(self.record))
-	    self.values=list()
-	    for i in self.value_entries:
-            	try:
-                	self.values.append(ESEValue(self, i))
-            	except:
-			a=ESEValue(self,1)
-			a.value="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-			self.values.append(a)
-                	log.warning("====> %r %r" % (ESEValue(self,0), ESEValue(self,1)))
+            self.values=list()
+            for i in self.value_entries:
+                try:
+                    self.values.append(ESEValue(self, i))
+                except:
+                    a=ESEValue(self,i)
+                    a.value=u"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                    self.values.append(a)
+                    log.warning("====> %r" % (ESEValue(self,i)))
 
         finally:
             self.lib.record_free(self.record)
