@@ -9,45 +9,53 @@ from bta.miners.tools import ObjectClass
 @Miner.register
 class CanCreate(Miner):
     _name_ = "CanCreate"
-    _desc_ = "This miner list all user who possess the right to create objects"
+    _desc_ = "This miner list all user who possess the right to create or delete objects"
     
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--root', help='Distinguished name for the search start')
+        parser.add_argument('--delete', help='Set to true for deletion rights')
         parser.add_argument("--rec", help="Recursive search deapth (-1 = infinite)")
         parser.add_argument('--obj', help='Type of object we can create (Common name needed) for exemple : User, Compter, Print-Queue, Group, Organizational-Unit, Container, Contact, ...')
     
-    def ACECreationRight(self, searchedType):
+    def ACECreationRight(self, searchedType, flag):
         result = dict()
         
-        req = {'sd_value.DACL.ACEList.AccessMask.flags.ADSRightDSCreateChild':True}
+        req = {'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:True}
         req_filter = {'sd_value.DACL.ACEList.SID':1, 
-                  'sd_value.DACL.ACEList.AccessMask.flags.ADSRightDSCreateChild':1, 
+                  'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:1, 
                   'sd_id':1,
                   'sd_value.DACL.ACEList.ObjectType':1,
                   'sd_value.DACL.ACEList.Type':1}
         for sd in self.sd_table.find(req,req_filter):
             # Making the list of deny access
             denied_ace=list()
-            for ace in sd["sd_value"]["DACL"]["ACEList"]:
-                if ace["Type"] == "AccessDeniedObject" and ace["AccessMask"]["flags"]["ADSRightDSCreateChild"]:
-                    denied_ace.append((ace["SID"],SID2StringFull(ace["ObjectType"],self.datatable,only_converted=True)))
-
             result[u"%s"%sd["sd_id"]]=list()
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
-                who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING !"
-                if (ace["SID"],searchedType) not in denied_ace:
+                if (ace["AccessMask"]["flags"][flag] and ace["Type"] == "AccessDeniedObject"):
+                    who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
+                    denied_ace.append((ace["SID"],SID2StringFull(who,self.datatable,only_converted=True)))
+                    # Uncomment if you want to see interdiction
+                    #string_who=SID2StringFull(who,self.datatable,only_converted=True)
+                    #result[u"%s"%sd["sd_id"]].append("%s have no right on %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
+
+            for ace in sd["sd_value"]["DACL"]["ACEList"]:
+                who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
+                if ((ace["SID"],searchedType) not in denied_ace) and ((ace["SID"],"EVERYTHING") not in denied_ace):
                     string_who=SID2StringFull(who,self.datatable,only_converted=True)
-                    if (ace["AccessMask"]["flags"]["ADSRightDSCreateChild"] and string_who in [searchedType, "EVERYTHING !"]):
-                        result[u"%s"%sd["sd_id"]].append("%s have the right to create %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
+                    if (ace["AccessMask"]["flags"][flag] and string_who in [searchedType, "EVERYTHING"]):
+                        result[u"%s"%sd["sd_id"]].append("----------%s have the right on %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
         return result
 
     def run(self, options, doc):
         if options.obj is None or options.obj=="":
             print "Usage <obj> is required !"
             exit(1)
-
-        SDs_can_create = self.ACECreationRight(options.obj)
+        flag="ADSRightDSCreateChild"
+        if options.delete=="true":
+            "DELETION RIGHTS"
+            flag="ADSRightDSDeleteChild"
+        SDs_can_create = self.ACECreationRight(options.obj, flag)
         #print SDs_can_create
         possibleSupperiors = ObjectClass.find_my_possuperiors(options.obj, self.datatable)
         #print possibleSupperiors
