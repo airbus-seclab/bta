@@ -12,7 +12,7 @@ class CheckUAC(Miner):
     
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('--check', help='List weird user access control Possible values to be checked: %s'%(", ".join(UserAccountControl._flags_.keys())))
+        parser.add_argument('--check', help='List weird user access control Possible values to be checked (comma separated list): %s'%(", ".join(UserAccountControl._flags_.keys())))
     
     def findRogue(self, flags):
         result = list()
