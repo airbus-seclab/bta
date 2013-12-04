@@ -46,8 +46,7 @@ class AdminCountCheck(Miner):
         adminAccountsMembers=list()
         for account in adminAccountsObjects:
             adminAccountsMembers+=LGMiner.get_members_of(account['objectSid'], True)
-
-        adminAccountsMembersSid=[a for a,b,c in adminAccountsMembers]
+        adminAccountsMembersSid=[a for a,b,c,d in adminAccountsMembers]
         # Find all accounts with adminCount=1
         accountsWithAdminCount=list()
         for a in self.datatable.find({'$and': [{'objectCategory': self.categories.person},{"adminCount":1}]}):
