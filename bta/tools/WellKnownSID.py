@@ -104,35 +104,29 @@ def SID2String(sid):
             return k
     return sid
 
-def SID2StringFull(sid, datatable, only_converted=False):
+def SID2StringFull(sid, guid_table, only_converted=False):
   # Try to resolve with well known SID
     import re
+    sid=sid.lower()
     for k,v in WellKnownSID.items():
-        if re.match("^%s$"%v,sid) is not None:
+        if re.match("^%s$"%v.lower(),sid) is not None:
           # Do we have a variable part to retreive ?
           variable=""
           if v.count(".*")==1:
-              variable = "of %s "%str(datatable.find_one({"objectSid":sid[:-4]},{"name":1})["name"])
+              print "I will find >%s<"%sid[:-4]
+              variable = "of %s "%str(guid_table.find_one({"id":sid[:-4]},{"name":1})["name"])
           if only_converted:
               return u"%s"%k
           else:
               return "%s %s(%s)"%(k, variable, sid)
 
-      # Try to resolve if it's an user in datatable
-    obj = datatable.find_one({"objectSid":sid})
+    #Try to resolve in guid table
+    obj = guid_table.find_one({"id":sid})
     if obj is not None:
         if only_converted:
-            return obj["cn"]
+            return obj["name"]
         else:
-            return "%s (%s)"%(obj["cn"], sid)
-
-    #Try to resolve if it is an object type
-    obj = datatable.find_one({"schemaIDGUID":sid})
-    if obj is not None:
-        if only_converted:
-            return obj["cn"]
-        else:
-            return "%s (%s)"%(obj["cn"], sid)
+            return "%s (%s)"%(obj["name"], sid)
 
     # If everything failed just return the sid
     return sid

@@ -32,7 +32,7 @@ class NewAdmin(Miner):
             if(uAcc['passwdNotrequired'] or uAcc['dontExpirePassword']):
                 result.append([subject['cn'], 'STRANGE', subject['objectSid']])
             else:
-                result.append([subject['cn'], ",".join([ a for a,b in subject['userAccountControl']['flags'].items() if b]), SID2StringFull(subject['objectSid'], self.datatable)])
+                result.append([subject['cn'], ",".join([ a for a,b in subject['userAccountControl']['flags'].items() if b]), SID2StringFull(subject['objectSid'], self.guid)])
         result.insert(0, [])
         result.insert(0, ["cn","accountType","SID"])
         return result

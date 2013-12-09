@@ -73,6 +73,9 @@ class PostProcessing(object):
         #guid for rights
         for id in self.dt.find({"rightsGuid": {"$exists": 1}}):
             guid.insert({"id":id["rightsGuid"].lower(), "name":id["name"]})
+        #ObjectId
+        for id in self.dt.find({"objectSid": {"$exists": 1}}):
+            guid.insert({"id":id["objectSid"].lower(), "name":id["name"]})
         
     @PostProcRegistry.register(depends={"category"})
     def domains(self):

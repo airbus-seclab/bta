@@ -34,7 +34,7 @@ class CanCreate(Miner):
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
                 if (ace["AccessMask"]["flags"][flag] and ace["Type"] == "AccessDeniedObject"):
                     who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
-                    denied_ace.append((ace["SID"],SID2StringFull(who,self.datatable,only_converted=True)))
+                    denied_ace.append((ace["SID"],SID2StringFull(who,self.guid,only_converted=True)))
                     # Uncomment if you want to see interdiction
                     #string_who=SID2StringFull(who,self.datatable,only_converted=True)
                     #result[u"%s"%sd["sd_id"]].append("%s have no right on %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
@@ -42,9 +42,9 @@ class CanCreate(Miner):
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
                 who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
                 if ((ace["SID"],searchedType) not in denied_ace) and ((ace["SID"],"EVERYTHING") not in denied_ace):
-                    string_who=SID2StringFull(who,self.datatable,only_converted=True)
+                    string_who=SID2StringFull(who,self.guid,only_converted=True)
                     if (ace["AccessMask"]["flags"][flag] and string_who in [searchedType, "EVERYTHING"]):
-                        result[u"%s"%sd["sd_id"]].append("----------%s have the right on %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
+                        result[u"%s"%sd["sd_id"]].append("----------%s have the right on %s"%(SID2StringFull(ace["SID"],self.guid),string_who))
         return result
 
     def run(self, options, doc):

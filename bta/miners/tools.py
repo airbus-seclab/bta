@@ -10,11 +10,11 @@ local_relative_domains_sid=None
 class Family(object):
     @classmethod
     def find_childs(cls, node, datatable):
-        childs=list()
-        id_childs=[s["DNT_col"] for s in datatable.find({"PDNT_col":node['DNT_col']},{"DNT_col":1})]
-        for i in id_childs:
-            childs.append(datatable.find({"DNT_col":i}).limit(1)[0])
-        return childs
+        #childs=list()
+        return list(datatable.find({"PDNT_col":node['DNT_col']}))
+        #for i in id_childs:
+        #    childs.append(datatable.find({"DNT_col":i}).limit(1)[0])
+        #return childs
 
     @classmethod
     def find_parents(cls, node, datatable):
@@ -92,6 +92,8 @@ class Family(object):
     def find_the_one(cls, cn, datatable):
         steps=cn.split(":")
         the_node=None
+        name = "%s"%steps[-1]
+        name = name.strip()
         nodes = datatable.find({"name":steps[-1]})
         for node in nodes:
             ancestors=Family.find_parents(node, datatable)

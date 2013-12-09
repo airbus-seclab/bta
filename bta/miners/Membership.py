@@ -41,7 +41,7 @@ class Membership(Miner):
                 if group:
                     groups.add(group['cn'])
 
-            table.add([SID2StringFull(user["objectSid"], self.datatable), user["cn"], ', '.join(groups)])
+            table.add([SID2StringFull(user["objectSid"], self.guid), user["cn"], ', '.join(groups)])
         table.finished()
     
     def assert_consistency(self):

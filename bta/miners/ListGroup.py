@@ -6,7 +6,7 @@ from bta.miners import ListACE
 from bta.miners.tools import Sid
 import datetime
 import subprocess 
-from bta.tools.WellKnownSID import SID2StringFull
+from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
 @Miner.register
 class ListGroup(Miner):
@@ -47,7 +47,7 @@ class ListGroup(Miner):
             else:
                 print '***** Unknown category (%d) for %s' % (category, sid)
         if len(members)==0:
-            members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.datatable)))
+            members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.guid)))
         return members
         
     def getInfo_fromSid(self, sid):
@@ -71,7 +71,6 @@ class ListGroup(Miner):
 	Mylist = list()	
 	for ace in aceList:
 	    info = self.getInfo_fromSid(ace['SID'])
-            from bta.tools.WellKnownSID import SID2String
             trustee_cn=info['cn']
             trustee_string=SID2String(info['cn'])
             trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
