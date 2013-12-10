@@ -113,8 +113,8 @@ def SID2StringFull(sid, guid_table, only_converted=False):
           # Do we have a variable part to retreive ?
           variable=""
           if v.count(".*")==1:
-              print "I will find >%s<"%sid[:-4]
-              variable = "of %s "%str(guid_table.find_one({"id":sid[:-4]},{"name":1})["name"])
+              #print "I will find >%s<"%sid[:-4]
+              variable = "of %s "%guid_table.find_one({"id":sid[:-4]},{"name":1}).get("name")
           if only_converted:
               return u"%s"%k
           else:
@@ -131,8 +131,11 @@ def SID2StringFull(sid, guid_table, only_converted=False):
     # If everything failed just return the sid
     return sid
 
-def String2SID(name):
+def Strings2SID(name, guid_table):
     if name in WellKnownSID.keys():
-        return WellKnownSID[name]
+        return [WellKnownSID[name]]
     else:
-        return name
+        results = guid_table.find({"name":name},{"id":1})
+        if results is not None:
+            return [t["id"] for t in results]
+        return [name]
