@@ -11,6 +11,8 @@ class Search4Rights(Miner):
     _name_ = "Search4Rights"
     _desc_ = "This miner list all user who possess a certain right on User and Computer objects"
     _rights_ = {'User-Force-Change-Password':['ADSRightDSControlAccess'], 
+                'Send-As':['ADSRightDSControlAccess'], 
+                'Receive-As':['ADSRightDSControlAccess'], 
                 'User-Account-Control':['GenericAll','ADSRightDSWriteProp', 'GenericWrite'],
                 'Lockout-Time':['GenericWrite', 'ADSRightDSWriteProp', 'GenericAll'],
                 'Script-Path':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
@@ -18,6 +20,7 @@ class Search4Rights(Miner):
                 'User-Workstations':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'Account-Expires':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'User-Account-Control':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'User-Principal-Name':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 #'':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 }
     _types_ = ["User", "Computer", "Group"]
