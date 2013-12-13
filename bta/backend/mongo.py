@@ -3,7 +3,6 @@
 
 import pymongo
 import struct
-from datetime import datetime
 from bta.normalization import TypeFactory,Normalizer
 from bta.backend import Backend, BackendTable
 import bson.binary
@@ -12,6 +11,7 @@ import bta.datatable
 import bta.tools.decoding
 import logging
 import functools
+from datetime import datetime,timedelta
 
 log = logging.getLogger("bta.backend.mongo")
 
@@ -124,6 +124,13 @@ class MongoOID(MongoNormalizer):
             return bta.tools.decoding.decode_OID(val)
         return None
 
+class MongoWindowsTimestamp(MongoNormalizer):
+    def normal(self, val):
+        val=val^0xffffffffffffffff
+        try:
+            return datetime.fromtimestamp(0)+timedelta(microseconds=(val/10))
+        except:
+            return datetime.fromtimestamp(0)
 
 class MongoTypeFactory(TypeFactory):
     def Text(self):
@@ -156,6 +163,8 @@ class MongoTypeFactory(TypeFactory):
 	    return MongoAncestors()
     def OID(self):
 	    return MongoOID()
+    def WindowsTimestamp(self):
+        return MongoWindowsTimestamp()
 
 class MongoTable(BackendTable):
     def __init__(self, options, db, name):
