@@ -35,7 +35,7 @@ Installing BTA
 
 Dependencies:
 
-* mongodb
+* mongodb (``apt-get install mongodb-server python-pymongo``)
 * libesedb http://code.google.com/p/libesedb/
 
 Installation:
