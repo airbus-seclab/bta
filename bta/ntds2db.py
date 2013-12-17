@@ -140,6 +140,7 @@ class Datatable(ESETable):
         ESEColumn("lockoutDuration", "ATTq589884", "WindowsTimestamp", False),
         ESEColumn("minPwdAge", "ATTq589902", "WindowsTimestamp", False),
         ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
+        ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
         ]
     _indexes_ = [ "rightsGuid" ]
 
@@ -175,6 +176,7 @@ class Datatable(ESETable):
         "GeneralizedTime" : ("Timestamp",False),
         "Integer8": ("Int",False),
         "NTSecurityDescriptor" : ("NTSecDesc",True),
+        "ReplPropertyMetaData" : ("ReplPropMeta",True),
         }
     
     def syntax_to_type(self, s):

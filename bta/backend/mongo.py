@@ -132,6 +132,10 @@ class MongoWindowsTimestamp(MongoNormalizer):
         except:
             return datetime.fromtimestamp(0)
 
+class MongoReplPropMeta(MongoNormalizer):
+    def normal(self, val):
+        return bta.tools.decoding.decode_ReplPropMeta(val)
+
 class MongoTypeFactory(TypeFactory):
     def Text(self):
         return MongoTextNormalizer()
@@ -165,6 +169,8 @@ class MongoTypeFactory(TypeFactory):
 	    return MongoOID()
     def WindowsTimestamp(self):
         return MongoWindowsTimestamp()
+    def ReplPropMeta(self):
+        return MongoReplPropMeta()
 
 class MongoTable(BackendTable):
     def __init__(self, options, db, name):
