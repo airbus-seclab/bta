@@ -50,7 +50,7 @@ def decode_ReplPropMeta(bin_data):
     list_prop=list()
     unpack_string='iil16sll'
     for i in range(nb_of_prop):
-        (oid, version, date, objectId, LocUSN, OrgUSN) = struct.unpack_from(unpack_string,bin_data,16+i*struct.calcsize(unpack_string))
+        (oid, version, date, objectId, OrgUSN, LocUSN) = struct.unpack_from(unpack_string,bin_data,16+i*struct.calcsize(unpack_string))
         list_prop.append({"OID":decode_OID(oid),
                           "version":version, 
                           "date":datetime(1601,1,1,1,0,0) + timedelta(seconds=date),
