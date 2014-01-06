@@ -13,14 +13,15 @@ class Passwords(Miner):
     def create_arg_subparser(cls, parser):
         parser.add_argument("--bad-password-count", action="store_true", help="Find users whose bad password count is non-zero")
         parser.add_argument("--dump-unicode-pwd", action="store_true", help="Dump unicodePwd AD field")
+        parser.add_argument("--password-age", action="store_true", help="List the password age of all accounts")
     
     def get_line(self, record, line):
 	return [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
 
     def bad_password_count(self, doc):
         t = doc.create_table("Users whose badPwdCount is non-zero")
-        for r in self.datatable.find({"badPwdCount":{"$exists": True, "$ne":0}}): #.sort({"badPwdCount":1}):
-            t.add(self.get_line(r, ["sAMAccountName", "name", "badPwdCount"]))
+        for r in self.datatable.find({"badPwdCount":{"$exists": True}},{"name":1, "badPwdCount":1}): #.sort({"badPwdCount":1}):
+            t.add([r["name"], r["badPwdCount"]])
             t.flush()
 
     def dump_field(self, doc, field):
@@ -29,9 +30,17 @@ class Passwords(Miner):
             t.add(self.get_line(r, ["sAMAccountName", "name", field]))
             t.flush()
 
+    def pwdLastSet(self, doc):
+        t = doc.create_table("Last password Modification")
+        for account in self.datatable.find({"pwdLastSet":{"$exists":True}},{"name":True, "pwdLastSet":True}):
+            t.add([account["name"],account["pwdLastSet"]])
+            t.flush()
+
     def run(self, options, doc):
         if options.bad_password_count:
             self.bad_password_count(doc)
+        if options.password_age:
+            self.pwdLastSet(doc)
         if options.dump_unicode_pwd:
             self.dump_field(doc, "unicodePwd")
     
