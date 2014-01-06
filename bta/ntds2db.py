@@ -139,6 +139,7 @@ class Datatable(ESETable):
         ESEColumn("forceLogoff", "ATTq589863", "WindowsTimestamp", False),
         ESEColumn("lockoutDuration", "ATTq589884", "WindowsTimestamp", False),
         ESEColumn("minPwdAge", "ATTq589902", "WindowsTimestamp", False),
+        ESEColumn("pwdLastSet", "ATTq589920", "WindowsEnlapsedTime", False),
         ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
         ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
         ]

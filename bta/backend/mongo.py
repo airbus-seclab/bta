@@ -132,6 +132,15 @@ class MongoWindowsTimestamp(MongoNormalizer):
         except:
             return datetime.fromtimestamp(0)
 
+class MongoWindowsEnlaspedTime(MongoNormalizer):
+    def normal(self, val):
+        try:
+            val = int(val)
+            return datetime.fromtimestamp(0)+timedelta(microseconds=(val/10-11644473600000000))
+        except:
+            return datetime.fromtimestamp(0)
+
+
 class MongoReplPropMeta(MongoNormalizer):
     def normal(self, val):
         return bta.tools.decoding.decode_ReplPropMeta(val)
@@ -169,6 +178,8 @@ class MongoTypeFactory(TypeFactory):
 	    return MongoOID()
     def WindowsTimestamp(self):
         return MongoWindowsTimestamp()
+    def WindowsEnlapsedTime(self):
+        return MongoWindowsEnlaspedTime()
     def ReplPropMeta(self):
         return MongoReplPropMeta()
 
