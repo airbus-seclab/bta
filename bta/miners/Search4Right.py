@@ -21,6 +21,13 @@ class Search4Rights(Miner):
                 'Account-Expires':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'User-Account-Control':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'User-Principal-Name':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'Service-Principal-Name':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'Group':['ADSRightDSCreateChild'],
+                'Member':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'Self-Membership':['ADSRightDSSelf'],
+                'Group-Type':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'GP-Link':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'GP-Options':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 #'':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 }
     _types_ = ["User", "Computer", "Group"]
@@ -43,8 +50,8 @@ class Search4Rights(Miner):
                   'sd_id':1,
                   'sd_value.DACL.ACEList.ObjectType':1,
                   'sd_value.DACL.ACEList.Type':1}
-        pprint(req)
-        pprint(req_filter)
+        #pprint(req)
+        #pprint(req_filter)
         for sd in self.sd_table.find(req,req_filter):
             # Making the list of deny access
             denied_ace=list()
