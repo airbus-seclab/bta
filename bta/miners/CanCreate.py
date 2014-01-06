@@ -19,6 +19,7 @@ class CanCreate(Miner):
         parser.add_argument('--obj', help='Type of object we can create (Common name needed) for exemple : User, Compter, Print-Queue, Group, Organizational-Unit, Container, Contact, ...')
     
     def ACECreationRight(self, searchedType, flag):
+        magic_word="everything"
         result = dict()
         
         req = {'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:True}
@@ -33,17 +34,17 @@ class CanCreate(Miner):
             result[u"%s"%sd["sd_id"]]=list()
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
                 if (ace["AccessMask"]["flags"][flag] and ace["Type"] == "AccessDeniedObject"):
-                    who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
+                    who = ace["ObjectType"] if "ObjectType" in ace.keys() else magic_word
                     denied_ace.append((ace["SID"],SID2StringFull(who,self.guid,only_converted=True)))
                     # Uncomment if you want to see interdiction
                     #string_who=SID2StringFull(who,self.datatable,only_converted=True)
                     #result[u"%s"%sd["sd_id"]].append("%s have no right on %s"%(SID2StringFull(ace["SID"],self.datatable),string_who))
 
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
-                who = ace["ObjectType"] if "ObjectType" in ace.keys() else "EVERYTHING"
-                if ((ace["SID"],searchedType) not in denied_ace) and ((ace["SID"],"EVERYTHING") not in denied_ace):
+                who = ace["ObjectType"] if "ObjectType" in ace.keys() else magic_word
+                if ((ace["SID"],searchedType) not in denied_ace) and ((ace["SID"],magic_word) not in denied_ace):
                     string_who=SID2StringFull(who,self.guid,only_converted=True)
-                    if (ace["AccessMask"]["flags"][flag] and string_who in [searchedType, "EVERYTHING"]):
+                    if (ace["AccessMask"]["flags"][flag] and string_who in [searchedType, magic_word]):
                         result[u"%s"%sd["sd_id"]].append("----------%s have the right on %s"%(SID2StringFull(ace["SID"],self.guid),string_who))
         return result
 
