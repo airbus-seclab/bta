@@ -17,6 +17,7 @@ class Passwords(Miner):
         parser.add_argument("--password-age", action="store_true", help="List the password age of all accounts")
         parser.add_argument("--last-logon", nargs='?', const=-1, type=int, help="List account unused for X days (No argument for listing)")
         parser.add_argument("--account-creation", action="store_true", help="List all account creation dates")
+        parser.add_argument("--never-logged", action="store_true", help="List all account never used")
     
     def get_line(self, record, line):
     	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
@@ -59,6 +60,16 @@ class Passwords(Miner):
                 t.add(r)
                 t.flush()
 
+    def never_logged(self, doc, field):
+        t = doc.create_table("Dump of %s" % field)
+        t.add(["name"])
+        t.add()
+        for account in self.datatable.find({field:{"$exists":False}, 
+                                            "objectClass":{"$in":["2.5.6.7"]}, 
+                                            "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
+            t.add(self.get_line(account, []))
+            t.flush()
+
 
     def run(self, options, doc):
         if options.bad_password_count:
@@ -75,6 +86,9 @@ class Passwords(Miner):
 
         if options.dump_unicode_pwd:
             self.dump_field(doc, "unicodePwd")
+
+        if options.never_logged:
+            self.never_logged(doc, "lastLogonTimestamp")
     
     def assert_consistency(self):
         Miner.assert_consistency(self)
