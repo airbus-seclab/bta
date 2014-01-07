@@ -12,10 +12,11 @@ class Passwords(Miner):
     _desc_ = "Look for things on user passwords"
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument("--bad-password-count", action="store_true", help="Find users whose bad password count is non-zero")
+        parser.add_argument("--bad-password-count",action="store_true", help="Find users whose bad password count is non-zero")
         parser.add_argument("--dump-unicode-pwd", action="store_true", help="Dump unicodePwd AD field")
         parser.add_argument("--password-age", action="store_true", help="List the password age of all accounts")
         parser.add_argument("--last-logon", nargs='?', const=-1, type=int, help="List account unused for X days (No argument for listing)")
+        parser.add_argument("--failed-logon", nargs='?', const=-1, type=int, help="List failed authentication since X days (No argument for listing)")
         parser.add_argument("--account-creation", action="store_true", help="List all account creation dates")
         parser.add_argument("--never-logged", action="store_true", help="List all account never used")
     
@@ -42,7 +43,7 @@ class Passwords(Miner):
             t.add(self.get_line(account, ["name", "whenCreated"]))
             t.flush()
 
-    def last_logon(self, doc, field, since):
+    def extract_field_since(self, doc, field, since):
         results=list()
         for r in self.datatable.find({field:{"$exists": True}}):
             if ( (datetime.now()-r[field]).days >= since or since<0):
@@ -72,14 +73,18 @@ class Passwords(Miner):
 
 
     def run(self, options, doc):
+
         if options.bad_password_count:
             self.dump_field(doc, "badPwdCount")
+
+        if options.failed_logon is not None:
+            self.extract_field_since(doc, "badPasswordTime", options.failed_logon)
 
         if options.password_age:
             self.dump_field(doc, "pwdLastSet")
 
-        if options.last_logon>=0:
-            self.last_logon(doc, "lastLogonTimestamp", options.last_logon)
+        if options.last_logon is not None:
+            self.extract_field_since(doc, "lastLogonTimestamp", options.last_logon)
 
         if options.account_creation:
             self.account_creation_date(doc)
