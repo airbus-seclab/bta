@@ -93,6 +93,7 @@ WellKnownSID = {'ML_PROTECTED_PROCESS': 'S-1-16-20480',
                 'DOMAIN_GUESTS': 'S-1-5-21-.*-514', 
                 'LOGON_ID': 'S-1-5-5-.*-.*', 
                 'GUEST': 'S-1-5-21-.*-501', 
+                'KRBTGT': 'S-1-5-21-.*-502', 
                 'DOMAIN_DOMAIN_CONTROLLERS': 'S-1-5-21-.*-516', 
                 'READONLY_DOMAIN_CONTROLLERS': 'S-1-5-21-.*-521', 
                 'CLONEABLE_CONTROLLERS': 'S-1-5-21-.*-522',} 
