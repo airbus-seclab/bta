@@ -136,12 +136,16 @@ class Datatable(ESETable):
         ESEColumn("trustDirection", "ATTj589956", "TrustDirection", False),
         ESEColumn("userAccountControl", "ATTj589832", "UserAccountControl", False),
         ESEColumn("maxPwdAge", "ATTq589898", "WindowsTimestamp", False),
+        ESEColumn("badPasswordTime", "ATTq589873", "WindowsEnlapsedTime", True),
         ESEColumn("forceLogoff", "ATTq589863", "WindowsTimestamp", False),
         ESEColumn("lockoutDuration", "ATTq589884", "WindowsTimestamp", False),
         ESEColumn("minPwdAge", "ATTq589902", "WindowsTimestamp", False),
         ESEColumn("pwdLastSet", "ATTq589920", "WindowsEnlapsedTime", False),
+        ESEColumn("lastLogon", "ATTq589876", "WindowsEnlapsedTime", False),
+        ESEColumn("lastLogonTimestamp", "ATTq591520", "WindowsEnlapsedTime", False),
         ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
         ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
+        ESEColumn("accountExpires", "ATTq589983", "WindowsTimestamp", False),
         ]
     _indexes_ = [ "rightsGuid" ]
 
