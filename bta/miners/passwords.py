@@ -85,17 +85,16 @@ class Passwords(Miner):
             account_type=self.datatable.find_one({"name":self._types_[0] })["DNT_col"]
         else:
             account_type=self.datatable.find_one({"name":options.account_type})["DNT_col"]
-        print account_type
 
         if options.bad_password_count:
             self.dump_field(doc, "badPwdCount")
 
         if options.failed_logon is not None:
-            self.extract_field_since(doc, "badPasswordTime", options.failed_logon)
+            self.extract_field_since(doc, "badPasswordTime", options.failed_logon, account_type)
 
         if options.password_age is not None:
             arg=options.password_age
-            self.extract_field_since(doc, "pwdLastSet", abs(arg), arg<0)
+            self.extract_field_since(doc, "pwdLastSet", abs(arg), arg<0, account_type)
 
         if options.last_logon is not None:
             self.extract_field_since(doc, "lastLogonTimestamp", options.last_logon, account_type)
