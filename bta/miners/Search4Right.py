@@ -5,6 +5,7 @@ from bta.miner import Miner
 from bta.tools.WellKnownSID import SID2StringFull, Strings2SID
 from bta.miners.tools import Family
 from bta.miners.tools import ObjectClass
+from pprint import pprint
 
 @Miner.register
 class Search4Rights(Miner):
@@ -28,20 +29,25 @@ class Search4Rights(Miner):
                 'Group-Type':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'GP-Link':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'GP-Options':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
+                'Can-Get-Ownership':['GenericAll','WriteOwner'],
+                'Can-Modify-Groups':['ADSRightDSWriteProp','GenericWrite','GenericAll']
                 #'':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 }
     _types_ = ["User", "Computer", "Group"]
+    _magic_word_ = "everything"
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--root', help='Distinguished name for the search start')
         parser.add_argument("--rec", help="Recursive search deapth (-1 = infinite)")
         parser.add_argument('--right', help='Right you want to search for: %s : '%', '.join(cls._rights_.keys()))
-        parser.add_argument('--obj', help='Type of object the right apply on : %s'%', '.join(cls._types_))
+        parser.add_argument('--obj', nargs='?', const=cls._magic_word_, type=str, default=cls._magic_word_, help='Type of object the right apply on : %s, %s'%(', '.join(cls._types_), cls._magic_word_))
+        parser.add_argument('--DNT_col', nargs='?', const=0, type=int, help="Specify the DNT_col of the node")
+
     
     def ACEAllowRight(self, searchedRight, flags, searchedType):
-        magic_word="everything"
+        # Arguments are (ObjectType, AccessMask.flags, InheritedObjectType)
         result = dict()
-        from pprint import pprint
         flags4Req=[{'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:True} for flag in flags]
         type4Req={'sd_value.DACL.ACEList.InheritedObjectType':{'$in':Strings2SID(searchedType,self.guid)}}
         req = {'$and':[{'$or':[type4Req, {'sd_value.DACL.ACEList.InheritedObjectType':{'$exists':False}}]}, {'$or':flags4Req}]}
@@ -57,21 +63,21 @@ class Search4Rights(Miner):
             denied_ace=list()
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
                 if (any([ace["AccessMask"]["flags"].get(flag, False) for flag in flags]) and ace["Type"] == "AccessDeniedObject"):
-                    who = ace["ObjectType"] if "ObjectType" in ace.keys() else magic_word
+                    who = ace["ObjectType"] if "ObjectType" in ace.keys() else self._magic_word_
                     denied_ace.append((ace["SID"],SID2StringFull(who,self.guid,only_converted=True)))
 
             for ace in sd["sd_value"]["DACL"]["ACEList"]:
 
                 if "InheritedObjectType" not in ace.keys():
-                    ace["InheritedObjectType"]=magic_word
+                    ace["InheritedObjectType"]=self._magic_word_
                 elif SID2StringFull(ace["InheritedObjectType"],self.guid,only_converted=True) != searchedType:
                     continue
-                if (((ace["SID"],magic_word) in denied_ace) or ((ace["SID"],searchedRight) in denied_ace)):
+                if (((ace["SID"],self._magic_word_) in denied_ace) or ((ace["SID"],searchedRight) in denied_ace)):
                     continue
 
-                who = ace["ObjectType"] if "ObjectType" in ace.keys() else magic_word
+                who = ace["ObjectType"] if "ObjectType" in ace.keys() else self._magic_word_
                 string_who=SID2StringFull(who,self.guid,only_converted=True)
-                if ( any([ace["AccessMask"]["flags"].get(flag, False) for flag in flags]) and string_who in [searchedRight, magic_word]):
+                if ( any([ace["AccessMask"]["flags"].get(flag, False) for flag in flags]) and string_who in [searchedRight, self._magic_word_]):
                     # Create the dictionary if necessary
                     if u"%s"%sd["sd_id"] not in result.keys():
                         result[u"%s"%sd["sd_id"]]=list()
@@ -79,33 +85,37 @@ class Search4Rights(Miner):
                                                                                              string_who, 
                                                                                              SID2StringFull(ace["InheritedObjectType"],
                                                                                              self.guid)))
-        pprint(result)
+        #pprint(result)
         return result
 
     def run(self, options, doc):
-        if options.obj is None or options.obj not in self._types_:
-            print "Usage <obj> is required ! and must be in %s "%', '.join(self._types_)
+        if options.obj != self._magic_word_ and options.obj not in self._types_:
+            print "Usage <obj> is required ! and must be in %s, %s"%(', '.join(self._types_), self._magic_word_)
             exit(1)
         if options.right is None or options.right not in self._rights_.keys():
             print "Usage <right> is required ! and must be in %s "%', '.join(self._rights_.keys())
             exit(1)
 
         SDs_can_create = self.ACEAllowRight(options.right, self._rights_[options.right], options.obj)
-        #print SDs_can_create
-        depth = 1
+        #pprint(SDs_can_create)
+        depth = 0#1
         if options.rec:
             depth=int(options.rec)
-        if(options.root):
+
+        the_node=None
+        if(options.root is not None):
             root=unicode(options.root, errors='ignore')
-        else:
-            print "Root argument not found !"
+            the_node = Family.find_the_one(root, self.datatable)
+        elif(options.DNT_col is not None):
+            the_node = self.datatable.find_one({"DNT_col":options.DNT_col})
+        else:            
+            print "Root nor DNT_col argument found !"
             exit(1)
-            
-        the_node = Family.find_the_one(root, self.datatable)
+
         if the_node is not None:
             tree = Family.find_offspring(the_node,self.datatable,depth, need=['name', 'DNT_col', 'nTSecurityDescriptor'])
         else:
-            print "Check your root %s not found !"%root
+            print "Check your root %s or DNT_col %s not found !"%(root, options.DNT_col)
             exit(1)
 
         l = doc.create_list("Node information")
