@@ -4,7 +4,6 @@
 import os, sys
 from bta.tools.WellKnownSID import SID2StringFull
 
-load_rid_path=os.path.join(os.environ['HOME'], 'local_rid.py')
 local_relative_domains_sid=None
 
 class Family(object):
@@ -80,8 +79,6 @@ class Family(object):
                             for info in lucky_nodes[u"%s"%l.split(":")[lucky_position]]:
                                 ri.add(info)
                             ri.finished()
-                    else:
-                        doc.add(l)
             elif type(v)==dict:
                 if dico is None:
                     dico=doc.create_list(k)
