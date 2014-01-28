@@ -22,6 +22,7 @@ class Passwords(Miner):
         parser.add_argument("--account-creation", action="store_true", help="List all account creation dates")
         parser.add_argument("--never-logged", action="store_true", help="List all account never used")
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
+        parser.add_argument("--pso-details", action="store_true", help="Give details about all Passwords Settings Objects")
     
     def get_line(self, record, line):
     	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
@@ -78,9 +79,33 @@ class Passwords(Miner):
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
             t.add(self.get_line(account, []))
             t.flush()
+    
+    def pso_details(self, doc):
+        PSObjects_category=self.datatable.find_one({"name":"ms-DS-Password-Settings"},{"DNT_col":True})["DNT_col"]
+        PSObjects = self.datatable.find({"objectCategory":PSObjects_category})
+        t = doc.create_list("Password Objects details")
 
+        for obj in PSObjects:
+            t.create_list("Details of %s"%obj["name"])
+            t.add("Display name: %s"%obj["displayName"])
+            t.add("Lockout duration: %s"%obj["msDS_LockoutDuration"])
+            t.add("Lockout observation Windows: %s"%obj["msDS_LockoutObservationWindow"])
+            t.add("Lockout threshold: %s"%obj["msDS_LockoutThreshold"])
+            t.add("Maximium password age: %s"%obj["msDS_MaximumPasswordAge"])
+            t.add("Minimum password age: %s"%obj["msDS_MinimumPasswordAge"])
+            t.add("Minimum password length: %s"%obj["msDS_MinimumPasswordLength"])
+            t.add("Password complexity enabled: %s"%obj["msDS_PasswordComplexityEnabled"])
+            t.add("Password history length: %s"%obj["msDS_PasswordHistoryLength"])
+            t.add("Password setting precedence: %s"%obj["msDS_PasswordSettingsPrecedence"])
+            t.flush()
+            #t.add(obj["REVERSIBLE"])
+            #t.add(obj["APPLIES TO"])
 
     def run(self, options, doc):
+        if options.pso_details:
+            self.pso_details(doc)
+            return
+
         if options.account_type not in self._types_:
             account_type=self.datatable.find_one({"name":self._types_[0] })["DNT_col"]
         else:
