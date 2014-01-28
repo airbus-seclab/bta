@@ -20,6 +20,9 @@ class Passwords(Miner):
         parser.add_argument("--expire-since", nargs='?', const=-1, type=int, help="List account deleted from X days (no argument for listing)")
         parser.add_argument("--owners", nargs='?', const="", type=str, help="List account owners (no argument for listing, regex matching when specified)")
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
+        parser.add_argument("--logon-hours", action="store_true", help="Export accounts that have specific logon hours")
+        parser.add_argument("--workstations", action="store_true", help="Export accounts that have workstations restriction")
+        parser.add_argument("--operating-systems", action="store_true", help="Export Operating systems, when available")
 
     
     def get_line(self, record, line):
@@ -81,7 +84,43 @@ class Passwords(Miner):
             t.add([SID2StringFull(r["objectSid"], self.guid), SID2StringFull(infos["sd_value"]["Owner"], self.guid)])
         t.flush()
 
+    def extract_logon_hours(self, doc):
+        accounts = self.datatable.find({"logonHours":{"$exists":1}})
+        for acc in accounts:
+            t = doc.create_list("The user %s have the following logon hours:"%acc["name"])
+            for hour in acc["logonHours"]:
+                t.add(hour)
+            t.flush()
+            t.finished()
+
+    def extract_workstations(self, doc):
+        accounts = self.datatable.find({"userWorkstations":{"$exists":1}})
+        for acc in accounts:
+            t = doc.create_list("The user %s can log on the following workstations:"%acc["name"])
+            for workstation in acc["userWorkstations"]:
+                t.add(workstation)
+            t.flush()
+            t.finished()
+
+    def extract_operating_systems(self, doc):
+        accounts = self.datatable.find({"operatingSystem":{"$exists":1}})
+        u = doc.create_table("Account operating systems")
+        u.add(["name","operating system"])
+        u.add()
+        for acc in accounts:
+            u.add([acc["name"],acc["operatingSystem"]])
+            u.flush()
+        u.finished()
+
     def run(self, options, doc):
+        if options.operating_systems:
+            self.extract_operating_systems(doc)
+
+        if options.workstations:
+            self.extract_workstations(doc)
+
+        if options.logon_hours:
+           self.extract_logon_hours(doc)
 
         if options.account_type not in self._types_:
             account_type = self.datatable.find_one({"name": self._types_[0] })["DNT_col"]
