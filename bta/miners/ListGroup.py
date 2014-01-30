@@ -74,8 +74,11 @@ class ListGroup(Miner):
             if info is None:
                 trustee_cn = trustee_string = "NULLOBJECT-%S" % ace['SID']
             else:
-                trustee_cn=info['cn']
-                trustee_string=SID2String(info['cn'])
+		if "cn" in info:
+	                trustee_cn=info['cn']
+        	        trustee_string=SID2String(info['cn'])
+		else:
+			trustee_string = trustee_cn = info['name']
             trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
 	    info2 = self.getInfo_fromSid(membersid)
 	    subject = info2['cn']
