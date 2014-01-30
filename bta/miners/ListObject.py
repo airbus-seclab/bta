@@ -25,44 +25,35 @@ class ListObject(Miner):
         except Exception as e:
             raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
         return year, month, day
+
+    def select(self, year, month, day, category, year2=None, month2=None, day2=None, condition="whenCreated"):
+	year2 = year if year2 is None else year2
+	month2 = month if month2 is None else month2
+	day2 = day if day2 is None else day2
+        result = list()
+        start = datetime.datetime(year, month, day, 0, 0, 0)
+        end = datetime.datetime(year2, month2, day2, 23, 59, 59)
+        req = {'$and': [
+                {"objectCategory" : category},
+                {condition: {"$gt": start, "$lt": end}}],
+              }
+        for entry in self.datatable.find(req):
+            if 'objectSid' in entry:
+                result.append([entry['cn'], entry['objectSid'], entry['objectGUID'], entry[condition]])
+            else:
+                result.append([entry['cn'], 'NULL', entry['objectGUID'], entry[condition]])
+        result.sort(key=lambda x: x[0].lower())
+        return result
     
-    def create(self, year, month, day, category):
-        result = list()
-        start = datetime.datetime(year, month, day, 0, 0, 0)
-        end = datetime.datetime(year, month, day, 23, 59, 59)
-        req = {'$and': [
-                {"objectCategory" : category},
-                {"whenCreated": {"$gt": start, "$lt": end}}],
-              }
-        for entry in self.datatable.find(req):
-            if 'objectSid' in entry:
-                result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
-            else:
-                result.append([entry['cn'], 'NULL', entry['objectGUID']])
-        result.sort(key=lambda x: x[0].lower())
-        return result
-        
-    def change(self, year, month, day, category):
-        result = list()
-        start = datetime.datetime(year, month, day, 0, 0, 0)
-        end = datetime.datetime(year, month, day, 23, 59, 59)
-        req = {'$and': [
-                {"objectCategory" : category},
-                {"whenChanged": {"$gt": start, "$lt": end}}],
-              }
-        for entry in self.datatable.find(req):
-            if 'objectSid' in entry:
-                result.append([entry['cn'], entry['objectSid'], entry['objectGUID']])
-            else:
-                result.append([entry['cn'], 'NULL', entry['objectGUID']])
-        result.sort(key=lambda x: x[0].lower())
-        return result
-        
+    
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--catego", help="Look only for object which categorie match REGEX", metavar="REGEX", required=True)
-        parser.add_argument('--change', help='Find all changed object at a given date', metavar='YYYY-MM-DD')
-        parser.add_argument('--create', help='Find all creation object at a given date', metavar='YYYY-MM-DD')
+        parser.add_argument('--change', action="store_true", help='Find all changed object at a given date')
+        parser.add_argument('--create', action="store_true", help='Find all creation object at a given date')
+        parser.add_argument('--start-date', required=True, help='Start date', metavar='YYYY-MM-DD')
+        parser.add_argument('--end-date', help='End date (if empty then only 1 day is taken)', metavar='YYYY-MM-DD')
+	
     
     def run(self, options, doc):
         category = self.getCategory(options.catego)
@@ -70,24 +61,22 @@ class ListObject(Miner):
             doc.add("No categories match [%s]" % options.catego)
             return
 
-        if options.create:
-            year, month, day = self.parseDate(options.create)
-            create = self.create(year, month, day, category)
-            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.catego, year, month, day))
-            table.add(["cn", "SID", "GUID"])
-            table.add()
-            for attr in create:
-                table.add(attr)
-            table.finished()
-        if options.change:
-            year, month, day = self.parseDate(options.change)
-            change = self.change(year, month, day, category)
-            table = doc.create_table("Object[%s] create at %i-%i-%i" % (options.catego, year, month, day))
-            table.add(["cn", "SID", "GUID"])
-            table.add()
-            for attr in change:
-                table.add(attr)
-            table.finished()
+	end_date = options.end_date if not options.end_date is None else options.start_date
+
+	if options.create:
+		cond,verb = ("whenCreated","created")
+	else:
+		cond,verb = ("whenChanged","changed")
+
+        year, month, day = self.parseDate(options.start_date)
+        year2, month2, day2 = self.parseDate(end_date)
+        create = self.select(year, month, day, category, year2, month2, day2, condition=cond)
+        table = doc.create_table("Object[%s] %s between %i-%i-%i and %i-%i-%i" % (options.catego, verb, year, month, day, year2, month2, day2))
+        table.add(["cn", "SID", "GUID","Date"])
+        table.add()
+        for attr in create:
+            table.add(attr)
+        table.finished()
 
     def assert_consistency(self):
         Miner.assert_consistency(self)
