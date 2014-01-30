@@ -80,7 +80,12 @@ class Passwords(Miner):
         for account in self.datatable.find({field:{"$exists":False},
                                             "objectCategory":{"$in":[account_type]}, 
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, [{"userAccountControl":"flags"}]))
+	    x = self.get_line(account, []) 
+	    if "userAccountControl" not in account:
+		x = x + ["NoAccountControl"]
+	    else:
+		x = x + ["Account DIsable:%r"%account["userAccountControl"]["flags"]["accountDisable"]] 
+            t.add(x)
             t.flush()
     
     def pso_details(self, doc):
