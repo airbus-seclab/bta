@@ -26,7 +26,10 @@ class Passwords(Miner):
     
     def get_line(self, record, line):
     	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
-        res.append(SID2StringFull(record["objectSid"], self.guid))
+        if "objectSid" in record:
+            res.append(SID2StringFull(record["objectSid"], self.guid))
+        else:
+            res.append("NOSID:%s" % record['name'])
         return res
 
     def dump_field(self, doc, field):
