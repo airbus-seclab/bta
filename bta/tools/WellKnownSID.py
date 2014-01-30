@@ -109,17 +109,20 @@ def SID2StringFull(sid, guid_table, only_converted=False):
   # Try to resolve with well known SID
     import re
     sid=sid.lower()
-    for k,v in WellKnownSID.items():
-        if re.match("^%s$"%v.lower(),sid) is not None:
-          # Do we have a variable part to retreive ?
-          variable=""
-          if v.count(".*")==1:
-              #print "I will find >%s<"%sid[:-4]
-              variable = "of %s "%guid_table.find_one({"id":sid[:-4]},{"name":1}).get("name")
-          if only_converted:
-              return u"%s"%k
-          else:
-              return "%s %s(%s)"%(k, variable, sid)
+    try:
+	    for k,v in WellKnownSID.items():
+		if re.match("^%s$"%v.lower(),sid) is not None:
+		  # Do we have a variable part to retreive ?
+		  variable=""
+		  if v.count(".*")==1:
+		      #print "I will find >%s<"%sid[:-4]
+		      variable = "of %s "%guid_table.find_one({"id":sid[:-4]},{"name":1}).get("name")
+		  if only_converted:
+		      return u"%s"%k
+		  else:
+		      return "%s %s(%s)"%(k, variable, sid)
+    except:
+	return sid
 
     #Try to resolve in guid table
     obj = guid_table.find_one({"id":sid})
