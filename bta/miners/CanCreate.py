@@ -13,7 +13,7 @@ class CanCreate(Miner):
     
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('--root', help='Distinguished name for the search start')
+        parser.add_argument('--root', required=True, help='Distinguished name for the search start')
         parser.add_argument('--delete', help='Set to true for deletion rights')
         parser.add_argument("--rec", help="Recursive search deapth (-1 = infinite)")
         parser.add_argument('--obj', help='Type of object we can create (Common name needed) for exemple : User, Compter, Print-Queue, Group, Organizational-Unit, Container, Contact, ...')
@@ -56,6 +56,12 @@ class CanCreate(Miner):
         if options.delete=="true":
             "DELETION RIGHTS"
             flag="ADSRightDSDeleteChild"
+        depth = 1
+        if options.rec:
+            depth=int(options.rec)
+        if(options.root):
+            the_node = Family.find_the_one(options.root, self.datatable)
+            tree = Family.find_offspring(the_node,self.datatable,depth, need=['name', 'DNT_col', 'nTSecurityDescriptor'])
         SDs_can_create = self.ACECreationRight(options.obj, flag)
         #print SDs_can_create
         possibleSupperiors = ObjectClass.find_my_possuperiors(options.obj, self.datatable)
@@ -63,12 +69,6 @@ class CanCreate(Miner):
         selected_instances = {}
         for classGovernsID in possibleSupperiors:
             selected_instances.update(ObjectClass.instanceOfClass(classGovernsID, self.datatable))
-        depth = 1
-        if options.rec:
-            depth=int(options.rec)
-        if(options.root):
-            the_node = Family.find_the_one(options.root, self.datatable)
-            tree = Family.find_offspring(the_node,self.datatable,depth, need=['name', 'DNT_col', 'nTSecurityDescriptor'])
         l = doc.create_list("Node information")
         Family.correlate(tree, [(2, SDs_can_create), (1, selected_instances)], l, self.datatable)
         l.finished()
