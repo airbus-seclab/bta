@@ -74,13 +74,13 @@ class Passwords(Miner):
 
     def never_logged(self, doc, field, account_type):
         t = doc.create_table("Dump of %s" % field)
-        t.add(["name"])
+        t.add(["name","userAccountControl"])
         t.add()
 
         for account in self.datatable.find({field:{"$exists":False},
                                             "objectCategory":{"$in":[account_type]}, 
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, []))
+            t.add(self.get_line(account, ["userAccountControl"]))
             t.flush()
     
     def pso_details(self, doc):
