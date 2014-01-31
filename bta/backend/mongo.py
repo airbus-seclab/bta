@@ -11,6 +11,7 @@ import bta.datatable
 import bta.tools.decoding
 import logging
 import functools
+import re
 from datetime import datetime,timedelta
 
 log = logging.getLogger("bta.backend.mongo")
@@ -132,6 +133,17 @@ class MongoWindowsTimestamp(MongoNormalizer):
         except:
             return datetime.fromtimestamp(0)
 
+class MongoLogonHours(MongoNormalizer):
+    def normal(self, val):
+        hours=''.join(bin(x)[2:].zfill(8)[::-1] for x in bytearray(val))
+        days=['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+        if len(hours)>0:
+            hours=hours[-1]+hours[:-1]
+            hours=re.findall('........................',hours)
+        else:
+            hours=['x', 'x', 'x', 'x', 'x', 'x', 'x'] 
+        return dict(zip(days, hours))
+        
 class MongoWindowsEnlaspedTime(MongoNormalizer):
     def normal(self, val):
         try:
@@ -180,6 +192,8 @@ class MongoTypeFactory(TypeFactory):
         return MongoWindowsTimestamp()
     def WindowsEnlapsedTime(self):
         return MongoWindowsEnlaspedTime()
+    def LogonHours(self):
+        return MongoLogonHours()
     def ReplPropMeta(self):
         return MongoReplPropMeta()
 

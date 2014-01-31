@@ -146,6 +146,7 @@ class Datatable(ESETable):
         ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
         ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
         ESEColumn("accountExpires", "ATTq589983", "WindowsTimestamp", False),
+        ESEColumn("logonHours", "ATTk589888", "LogonHours", False),
         ]
     _indexes_ = [ "rightsGuid" ]
 
