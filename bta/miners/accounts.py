@@ -23,6 +23,7 @@ class Passwords(Miner):
         parser.add_argument("--logon-hours", action="store_true", help="Export accounts that have specific logon hours")
         parser.add_argument("--workstations", action="store_true", help="Export accounts that have workstations restriction")
         parser.add_argument("--operating-systems", action="store_true", help="Export Operating systems, when available")
+        parser.add_argument("--script-path", action="store_true", help="Export Script path, when available")
 
     
     def get_line(self, record, line):
@@ -97,10 +98,19 @@ class Passwords(Miner):
         accounts = self.datatable.find({"userWorkstations":{"$exists":1}})
         for acc in accounts:
             t = doc.create_list("The user %s can log on the following workstations:"%acc["name"])
-            for workstation in acc["userWorkstations"]:
+            for workstation in acc["userWorkstations"].split(','):
                 t.add(workstation)
             t.flush()
             t.finished()
+
+    def extract_scriptPath(self, doc):
+        accounts = self.datatable.find({"scriptPath":{"$exists":1}})
+        for acc in accounts:
+            t = doc.create_list("The scriptPath of %s is:"%acc["name"])
+            t.add(acc["scriptPath"])
+            t.flush()
+            t.finished()
+
 
     def extract_operating_systems(self, doc):
         accounts = self.datatable.find({"operatingSystem":{"$exists":1}})
@@ -118,6 +128,9 @@ class Passwords(Miner):
 
         if options.workstations:
             self.extract_workstations(doc)
+
+        if options.script_path:
+            self.extract_scriptPath(doc)
 
         if options.logon_hours:
            self.extract_logon_hours(doc)
