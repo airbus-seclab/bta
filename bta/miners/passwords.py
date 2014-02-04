@@ -5,6 +5,13 @@ from bta.miner import Miner
 from collections import defaultdict
 from bta.tools.WellKnownSID import SID2StringFull
 from datetime import datetime
+import bson.binary 
+
+def sane(o):
+    if type(o) is bson.binary.Binary:
+        return o.encode("hex")
+    return unicode(o)
+
 
 @Miner.register
 class Passwords(Miner):
@@ -29,9 +36,12 @@ class Passwords(Miner):
         res.append(SID2StringFull(record["objectSid"], self.guid))
         return res
 
+    def get_line(self, record, line):
+        return [sane(record.get(x,"-")) for x in line]
+
     def dump_field(self, doc, field):
         t = doc.create_table("Dump of %s for " % (field))
-        t.add(["name", field, "comments"])
+        t.add(["name", field])
         t.add()
         for r in self.datatable.find({field:{"$exists": True}}):
             t.add(self.get_line(r, ["name", field]))
@@ -44,7 +54,7 @@ class Passwords(Miner):
         for account in self.datatable.find({"whenCreated":{"$exists":True},
                                             "objectCategory":{"$in":[account_type]}, 
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, ["name", "whenCreated"]))
+            t.add(self.get_line(account, ["name", "whenCreated"])+[''])
             t.flush()
 
     def extract_field_since(self, doc, field, since, account_type):
@@ -56,7 +66,7 @@ class Passwords(Miner):
             else:
                 cond = (datetime.now()-r[field]).days >= since
             if ( cond or since==0) :
-                results.append(self.get_line(r, ["name", field]))
+                results.append(self.get_line(r, ["name", field])+[''])
 
         t = doc.create_table("Dump of %s for %s" % (field, account_type))
         if len(results)==0:
@@ -77,7 +87,7 @@ class Passwords(Miner):
         for account in self.datatable.find({field:{"$exists":False},
                                             "objectCategory":{"$in":[account_type]}, 
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, []))
+            t.add(self.get_line(account, ["name"]))
             t.flush()
     
     def pso_details(self, doc):
@@ -118,7 +128,7 @@ class Passwords(Miner):
 
         if options.password_age is not None:
             arg=options.password_age
-            self.extract_field_since(doc, "pwdLastSet", abs(arg), account_type)
+            self.extract_field_since(doc, "pwdLastSet", arg, account_type)
 
         if options.last_logon is not None:
             self.extract_field_since(doc, "lastLogonTimestamp", options.last_logon, account_type)
