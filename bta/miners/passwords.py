@@ -86,7 +86,6 @@ class Passwords(Miner):
         t = doc.create_list("Password Objects details")
 
         for obj in PSObjects:
-            t.create_list("Details of %s"%obj["name"])
             t.add("Display name: %s"%obj["displayName"])
             t.add("Lockout duration: %s"%obj["msDS_LockoutDuration"])
             t.add("Lockout observation Windows: %s"%obj["msDS_LockoutObservationWindow"])
