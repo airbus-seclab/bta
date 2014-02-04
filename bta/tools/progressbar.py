@@ -84,4 +84,4 @@ class StderrMultiProgressBarMothership(object):
             # set up scrolling to protect upper lines and restore cursor
             sys.stderr.write("\033[%i;%ir\033[u" % (len(self.progress)+2,rows))
     def __del__(self):
-        sys.sdterr.write("\033[r") # remove scrolling restrictions
+        sys.stderr.write("\033[r") # remove scrolling restrictions
