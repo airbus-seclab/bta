@@ -147,6 +147,7 @@ class Datatable(ESETable):
         ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
         ESEColumn("accountExpires", "ATTq589983", "WindowsTimestamp", False),
         ESEColumn("logonHours", "ATTk589888", "LogonHours", False),
+        ESEColumn("sIDHistory", "ATTr590433", "SID", False),
         ]
     _indexes_ = [ "rightsGuid" ]
 
