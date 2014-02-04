@@ -71,8 +71,14 @@ class ListGroup(Miner):
 	Mylist = list()	
 	for ace in aceList:
 	    info = self.getInfo_fromSid(ace['SID'])
-            trustee_cn=info['cn']
-            trustee_string=SID2String(info['cn'])
+            if info is None:
+                trustee_cn = trustee_string = "NULLOBJECT-%S" % ace['SID']
+            else:
+		if "cn" in info:
+	                trustee_cn=info['cn']
+        	        trustee_string=SID2String(info['cn'])
+		else:
+			trustee_string = trustee_cn = info['name']
             trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
 	    info2 = self.getInfo_fromSid(membersid)
 	    subject = info2['cn']

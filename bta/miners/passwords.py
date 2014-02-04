@@ -31,9 +31,18 @@ class Passwords(Miner):
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
         parser.add_argument("--pso-details", action="store_true", help="Give details about all Passwords Settings Objects")
     
-    def get_line(self, record, line):
+    def get_line(self, record, line, flags=None):
     	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
-        res.append(SID2StringFull(record["objectSid"], self.guid))
+        if "objectSid" in record:
+            res.append(SID2StringFull(record["objectSid"], self.guid))
+        else:
+            res.append("NOSID:%s" % record['name'])
+	if not flags is None:
+		if "userAccountControl" in record:
+			res.append("%s:%r" % (flags,record["userAccountControl"]["flags"][flags]))
+		else:
+			res.append("NoAccountControl")
+			
         return res
 
     def get_line(self, record, line):
@@ -66,14 +75,14 @@ class Passwords(Miner):
             else:
                 cond = (datetime.now()-r[field]).days >= since
             if ( cond or since==0) :
-                results.append(self.get_line(r, ["name", field])+[''])
+                results.append(self.get_line(r, ["name", field],"accountDisable"))
 
         t = doc.create_table("Dump of %s for %s" % (field, account_type))
         if len(results)==0:
             t.add(["No Result"])
             return
         else:
-            t.add(["name", field, "comments"])
+            t.add(["name", field, "comments", "userAccountControl"])
             t.add()
             for r in results:
                 t.add(r)
@@ -81,13 +90,14 @@ class Passwords(Miner):
 
     def never_logged(self, doc, field, account_type):
         t = doc.create_table("Dump of %s" % field)
-        t.add(["name"])
+        t.add(["name","userAccountControl"])
         t.add()
 
         for account in self.datatable.find({field:{"$exists":False},
                                             "objectCategory":{"$in":[account_type]}, 
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, ["name"]))
+	        x = self.get_line(account, ["name"], "accountDisable") 
+            t.add(x)
             t.flush()
     
     def pso_details(self, doc):

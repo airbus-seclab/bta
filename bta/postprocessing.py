@@ -116,10 +116,15 @@ class PostProcessing(object):
         dnames.create_index("DNT_col")
         dnames.create_index("DName")
 
+	error = 0
         for r in self.dt.find({"Ancestors_col":{"$exists":True}}):
 		dn=list()
 		for p in r["Ancestors_col"]:
-			p=self.dt.find({"DNT_col":p}).limit(1)[0]
+			try:
+				p=self.dt.find({"DNT_col":p}).limit(1)[0]
+			except:
+				error += 1
+				continue
                         if p.get('name')=="$ROOT_OBJECT$\x00":
                                 continue
                         if p.get('dc'):
@@ -130,6 +135,7 @@ class PostProcessing(object):
                                 dn.append("DC=%s"%p['name'])
                 dn.reverse()
 		dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
+	print "NB ERRORS : %r" % error
 
 
     @PostProcRegistry.register()
