@@ -25,9 +25,9 @@ class Passwords(Miner):
         parser.add_argument("--operating-systems", action="store_true", help="Export Operating systems, when available")
         parser.add_argument("--script-path", action="store_true", help="Export Script path, when available")
 
-    
+
     def get_line(self, record, line):
-    	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
+        res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
         res.append(SID2StringFull(record["objectSid"], self.guid))
         return res
 
@@ -142,7 +142,7 @@ class Passwords(Miner):
 
         if options.created_since is not None:
             self.extract_field_since(doc, "whenCreated", options.created_since, [account_type])
-    
+
         if options.changed_since is not None:
             self.extract_field_since(doc, "whenChanged", options.created_since, [account_type])
 

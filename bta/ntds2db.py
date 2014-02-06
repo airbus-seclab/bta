@@ -4,7 +4,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import os,sys
+import os, sys
 
 import libesedb
 
@@ -21,7 +21,7 @@ def win2epoch(x):
     return x-11644473600
 
 def dbsanecolname(x):
-    return x.replace("-","_")
+    return x.replace("-", "_")
 
 
 class ESEColumn(object):
@@ -31,7 +31,7 @@ class ESEColumn(object):
         self.type = type_
         self.index = index
     def to_json(self):
-        return dict((k,v) for (k,v) in self.__dict__.iteritems() if not k.startswith("_"))
+        return dict((k, v) for (k, v) in self.__dict__.iteritems() if not k.startswith("_"))
 
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
@@ -41,7 +41,7 @@ class ESETable(object):
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
-        self.attname2col =  { col.attname:col for col in self._columns_ }
+        self.attname2col = {col.attname:col for col in self._columns_}
         self.esedb = options.esedb
         self.esetable = options.esedb[self._tablename_]
 
@@ -49,7 +49,7 @@ class ESETable(object):
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
-                esecol = self.attname2col[c.name] 
+                esecol = self.attname2col[c.name]
             else:
                 esecol = ESEColumn(dbsanecolname(c.name), c.name, "UnknownType")
             columns.append(esecol)
@@ -58,7 +58,7 @@ class ESETable(object):
     def parse_file(self, dbtable):
         total = self.esetable.number_of_records
         log.info("Parsing ESE table. %i records." % total)
-        pbar  = self.options.progress_bar(total, desc="Importing [%s.%s]" % (dbtable.db.name,self._tablename_), 
+        pbar = self.options.progress_bar(total, desc="Importing [%s.%s]" % (dbtable.db.name, self._tablename_),
                                           step=100, obj="rec")
         next(pbar)
         try:
@@ -149,7 +149,7 @@ class Datatable(ESETable):
         ESEColumn("logonHours", "ATTk589888", "LogonHours", False),
         ESEColumn("sIDHistory", "ATTr590433", "SID", False),
         ]
-    _indexes_ = [ "rightsGuid" ]
+    _indexes_ = ["rightsGuid"]
 
     ATTRIBUTE_ID = 131102      # ATTc131102
     ATTRIBUTE_SYNTAX = 131104  # ATTc131104
@@ -177,29 +177,29 @@ class Datatable(ESETable):
         }
 
     type2type = {
-        "DN": ("Text",False),
-        "OID": ("OID",False),
-        "CaseExactString" : ("Text",False),
-        "GeneralizedTime" : ("Timestamp",False),
-        "Integer8": ("Int",False),
-        "NTSecurityDescriptor" : ("NTSecDesc",True),
-        "ReplPropertyMetaData" : ("ReplPropMeta",True),
+        "DN": ("Text", False),
+        "OID": ("OID", False),
+        "CaseExactString" : ("Text", False),
+        "GeneralizedTime" : ("Timestamp", False),
+        "Integer8": ("Int", False),
+        "NTSecurityDescriptor" : ("NTSecDesc", True),
+        "ReplPropertyMetaData" : ("ReplPropMeta", True),
         }
-    
+
     def syntax_to_type(self, s):
-        return self.type2type.get(self.attsyntax2type.get(s), ("UnknownType",False))
+        return self.type2type.get(self.attsyntax2type.get(s), ("UnknownType", False))
 
 
     def identify_columns(self):
         log.info("Resolving column names")
         att2ldn = {}
         att2asy = {}
-        cols = { int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
+        cols = {int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
         nbcols = len(cols)
-        log.info("%i columns to be identified, out of %i" % (nbcols,len(self.esetable.columns)))
+        log.info("%i columns to be identified, out of %i" % (nbcols, len(self.esetable.columns)))
 
         try:
-            lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID], 
+            lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID],
                      cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
         except IndexError:
             raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
@@ -208,7 +208,7 @@ class Datatable(ESETable):
         next(pbar)
         for rec in self.esetable.iter_records(columns=lcols):
             next(pbar)
-            aid,amsds,asy,ldn = list(rec)
+            aid, amsds, asy, ldn = list(rec)
             if not ldn.value:
                 continue
             if aid.value is None and amsds.value is None or not ldn.value:
@@ -223,13 +223,13 @@ class Datatable(ESETable):
                 log.info("All columns found! Ending scan early!")
                 break
 
-        log.info("Resolved %i / %i columns." % (len(att2ldn),nbcols))
+        log.info("Resolved %i / %i columns." % (len(att2ldn), nbcols))
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
-                esecol = self.attname2col[c.name] 
+                esecol = self.attname2col[c.name]
             else:
-                synt,idx = self.syntax_to_type(att2asy.get(c.name))
+                synt, idx = self.syntax_to_type(att2asy.get(c.name))
                 esecol = ESEColumn(
                     dbsanecolname(att2ldn.get(c.name, c.name)),
                     c.name, synt, idx)
@@ -248,9 +248,9 @@ def import_file((options, fname, connection)):
                 log.info("Opening [%s]" % fname)
                 options.esedb = libesedb.ESEDB(fname)
                 log.info("Opening done.")
-            
+
                 options.dblog.update_entry("Opened ESEDB file [%s]" % fname)
-                
+
                 if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
                     sd = SDTable(options)
                     sd.create()
@@ -260,9 +260,9 @@ def import_file((options, fname, connection)):
                 if options.only.lower() in ["", "datatable", "data"]:
                     dt = Datatable(options)
                     dt.create()
-                
+
                 options.backend.commit()
-        
+
             if not options.no_post_proc:
                 options.dblog.update_entry("Starting post-processing")
                 pp = bta.postprocessing.PostProcessing(options)
@@ -275,7 +275,7 @@ def import_file((options, fname, connection)):
 def main():
     import optparse
     parser = optparse.OptionParser("Usage: %prog {-C <dbcnx>|--C-list <dbcnxlist>|--C-from <dbcnxfmt> <rpnprog>} [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
-    
+
     parser.add_option("-C", dest="connections", default=[], action="append",
                       help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
     parser.add_option("--C-list", dest="connection_list",
@@ -286,8 +286,6 @@ def main():
 
     parser.add_option("-B", dest="backend_class", default="mongo",
                       help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
-
-    
     parser.add_option("--only", dest="only", default="",
                       help="Restrict import to TABLENAME", metavar="TABLENAME")
     parser.add_option("--append", dest="append", action="store_true",
@@ -311,7 +309,7 @@ def main():
                       help="be more quiet (can be used many times)")
 
     options, args = parser.parse_args()
-    
+
     if not args:
         parser.error("Missing paths to ntds.dit files to import")
 
@@ -320,26 +318,26 @@ def main():
         int(bool(options.connection_from_filename))) > 1:
         parser.error("-C, --Clist and --Cfromfilename are incompatible")
 
-    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
+    options.verbosity = max(1, 50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
     if options.connection_list:
         options.connections = options.connection_list.split(",")
     if options.connection_from_filename:
-        cnxfmt,dbprog = options.connection_from_filename
+        cnxfmt, dbprog = options.connection_from_filename
         ed = bta.tools.RPNedit.RPNFilenameEditor(dbprog)
         options.connections = [cnxfmt % ed(fname) for fname in args]
 
     if len(args) != len(options.connections):
         parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
                      (len(args), len(options.connections)))
-    
 
-    for fname,cnx in zip(args, options.connections):
-        log.info("Going to import %-15s <- %s" % (cnx,fname))
+
+    for fname, cnx in zip(args, options.connections):
+        log.info("Going to import %-15s <- %s" % (cnx, fname))
     if not options.yes and len(options.connections) > 1:
         while True:
-            print >>sys.stderr,"Can I carry on ? (y/n) ",
+            print >>sys.stderr, "Can I carry on ? (y/n) ",
             r = raw_input().lower().strip()
             if r == "y":
                 break
@@ -347,8 +345,8 @@ def main():
                 log.error("Interrupted by user.")
                 raise SystemExit
 
-    jobs = [ (options, fname, cnx) 
-             for fname,cnx in zip(args, options.connections) ]
+    jobs = [(options, fname, cnx)
+            for fname, cnx in zip(args, options.connections)]
 
     if options.multi:
         import multiprocessing

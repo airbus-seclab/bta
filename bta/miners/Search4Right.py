@@ -11,9 +11,9 @@ from pprint import pprint
 class Search4Rights(Miner):
     _name_ = "Search4Rights"
     _desc_ = "This miner list all user who possess a certain right on User and Computer objects"
-    _rights_ = {'User-Force-Change-Password':['ADSRightDSControlAccess'], 
-                'Send-As':['ADSRightDSControlAccess'], 
-                'Receive-As':['ADSRightDSControlAccess'], 
+    _rights_ = {'User-Force-Change-Password':['ADSRightDSControlAccess'],
+                'Send-As':['ADSRightDSControlAccess'],
+                'Receive-As':['ADSRightDSControlAccess'],
                 'User-Account-Control':['GenericAll','ADSRightDSWriteProp', 'GenericWrite'],
                 'Lockout-Time':['GenericWrite', 'ADSRightDSWriteProp', 'GenericAll'],
                 'Script-Path':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
@@ -44,15 +44,15 @@ class Search4Rights(Miner):
         parser.add_argument('--obj', nargs='?', const=cls._magic_word_, type=str, default=cls._magic_word_, help='Type of object the right apply on : %s, %s'%(', '.join(cls._types_), cls._magic_word_))
         parser.add_argument('--DNT_col', nargs='?', const=0, type=int, help="Specify the DNT_col of the node")
 
-    
+
     def ACEAllowRight(self, searchedRight, flags, searchedType):
         # Arguments are (ObjectType, AccessMask.flags, InheritedObjectType)
         result = dict()
         flags4Req=[{'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:True} for flag in flags]
         type4Req={'sd_value.DACL.ACEList.InheritedObjectType':{'$in':Strings2SID(searchedType,self.guid)}}
         req = {'$and':[{'$or':[type4Req, {'sd_value.DACL.ACEList.InheritedObjectType':{'$exists':False}}]}, {'$or':flags4Req}]}
-        req_filter = {'sd_value.DACL.ACEList.SID':1, 
-                  'sd_value.DACL.ACEList.AccessMask.flags':1, 
+        req_filter = {'sd_value.DACL.ACEList.SID':1,
+                  'sd_value.DACL.ACEList.AccessMask.flags':1,
                   'sd_id':1,
                   'sd_value.DACL.ACEList.ObjectType':1,
                   'sd_value.DACL.ACEList.Type':1}
@@ -81,8 +81,8 @@ class Search4Rights(Miner):
                     # Create the dictionary if necessary
                     if u"%s"%sd["sd_id"] not in result.keys():
                         result[u"%s"%sd["sd_id"]]=list()
-                    result[u"%s"%sd["sd_id"]].append("----------%s have the right %s on %s"%(SID2StringFull(ace["SID"],self.guid), 
-                                                                                             string_who, 
+                    result[u"%s"%sd["sd_id"]].append("----------%s have the right %s on %s"%(SID2StringFull(ace["SID"],self.guid),
+                                                                                             string_who,
                                                                                              SID2StringFull(ace["InheritedObjectType"],
                                                                                              self.guid)))
         #pprint(result)
@@ -108,7 +108,7 @@ class Search4Rights(Miner):
             the_node = Family.find_the_one(root, self.datatable)
         elif(options.DNT_col is not None):
             the_node = self.datatable.find_one({"DNT_col":options.DNT_col})
-        else:            
+        else:
             print "Root nor DNT_col argument found !"
             exit(1)
 

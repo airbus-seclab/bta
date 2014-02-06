@@ -19,7 +19,7 @@ class Membership(Miner):
     def list_groups_of(self, username, doc):
         users = self.datatable.find({"name":{"$regex":"%s"%username}, "primaryGroupID":{"$exists":True}})
         group_category = self.category.find_one({"name":"Group"})["id"]
-        
+
         def backlinks(obj, ll):
             links = self.link_table.find({'backlink_DNT': obj['DNT_col'], 'link_DNT':{"$exists":True}})
             #up = ll.create_list("UP of %s"%obj["name"])
@@ -71,7 +71,7 @@ class Membership(Miner):
 
             table.add([SID2StringFull(user["objectSid"], self.guid), user["cn"], ', '.join(groups)])
         table.finished()
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)

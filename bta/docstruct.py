@@ -29,7 +29,7 @@ class DocPart(object):
 
     def flush(self):
         self.parent.flush()
-    
+
     def to_json(self):
         content = [ (c.to_json() if hasattr(c,"to_json") else c) for c in self.content ]
         return { "name":self.name, "type": self._type_, "content": content }
@@ -139,7 +139,7 @@ class Table(DocPart):
 class List(DocPart):
     _type_ = "list"
     list_level = 0
-    
+
     def format_content(self, c):
         return "%s%s %s\n" % (" "*self.list_level,
                               ["*","+","-"][self.list_level%3],
@@ -202,8 +202,7 @@ if __name__ == "__main__":
     s2.add("unpushed content of sub2..1"); w()
     s2.add("unpushed content of sub2..2"); w()
     s2.add("unpushed content of sub2..3"); w()
-    
+
     d.finish_stream()
-    
 
 #    d.to_text_file(sys.stdout)

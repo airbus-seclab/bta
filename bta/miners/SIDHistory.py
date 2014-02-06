@@ -10,7 +10,7 @@ from bta.miners.tools import Family
 class SIDHistory(Miner):
     _name_ = "SIDHistory"
     _desc_ = "Checking user with Sid history"
-    
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--list', action='store_true', help='list all user having a sidhistory setted')
@@ -22,7 +22,7 @@ class SIDHistory(Miner):
             users = self.datatable.find({"sIDHistory":{"$exists":True}})
             for u in users:
                 t = doc.create_list("User %s has the following sidHistory"%u["name"])
-                t.add(u["sIDHistory"]) 
+                t.add(u["sIDHistory"])
 
         if options.match:
             users = self.datatable.find({"sIDHistory":{"$regex":options.match}})

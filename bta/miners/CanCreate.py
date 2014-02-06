@@ -10,21 +10,21 @@ from bta.miners.tools import ObjectClass
 class CanCreate(Miner):
     _name_ = "CanCreate"
     _desc_ = "This miner list all user who possess the right to create or delete objects"
-    
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--root', required=True, help='Distinguished name for the search start')
         parser.add_argument('--delete', help='Set to true for deletion rights')
         parser.add_argument("--rec", help="Recursive search deapth (-1 = infinite)")
         parser.add_argument('--obj', help='Type of object we can create (Common name needed) for exemple : User, Compter, Print-Queue, Group, Organizational-Unit, Container, Contact, ...')
-    
+
     def ACECreationRight(self, searchedType, flag):
         magic_word="everything"
         result = dict()
-        
+
         req = {'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:True}
-        req_filter = {'sd_value.DACL.ACEList.SID':1, 
-                  'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:1, 
+        req_filter = {'sd_value.DACL.ACEList.SID':1,
+                  'sd_value.DACL.ACEList.AccessMask.flags.%s'%flag:1,
                   'sd_id':1,
                   'sd_value.DACL.ACEList.ObjectType':1,
                   'sd_value.DACL.ACEList.Type':1}

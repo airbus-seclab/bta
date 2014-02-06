@@ -18,7 +18,6 @@ class WhoIs(Miner):
 
     def run(self, options, doc):
         sec = doc.create_subsection("Who is %s" % options.sid)
-        
         c = self.datatable.find({'objectSid': options.sid})
         for r in c:
             t = sec.create_table("Name=[%s]" % r.get("name",""))

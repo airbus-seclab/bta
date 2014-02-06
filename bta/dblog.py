@@ -3,6 +3,11 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
+"""
+Stores action logs to the "log" table in backend.
+Used for long-running operations (ex. btaimport).
+Automatically action status (exception occurred, interrupted, success).
+"""
 
 import sys
 import datetime
@@ -25,7 +30,7 @@ class DBLogEntry(object):
         except KeyboardInterrupt:
             dblog.update_entry("Interrupted by user (Ctrl-C)")
             raise
-        except Exception,e:
+        except Exception, e:
             dblog.update_entry("ERROR: %s" % e)
             raise
         else:
@@ -40,7 +45,7 @@ class DBLogEntry(object):
             actions = [],
             )
         self.entry_id = self.log.insert(e)
-        
+
     def update_entry(self, action):
         act = dict(
             date = datetime.datetime.now(),

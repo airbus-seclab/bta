@@ -20,7 +20,7 @@ class Backend(object):
 
     def commit(self):
         pass
-        
+
     def create_table(self):
         raise NotImplementedError("Backend.create_table()")
     def open_table(self):

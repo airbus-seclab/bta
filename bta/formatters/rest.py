@@ -27,7 +27,7 @@ def format_table(table,  width_hint=200):
     hhfmt = ldcross + ( dcross.join(["%%-%is"]*len(tl)) % tuple(tl) ) + rdcross
     hhline = hhfmt % tuple(["="*l for l in tl])
     return fmt, hline, hhline
-    
+
 
 
 @Formatter.register

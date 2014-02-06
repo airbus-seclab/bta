@@ -5,7 +5,7 @@ from bta.miner import Miner
 from collections import defaultdict
 from bta.tools.WellKnownSID import SID2StringFull
 from datetime import datetime
-import bson.binary 
+import bson.binary
 
 def sane(o):
     if type(o) is bson.binary.Binary:
@@ -30,7 +30,7 @@ class Passwords(Miner):
         parser.add_argument("--never-logged", action="store_true", help="List all account never used")
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
         parser.add_argument("--pso-details", action="store_true", help="Give details about all Passwords Settings Objects")
-    
+
     def get_line(self, record, line, flags=None):
         res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
         if "objectSid" in record:
@@ -61,7 +61,7 @@ class Passwords(Miner):
         t.add(["name", "whenCreated", "comments"])
         t.add()
         for account in self.datatable.find({"whenCreated":{"$exists":True},
-                                            "objectCategory":{"$in":[account_type]}, 
+                                            "objectCategory":{"$in":[account_type]},
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
             t.add(self.get_line(account, ["name", "whenCreated"])+[''])
             t.flush()
@@ -94,12 +94,12 @@ class Passwords(Miner):
         t.add()
 
         for account in self.datatable.find({field:{"$exists":False},
-                                            "objectCategory":{"$in":[account_type]}, 
+                                            "objectCategory":{"$in":[account_type]},
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-	    x = self.get_line(account, ["name"], "accountDisable") 
+            x = self.get_line(account, ["name"], "accountDisable")
             t.add(x)
             t.flush()
-    
+
     def pso_details(self, doc):
         PSObjects_category=self.datatable.find_one({"name":"ms-DS-Password-Settings"},{"DNT_col":True})["DNT_col"]
         PSObjects = self.datatable.find({"objectCategory":PSObjects_category})
@@ -151,7 +151,7 @@ class Passwords(Miner):
 
         if options.never_logged:
             self.never_logged(doc, "lastLogonTimestamp", account_type)
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "badPwdCount", int)

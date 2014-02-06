@@ -16,7 +16,7 @@ class DNTree(Miner):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")
         parser.add_argument("--rec", help="Recursive search deapth (-1 = infinite)")
         parser.add_argument("--ace", help="Display ACEs")
-    
+
     def run(self, options, doc):
         doc.add("Display the tree of all objects in the database")
 
@@ -100,7 +100,7 @@ class DNTree(Miner):
         dn = self.dnames.find({"DNT_col":the_node['DNT_col']}).limit(1)[0]
         l_m.add(dn['DName'])
         l_m.finished()
-    
+
 
         depth = 1
         if options.rec:
@@ -112,8 +112,8 @@ class DNTree(Miner):
 
         if options.ace:
         # Displaying ACE
-            acl = find_ACE(the_node) 
-            l_n=doc.create_list("ACEs") 
+            acl = find_ACE(the_node)
+            l_n=doc.create_list("ACEs")
             pretty(acl, l_n)
             l_n.finished()
 

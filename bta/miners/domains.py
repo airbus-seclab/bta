@@ -14,7 +14,7 @@ class Domains(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--dn', help='Schema Partition Distinghuish name')
-   
+
     def run(self, options, doc):
         if not options.dn:
             print "the schema partition distinguish name is mandatory"
@@ -33,8 +33,6 @@ class Domains(Miner):
         u.finished()
 
         return t
-
-        
 
 
     def assert_consistency(self):

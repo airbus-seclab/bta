@@ -17,7 +17,7 @@ log = logging.getLogger("bta.miner")
 class categories(object):
     def __init__(self, ct):
         for entry in ct.find():
-            setattr(self, entry['name'].lower().replace('-','_'), int(entry['id']))
+            setattr(self, entry['name'].lower().replace('-', '_'), int(entry['id']))
 
 
 class MinerRegistry(Registry):
@@ -33,7 +33,7 @@ class Miner(object):
 
     @classmethod
     def create_arg_parser(cls):
-        
+
         parser = argparse.ArgumentParser()
 
         parser.add_argument("-C", dest="connection",
@@ -51,7 +51,6 @@ class Miner(object):
                             help="output file", metavar="FILENAME")
         parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",
                             help="output encoding. Default: utf8", metavar="ENCODING")
-        
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
         for miner in MinerRegistry.itervalues():
@@ -63,21 +62,21 @@ class Miner(object):
     @classmethod
     def create_arg_subparser(cls, parser):
         pass
-        
+
     @classmethod
     def main(cls):
         parser = cls.create_arg_parser()
         options = parser.parse_args()
-        
+
         if options.connection is None:
             parser.error("Missing connection string (-C)")
-    
+
         logging.basicConfig(level=logging.INFO,
                             format="%(levelname)-5s: %(message)s")
 
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
-        
+
         if not options.output_type:
             options.live_output = True
 
@@ -88,7 +87,7 @@ class Miner(object):
         else:
             try:
                 m.assert_consistency()
-            except AssertionError,e:
+            except AssertionError, e:
                 log.error("Consistency check failed: %s" %e)
                 raise SystemExit()
 
@@ -146,7 +145,7 @@ class Miner(object):
         assert cnt > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
     @classmethod
     def assert_field_type(cls, table, field, *types):
-        r = table.find_one({field : {"$exists":True}},{field:True})
+        r = table.find_one({field : {"$exists":True}}, {field:True})
         if r is not None:
             vtype = type(r[field])
             assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)

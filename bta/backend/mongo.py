@@ -3,7 +3,7 @@
 
 import pymongo
 import struct
-from bta.normalization import TypeFactory,Normalizer
+from bta.normalization import TypeFactory, Normalizer
 from bta.backend import Backend, BackendTable
 import bson.binary
 import bta.sd
@@ -12,7 +12,7 @@ import bta.tools.decoding
 import logging
 import functools
 import re
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 
 log = logging.getLogger("bta.backend.mongo")
 
@@ -30,7 +30,7 @@ class MongoNormalizer(Normalizer):
 
 class MongoTextNormalizer(MongoNormalizer):
     pass
-    
+
 class MongoIntNormalizer(MongoNormalizer):
     def normal(self, val):
         if -0x8000000000000000 <= val < 0x8000000000000000:
@@ -73,9 +73,9 @@ class MongoNTSecDesc(MongoNormalizer):
 class MongoSID(MongoNormalizer):
     def normal(self, val):
         if val:
-            return bta.tools.decoding.decode_sid(val,">")
+            return bta.tools.decoding.decode_sid(val, ">")
         return None
-    
+
 class MongoGUID(MongoNormalizer):
     def normal(self, val):
         if val:
@@ -105,7 +105,7 @@ class MongoUserAccountControl(MongoNormalizer):
         if val is not None:
             return bta.datatable.UserAccountControl(val).to_json()
         return None
-    
+
 class MongoSecurityDescriptor(MongoNormalizer):
     def normal(self, val):
         if val:
@@ -127,7 +127,7 @@ class MongoOID(MongoNormalizer):
 
 class MongoWindowsTimestamp(MongoNormalizer):
     def normal(self, val):
-        val=val^0xffffffffffffffff
+        val = val^0xffffffffffffffff
         try:
             return datetime.fromtimestamp(0)+timedelta(microseconds=(val/10))
         except:
@@ -135,15 +135,15 @@ class MongoWindowsTimestamp(MongoNormalizer):
 
 class MongoLogonHours(MongoNormalizer):
     def normal(self, val):
-        hours=''.join(bin(x)[2:].zfill(8)[::-1] for x in bytearray(val))
-        days=['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-        if len(hours)>0:
-            hours=hours[-1]+hours[:-1]
-            hours=re.findall('........................',hours)
+        hours = ''.join(bin(x)[2:].zfill(8)[::-1] for x in bytearray(val))
+        days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+        if len(hours) > 0:
+            hours = hours[-1]+hours[:-1]
+            hours = re.findall('........................', hours)
         else:
-            hours=['x', 'x', 'x', 'x', 'x', 'x', 'x'] 
+            hours = ['x', 'x', 'x', 'x', 'x', 'x', 'x']
         return dict(zip(days, hours))
-        
+
 class MongoWindowsEnlaspedTime(MongoNormalizer):
     def normal(self, val):
         try:
@@ -185,9 +185,9 @@ class MongoTypeFactory(TypeFactory):
     def UnknownType(self):
         return MongoUnknownNormalizer()
     def Ancestors(self):
-	    return MongoAncestors()
+        return MongoAncestors()
     def OID(self):
-	    return MongoOID()
+        return MongoOID()
     def WindowsTimestamp(self):
         return MongoWindowsTimestamp()
     def WindowsEnlapsedTime(self):
@@ -234,7 +234,7 @@ class MongoTable(BackendTable):
         for c in columns:
             if c.index:
                 self.create_index(c.name)
-        
+
     def insert(self, values):
         return self.col.insert(values)
 
@@ -242,7 +242,7 @@ class MongoTable(BackendTable):
         return self.col.update(*args)
 
     def insert_fields(self, values):
-        d = {name:norm.normal(v) for (name,norm),v in zip(self.fields, values) if not norm.empty(v)}
+        d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
         return self.insert(d)
 
     def count(self):
@@ -258,10 +258,10 @@ class MongoTable(BackendTable):
 class Mongo(Backend):
     def __init__(self, options, connection=None):
         Backend.__init__(self, options, connection)
-        ip,port,self.dbname,_ = (self.connection+":::").split(":",3)
+        ip, port, self.dbname, _ = (self.connection+":::").split(":", 3)
         ip = ip if ip else "127.0.0.1"
         port = int(port) if port else 27017
-        self.cnxstr = (ip,port)
+        self.cnxstr = (ip, port)
         self.cnx = pymongo.Connection(*self.cnxstr)
         self.db = self.cnx[self.dbname]
 
@@ -271,4 +271,3 @@ class Mongo(Backend):
     def list_tables(self):
         return self.db.collection_names()
 
-    
