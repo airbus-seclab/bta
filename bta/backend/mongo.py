@@ -238,8 +238,8 @@ class MongoTable(BackendTable):
     def insert(self, values):
         return self.col.insert(values)
 
-    def update(self, *args):
-        return self.col.update(*args)
+    def update(self, *args, **kargs):
+        return self.col.update(*args, **kargs)
 
     def insert_fields(self, values):
         d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
