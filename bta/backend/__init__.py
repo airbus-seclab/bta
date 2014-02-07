@@ -55,7 +55,7 @@ class BackendTable(object):
 
     def insert(self, values):
         raise NotImplementedError("Table.insert()")
-    def update(self, *args):
+    def update(self, *args, **kargs):
         raise NotImplementedError("Table.update()")
 
 

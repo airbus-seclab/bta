@@ -102,6 +102,8 @@ def main():
                       help="Add a field name to be ignored", metavar="FIELD")
     parser.add_option("-A", "--consider-field", dest="consider_list", action="append", default=[],
                       help="Add a field name to be considered even if present in default ignore list", metavar="FIELD")
+    parser.add_option("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
+                      help="Ignore mismatch between stored data and this program's format versions")
     parser.add_option("--ignore-defaults", dest="ignore_defaults", action="store_true",
                       help="Add %s to list of ignored fields" % ", ".join(DEFAULT_IGNORE_LIST))
 
