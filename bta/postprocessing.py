@@ -73,6 +73,12 @@ class PostProcessing(object):
         #guid for rights
         for id in self.dt.find({"rightsGuid": {"$exists": 1}}):
             guid.insert({"id":id["rightsGuid"].lower(), "name":id["name"]})
+        #ObjectId
+        for id in self.dt.find({"objectSid": {"$exists": 1}}):
+            guid.insert({"id":id["objectSid"].lower(), "name":id["name"]})
+        #
+        for id in self.dt.find({"attributeID": {"$exists": 1}}):
+            guid.insert({"id":id["attributeID"].lower(), "name":id["name"]})
         
     @PostProcRegistry.register(depends={"category"})
     def domains(self):
@@ -101,6 +107,36 @@ class PostProcessing(object):
 
         for r in self.dt.find({"objectCategory":dom, "objectSid":{"$exists":True}}):
             domains.insert({"domain":find_dn(r), "sid":r["objectSid"]})
+
+    @PostProcRegistry.register()
+    def dnames(self):
+        dnames = self.options.backend.open_table("dnames")
+        dnames.create()
+        dnames.create_index("name")
+        dnames.create_index("DNT_col")
+        dnames.create_index("DName")
+
+	error = 0
+        for r in self.dt.find({"Ancestors_col":{"$exists":True}}):
+		dn=list()
+		for p in r["Ancestors_col"]:
+			try:
+				p=self.dt.find({"DNT_col":p}).limit(1)[0]
+			except:
+				error += 1
+				continue
+                        if p.get('name')=="$ROOT_OBJECT$\x00":
+                                continue
+                        if p.get('dc'):
+                                dn.append("DC=%s"%p['name'])
+                        elif p.get('cn'):
+                                dn.append("CN=%s"%p['name'])
+                        elif p.get('name'):
+                                dn.append("DC=%s"%p['name'])
+                dn.reverse()
+		dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
+	print "NB ERRORS : %r" % error
+
 
     @PostProcRegistry.register()
     def usersid(self):

@@ -38,11 +38,14 @@ class MailBoxRights(Miner):
     def run(self, options, doc):
         userAccess = {}     # Permissions per User
         mailboxAccess = {}  # Permissions per mailbox
-
-        if options.user:
+        match = ""
+        if options.userid:
             match =  { "objectSid": options.user }  
-        elif options.userid:
-            match =  { "sAMAccountName": { "$regex" : options.userid } } 
+        elif options.user:
+            match =  { "sAMAccountName": { "$regex" : options.userid, "$options":"i" } } 
+        if match =="":
+            print "Argument user or userid missing !\nType \"$btaminer %s -h\" for usage "% self._name_
+            exit(1)
 
         mailboxes=self.datatable.find_one(match)
         for mbox in mailboxes:

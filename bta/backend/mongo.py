@@ -3,7 +3,6 @@
 
 import pymongo
 import struct
-from datetime import datetime
 from bta.normalization import TypeFactory,Normalizer
 from bta.backend import Backend, BackendTable
 import bson.binary
@@ -12,6 +11,8 @@ import bta.datatable
 import bta.tools.decoding
 import logging
 import functools
+import re
+from datetime import datetime,timedelta
 
 log = logging.getLogger("bta.backend.mongo")
 
@@ -81,6 +82,24 @@ class MongoGUID(MongoNormalizer):
             return bta.tools.decoding.decode_guid(val)
         return None
 
+class MongoTrustAttributes(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustAttributes(val).to_json()
+        return None
+
+class MongoTrustType(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustType(val).to_json()
+        return None
+
+class MongoTrustDirection(MongoNormalizer):
+    def normal(self, val):
+        if val is not None:
+            return bta.datatable.TrustDirection(val).to_json()
+        return None
+
 class MongoUserAccountControl(MongoNormalizer):
     def normal(self, val):
         if val is not None:
@@ -93,6 +112,50 @@ class MongoSecurityDescriptor(MongoNormalizer):
             return bta.sd.sd_to_json(val)
         return None
 
+class MongoAncestors(MongoNormalizer):
+    def normal(self, val):
+        if val:
+            return bta.tools.decoding.decode_ancestors(val)
+        return None
+
+class MongoOID(MongoNormalizer):
+    @vectorize
+    def normal(self, val):
+        if val is not None:
+            return bta.tools.decoding.decode_OID(val)
+        return None
+
+class MongoWindowsTimestamp(MongoNormalizer):
+    def normal(self, val):
+        val=val^0xffffffffffffffff
+        try:
+            return datetime.fromtimestamp(0)+timedelta(microseconds=(val/10))
+        except:
+            return datetime.fromtimestamp(0)
+
+class MongoLogonHours(MongoNormalizer):
+    def normal(self, val):
+        hours=''.join(bin(x)[2:].zfill(8)[::-1] for x in bytearray(val))
+        days=['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+        if len(hours)>0:
+            hours=hours[-1]+hours[:-1]
+            hours=re.findall('........................',hours)
+        else:
+            hours=['x', 'x', 'x', 'x', 'x', 'x', 'x'] 
+        return dict(zip(days, hours))
+        
+class MongoWindowsEnlaspedTime(MongoNormalizer):
+    def normal(self, val):
+        try:
+            val = int(val)
+            return datetime.fromtimestamp(0)+timedelta(microseconds=(val/10-11644473600000000))
+        except:
+            return datetime.fromtimestamp(0)
+
+
+class MongoReplPropMeta(MongoNormalizer):
+    def normal(self, val):
+        return bta.tools.decoding.decode_ReplPropMeta(val)
 
 class MongoTypeFactory(TypeFactory):
     def Text(self):
@@ -111,10 +174,28 @@ class MongoTypeFactory(TypeFactory):
         return MongoGUID()
     def SecurityDescriptor(self):
         return MongoSecurityDescriptor()
+    def TrustAttributes(self):
+        return MongoTrustAttributes()
+    def TrustType(self):
+        return MongoTrustType()
+    def TrustDirection(self):
+        return MongoTrustDirection()
     def UserAccountControl(self):
         return MongoUserAccountControl()
     def UnknownType(self):
         return MongoUnknownNormalizer()
+    def Ancestors(self):
+	    return MongoAncestors()
+    def OID(self):
+	    return MongoOID()
+    def WindowsTimestamp(self):
+        return MongoWindowsTimestamp()
+    def WindowsEnlapsedTime(self):
+        return MongoWindowsEnlaspedTime()
+    def LogonHours(self):
+        return MongoLogonHours()
+    def ReplPropMeta(self):
+        return MongoReplPropMeta()
 
 class MongoTable(BackendTable):
     def __init__(self, options, db, name):

@@ -3,6 +3,7 @@
 
 from bta.miner import Miner
 from collections import defaultdict
+from bta.tools.WellKnownSID import SID2StringFull
 
 @Miner.register
 class Membership(Miner):
@@ -12,20 +13,48 @@ class Membership(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
+        parser.add_argument("--all-groups", action="store_true", help="List all groups of the object direct or by inclusion")
+
+
+    def list_groups_of(self, username, doc):
+        users = self.datatable.find({"name":{"$regex":"%s"%username}, "primaryGroupID":{"$exists":True}})
+        group_category = self.category.find_one({"name":"Group"})["id"]
+        
+        def backlinks(obj, ll):
+            links = self.link_table.find({'backlink_DNT': obj['DNT_col'], 'link_DNT':{"$exists":True}})
+            #up = ll.create_list("UP of %s"%obj["name"])
+            for l in links:
+                upper_obj = self.datatable.find_one({"DNT_col":l['link_DNT'], "objectCategory":group_category})
+                if upper_obj is not None:
+                    if not(l.has_key("link_deltime")) or l["link_deltime"].year==1970:
+                        ll.add(upper_obj["name"])
+                        backlinks(upper_obj, ll)
+
+        for u in users:
+            l = doc.create_list("Upper groups of %s" %u["name"])
+            primary_id = self.datatable.find_one({"objectSid":'-'.join(u["objectSid"].split('-')[:-1])+'-%s'%u["primaryGroupID"]})
+            l.add("Primary group : %s"%primary_id["name"])
+            backlinks(u, l)
+
 
     def run(self, options, doc):
-        match = None
 
+        if options.match is not None and options.all_groups:
+            self.list_groups_of(options.match, doc)
+            return
+
+        match = None
         table = doc.create_table("group membership")
 
         match = { 'objectSid': {'$exists': True}, 'primaryGroupID': {'$exists': True},  }
         if options.match is not None:
             match = {"$and": [ match,
-                              {"$or": [ { "cn": { "$regex": options.match } },
+                              {"$or": [{ "cn": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
-                                     ]}
+                                      ]
+                              }
                              ]
-            }
+                    }
 
         for user in self.datatable.find(match):
             links = self.link_table.find({'backlink_DNT': user['DNT_col']}, {'link_DNT': True})
@@ -39,7 +68,8 @@ class Membership(Miner):
                 group = self.datatable.find_one({'DNT_col': groupRecId, 'cn':{"$exists":True}}, {'cn': True})
                 if group:
                     groups.add(group['cn'])
-            table.add([user["objectSid"], user["cn"], ', '.join(groups)])
+
+            table.add([SID2StringFull(user["objectSid"], self.guid), user["cn"], ', '.join(groups)])
         table.finished()
     
     def assert_consistency(self):

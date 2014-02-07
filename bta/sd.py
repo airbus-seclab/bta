@@ -114,18 +114,31 @@ class ACEObjectFlags(Flags):
 
 class AccessMask(Flags):
     _flags_ = {
-        "GenericRead": 0x80000000,
-        "GenericWrite": 0x40000000,
-        "GenericExecute": 0x20000000,
-        "GenericAll": 0x10000000,
-        "AcessSystemAcl": 0x01000000,
-        "Delete": 0x00010000,
-        "ReadControl": 0x00020000,
-        "WriteDAC": 0x00040000,
-        "WriteOwner": 0x00080000,
-        "Synchronize": 0x0010000,
-        }        
-
+        "GenericRead":              0x80000000,
+        "GenericWrite":             0x40000000,
+        "GenericExecute":           0x20000000,
+        "GenericAll":               0x10000000,
+        "AcessSystemAcl":           0x01000000,
+        "Delete":                   0x00010000,
+        "ReadControl":              0x00020000,
+        "WriteDAC":                 0x00040000,
+        "WriteOwner":               0x00080000,
+        "Synchronize":              0x00100000,
+        "AccessSystemSecurity":     0x01000000,
+        "MaximumAllowed":           0x02000000,
+        "StandardsRightsRequired":  0x000f0000,
+        "StandarRightsAll":         0x001f0000,
+        "SpecificRightsAll":        0x0000ffff,
+        "ADSRightDSCreateChild":    0x00000001,
+        "ADSRightDSDeleteChild":    0x00000002,
+        "ADSRightACTRLDSList":      0x00000004,
+        "ADSRightDSSelf":           0x00000008,
+        "ADSRightDSReadProp":       0x00000010,
+        "ADSRightDSWriteProp":      0x00000020,
+        "ADSRightDSDeleteTree":     0x00000040,
+        "ADSRightDSListObject":     0x00000080,
+        "ADSRightDSControlAccess":  0x00000100,  
+    }
 
 def acl_to_json(acl):
     rev,sbz,size,count,sbz2 = struct.unpack_from("<BBHHH", acl)

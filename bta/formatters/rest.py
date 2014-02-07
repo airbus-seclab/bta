@@ -5,9 +5,12 @@
 import itertools
 from bta.formatters import Formatter
 
+def get_indent(lvl):
+    return "  "*lvl
+
 def get_bullet(lvl):
     b = {0:"*", 1:"+", 2:"-"}.get(lvl, "*")
-    return ("  "*lvl)+b
+    return get_indent(lvl)+b
 
 
 def format_table(table,  width_hint=200):
@@ -49,9 +52,10 @@ class ReST(Formatter):
         t.append(hline)
         self.doc.append("\n".join(t))
 
-    def add_list(self, name, lst):
-        for lvl, content in lst:
-            self.doc.append("%s %s" % (get_bullet(lvl), content))
+    def add_list(self, name, lvl, lst):
+        self.doc.append("%s %s:" % (get_bullet(lvl-1), name.encode('unicode-escape')))
+        for content in lst:
+            self.doc.append("%s %s" % (get_bullet(lvl), content.encode('unicode-escape')))
 
     def add_section(self, section_name, lvl):
         self.doc.append("")

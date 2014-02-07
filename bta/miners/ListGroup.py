@@ -6,6 +6,7 @@ from bta.miners import ListACE
 from bta.miners.tools import Sid
 import datetime
 import subprocess 
+from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
 @Miner.register
 class ListGroup(Miner):
@@ -20,7 +21,7 @@ class ListGroup(Miner):
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def get_members_of(self, grpsid, recursive=False):
-        group = self.datatable.find_one({'objectSid': grpsid})
+        group = self.datatable.find_one({'objectSid': grpsid.split(":")[0]})
         if not group:
             return set()
         members=set()
@@ -37,13 +38,16 @@ class ListGroup(Miner):
             if category == self.categories.group:
                 if sid not in self.groups_already_saw:
                     self.groups_already_saw[sid] = True
-                    members.update(self.get_members_of(sid, recursive=True))
+                    members.update(self.get_members_of(sid+":"+grpsid, recursive=True))
             elif category == self.categories.person:
                 fromgrp = grpsid if recursive else ''
-                membership = (row['objectSid'], deleted, fromgrp)
+                name=row['cn']
+                membership = (sid, deleted, fromgrp, name)
                 members.add(membership)
             else:
                 print '***** Unknown category (%d) for %s' % (category, sid)
+        if len(members)==0:
+            members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.guid)))
         return members
         
     def getInfo_fromSid(self, sid):
@@ -67,9 +71,17 @@ class ListGroup(Miner):
 	Mylist = list()	
 	for ace in aceList:
 	    info = self.getInfo_fromSid(ace['SID'])
-            trustee = info['cn']
+            if info is None:
+                trustee_cn = trustee_string = "NULLOBJECT-%S" % ace['SID']
+            else:
+		if "cn" in info:
+	                trustee_cn=info['cn']
+        	        trustee_string=SID2String(info['cn'])
+		else:
+			trustee_string = trustee_cn = info['name']
+            trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
 	    info2 = self.getInfo_fromSid(membersid)
-	    subject = info2['cn'] 
+	    subject = info2['cn']
             if ace['ObjectType']:
 	        objtype = hdlACE.type2human(ace['ObjectType'])    
             else:
@@ -107,32 +119,32 @@ class ListGroup(Miner):
         
         listemptyGroup=[]
         for groupSid,membership in groups.items():
-            if len(membership) == 0: 
+            if len(membership)==0: 
                 listemptyGroup.append(groupSid)
                 continue
-                
             info = self.getInfo_fromSid(groupSid)
             name = info['cn']
             guid = info['objectGUID']
             
             sec = doc.create_subsection("Group %s" % name)
             sec.add("sid = %s" % groupSid)
-            sec.add("guid= %s" % guid)
-            sec.add("cn  = %s" % self.find_dn(info))
+            sec.add("guid = %s" % guid)
+            sec.add("cn = %s" % self.find_dn(info))
             table = sec.create_table("Members of %s" % name)
             table.add(headers)
             table.add()
-            for sid,deleted,fromgrp in deleted_last(membership):
-		sidobj = Sid(sid, self.datatable)
+            for sid,deleted,fromgrp,name in deleted_last(membership):
+                fromgrp = fromgrp.split(":")[0] 
+                sidobj = Sid(sid, self.datatable)
                 member = unicode(sidobj)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
                 flags = sidobj.getUserAccountControl()
-                table.add((member, deleted or '', flags, fromgrp))
+                table.add((member, deleted or '', flags if flags!='' else 'emptygroup', fromgrp))
             table.finished()
 
-            for sid,deleted,fromgrp in deleted_last(membership):
-               	sec.add("User %s" % (sid))
+            for sid,deleted,fromgrp,name in deleted_last(membership):
+               	sec.add("User %s (%s)" % (name, sid))
                 table = sec.create_table("ACE")
                 table.add(["Trustee", "Member", "ACE Type", "Object type"])
                 table.add()
@@ -147,6 +159,7 @@ class ListGroup(Miner):
             table = doc.create_table("Empty groups")
             table.add(headers)
             table.add()
+            print "@@@",listemptyGroup
             for groupSid in listemptyGroup:
                 info = self.getInfo_fromSid(groupSid)
                 name = info['cn']

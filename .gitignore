@@ -2,3 +2,7 @@
 *.pyc
 \#*#
 .#*
+bta.egg-info/
+build/
+dist/
+

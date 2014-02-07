@@ -7,6 +7,9 @@
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
 from esetypes import ColumnType,ValueFlags,native_type,multi_native_type
 
+import logging
+log = logging.getLogger("libesedb")
+
 class ESEDB_Exception(Exception):
     pass
 
@@ -197,7 +200,16 @@ class ESERecord(object):
         self.record = self.lib.table_get_record(self.table.table, record_num)
         try:
             self.value_entries = limit if limit is not None else range(self.lib.record_get_number_of_values(self.record))
-            self.values = [ESEValue(self, i) for i in self.value_entries]
+            self.values=list()
+            for i in self.value_entries:
+                try:
+                    self.values.append(ESEValue(self, i))
+                except:
+                    a=ESEValue(self,i)
+                    a.value=u"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                    self.values.append(a)
+                    log.warning("====> %r" % (ESEValue(self,i)))
+
         finally:
             self.lib.record_free(self.record)
             self.record = None
@@ -219,10 +231,16 @@ class ESEValue(object):
         else:
 
             if self.flags & ValueFlags.LONG_VALUE:
-                lv = self.lib.record_get_long_value(self.record.record, value_num)
-                segnb = self.lib.long_value_get_number_of_segments(lv)
-                segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
-                value = "".join(segs)
+                try:
+                    lv = self.lib.record_get_long_value(self.record.record, value_num)
+                except ESEDB_Exception,e:
+                    log.warning("error %s on line %d column %d flag %08x" % (e,self.record.record_num,value_num, self.flags))
+                    value = None
+                    raise
+                else:
+                    segnb = self.lib.long_value_get_number_of_segments(lv)
+                    segs = [self.lib.long_value_get_segment_data(lv, i) for i in xrange(segnb)]
+                    value = "".join(segs)
 
             if self.flags & ValueFlags.MULTI_VALUE:
                 self.value = multi_native_type(self.flags, self.type, value)

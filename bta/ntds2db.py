@@ -130,7 +130,24 @@ class Datatable(ESETable):
         ESEColumn("objectSid", "ATTr589970", "SID", True),
         ESEColumn("objectGUID", "ATTk589826", "GUID", True),
         ESEColumn("schemaIDGUID", "ATTk589972", "GUID", True),
+        ESEColumn("Ancestors_col", "Ancestors_col", "Ancestors", False),
+        ESEColumn("trustAttributes", "ATTj590294", "TrustAttributes", False),
+        ESEColumn("trustType", "ATTj589960", "TrustType", False),
+        ESEColumn("trustDirection", "ATTj589956", "TrustDirection", False),
         ESEColumn("userAccountControl", "ATTj589832", "UserAccountControl", False),
+        ESEColumn("maxPwdAge", "ATTq589898", "WindowsTimestamp", False),
+        ESEColumn("badPasswordTime", "ATTq589873", "WindowsEnlapsedTime", True),
+        ESEColumn("forceLogoff", "ATTq589863", "WindowsTimestamp", False),
+        ESEColumn("lockoutDuration", "ATTq589884", "WindowsTimestamp", False),
+        ESEColumn("minPwdAge", "ATTq589902", "WindowsTimestamp", False),
+        ESEColumn("pwdLastSet", "ATTq589920", "WindowsEnlapsedTime", False),
+        ESEColumn("lastLogon", "ATTq589876", "WindowsEnlapsedTime", False),
+        ESEColumn("lastLogonTimestamp", "ATTq591520", "WindowsEnlapsedTime", False),
+        ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
+        ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
+        ESEColumn("accountExpires", "ATTq589983", "WindowsTimestamp", False),
+        ESEColumn("logonHours", "ATTk589888", "LogonHours", False),
+        ESEColumn("sIDHistory", "ATTr590433", "SID", False),
         ]
     _indexes_ = [ "rightsGuid" ]
 
@@ -161,11 +178,12 @@ class Datatable(ESETable):
 
     type2type = {
         "DN": ("Text",False),
-        "OID": ("Text",False),
+        "OID": ("OID",False),
         "CaseExactString" : ("Text",False),
         "GeneralizedTime" : ("Timestamp",False),
         "Integer8": ("Int",False),
         "NTSecurityDescriptor" : ("NTSecDesc",True),
+        "ReplPropertyMetaData" : ("ReplPropMeta",True),
         }
     
     def syntax_to_type(self, s):
