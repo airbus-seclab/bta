@@ -9,6 +9,7 @@ import bson.binary
 import bta.sd
 import bta.datatable
 import bta.tools.decoding
+import bta.dbmeta
 import logging
 import functools
 import re
@@ -256,6 +257,12 @@ class MongoTable(BackendTable):
 
 @Backend.register("mongo")
 class Mongo(Backend):
+    # data format version.
+    # to be incremented each time the import format changes
+    # ex. added/removed extracted attributes, type changes...
+    data_format_version = 1
+
+
     def __init__(self, options, connection=None):
         Backend.__init__(self, options, connection)
         ip, port, self.dbname, _ = (self.connection+":::").split(":", 3)
@@ -264,6 +271,40 @@ class Mongo(Backend):
         self.cnxstr = (ip, port)
         self.cnx = pymongo.Connection(*self.cnxstr)
         self.db = self.cnx[self.dbname]
+        self.dbmetaentry = bta.dbmeta.DBMetadataEntry(self)
+        if self.isFormatMismatch():
+            raise Exception("Data format version mismatch.")
+        self.dbmetaentry.set_value("data_format_version", self.data_format_version)
+
+
+    def isFormatMismatch(self):
+        """
+        Format version mismatch iff all following criteria are met:
+        * stored version is not None
+        * stored version != data_format_version
+        * --ignore-version-mismatch has not been passed
+        * --overwrite has not been passed
+        """
+        db_data_format_version = self.dbmetaentry.get_value("data_format_version")
+        if db_data_format_version is None:
+            return False
+        if db_data_format_version == self.data_format_version:
+            return False
+        if getattr(self.options, "ignore_version_mismatch", False):
+            log.info("Format version mismatch (stored: %d, supported: %d) \
+ignored." % (db_data_format_version, self.data_format_version))
+            return False
+        if getattr(self.options, "overwrite", False):
+            log.info("Re-creating tables with updated data format version \
+(%d -> %d)." % (db_data_format_version, self.data_format_version))
+            return False
+        log.error("Importer version mismatch. Database %s has already been \
+imported using version %d importer format version. This program uses format \
+version %d. You should either re-import the database using --overwrite, or \
+continue with an older version of this tool. \n\
+Using --ignore-version-mismatch might lead to incorrect results." %
+(self.dbname, db_data_format_version, self.data_format_version))
+        return True
 
 
     def open_table(self, name):

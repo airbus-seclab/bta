@@ -292,6 +292,8 @@ def main():
                       help="Append ESE tables to existing data in db")
     parser.add_option("--overwrite", dest="overwrite", action="store_true",
                       help="Delete tables that already exist in db")
+    parser.add_option("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
+                      help="Ignore mismatch between stored data and this program's format versions")
     parser.add_option("--no-post-processing", dest="no_post_proc", action="store_true",
                       help="Don't post-process imported data")
     parser.add_option("--only-post-processing", dest="only_post_proc", action="store_true",
