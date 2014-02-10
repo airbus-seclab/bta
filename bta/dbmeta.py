@@ -13,8 +13,6 @@ class DBMetadataEntry(object):
     def __init__(self, backend):
         self.backend = backend
         self.log = backend.open_table("metadata")
-        # TODO re-create table in bta-import to ensure data gets deleted if
-        # overwrite==True
         self.log.ensure_created()
 
     def get_value(self, key):
