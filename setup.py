@@ -1,6 +1,22 @@
 #! /usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, Command
+
+class PyLint(Command):
+    description = "run pylint"
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import sys,subprocess
+        errno = subprocess.call(["pylint", "--rcfile", "./lint/pylintrc", "bta"],
+                                env={"PYTHONPATH":"lint"})
+        raise SystemExit(errno)
+
+
+
 
 setup(
     name = 'bta',
@@ -13,4 +29,7 @@ setup(
     author = 'Philippe Biondi',
     author_email = 'phil@secdev.org',
     description = 'Active Directory Auditing tool',
+
+    cmdclass = {'lint': PyLint},
+
 )
