@@ -42,7 +42,7 @@ class ListACE(Miner):
             if 'ObjectType' in ace:
                 objtype = self.type2human(ace['ObjectType'])
             else:
-                objtype = "No object type /!\ DANGEROUS"
+                objtype = r"No object type /!\ DANGEROUS"
         return [trustee,
                 unicode(Sid(ace['SID'], self.datatable), self.usersid),
                 objtype,
@@ -136,8 +136,10 @@ class ListACE(Miner):
 
                 aceList = self.extractACE(securitydescriptor)
                 for ace in aceList:
-                    if options.type and ace.ObjectType != options.type: continue
-                    if options.trustee and ace.SID != options.trustee: continue
+                    if options.type and ace.ObjectType != options.type:
+                        continue
+                    if options.trustee and ace.SID != options.trustee:
+                        continue
 
                     aceobj = self.formatACE(ace.SID, subjects, ace.ObjectType)
                     table.add(aceobj)

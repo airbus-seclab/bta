@@ -51,8 +51,8 @@ class Miner(object):
                             help="output file", metavar="FILENAME")
         parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",
                             help="output encoding. Default: utf8", metavar="ENCODING")
-        parser.add_option("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
-                          help="Ignore mismatch between stored data and this program's format versions")
+        parser.add_argument("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
+                            help="Ignore mismatch between stored data and this program's format versions")
 
         subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
         for miner in MinerRegistry.itervalues():
@@ -128,7 +128,7 @@ class Miner(object):
         self.dnames = backend.open_table("dnames")
         self.categories = categories(self.category)
 
-    def run(self, options):
+    def run(self, options, doc):
         raise NotImplementedError("run")
 
     def assert_consistency(self):

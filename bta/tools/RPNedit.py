@@ -16,6 +16,7 @@ def stackify(f):
     return stackified
 
 class RPNFilenameEditor(object):
+    #pylint: disable=no-self-argument,no-member
     def __init__(self, prog):
         self._new_prog(prog)
         self._stack = []

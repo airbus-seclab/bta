@@ -121,7 +121,7 @@ class ObjectClass(object):
         return []
 
     @classmethod
-    def test():
+    def test(cls):
         return ""
 
 class Sid(object):

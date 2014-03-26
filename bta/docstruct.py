@@ -169,6 +169,7 @@ def w():
     time.sleep(0.1)
 
 if __name__ == "__main__":
+    #pylint: disable=multiple-statements
     d = LiveRootDoc("root")
     d.start_stream()
     d.add("foo") ;w()

@@ -30,12 +30,18 @@ class Schema(Miner):
             createtime = str(r["whenCreated"])[:-6]
             recid = r["DNT_col"]
 
-            if rectime in timerecord: timerecord[rectime].append(recid)
-            else: timerecord[rectime] = [recid]
-            if createtime in timecreated: timecreated[createtime].append(recid)
-            else: timecreated[createtime] = [recid]
-            if changetime in timechanged: timechanged[changetime].append(recid)
-            else: timechanged[changetime] = [recid]
+            if rectime in timerecord: 
+                timerecord[rectime].append(recid)
+            else:
+                timerecord[rectime] = [recid]
+            if createtime in timecreated: 
+                timecreated[createtime].append(recid)
+            else:
+                timecreated[createtime] = [recid]
+            if changetime in timechanged: 
+                timechanged[changetime].append(recid)
+            else:
+                timechanged[changetime] = [recid]
 
         if option == 'recorded':
             timerecord = sorted(timerecord.items(), key=lambda x: x[0])
@@ -53,20 +59,22 @@ class Schema(Miner):
         SchemaSecuDescriptor[root["nTSecurityDescriptor"]] = [root["DNT_col"]]
         for r in self.datatable.find({"objectCategory": self.categories.attribute_schema}):
             idSecu = r["nTSecurityDescriptor"]
-            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
+            if idSecu in SchemaSecuDescriptor:
+                SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
             else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
         for r in self.datatable.find({"objectCategory": self.categories.class_schema}):
             idSecu = r["nTSecurityDescriptor"]
-            if idSecu in SchemaSecuDescriptor: SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
+            if idSecu in SchemaSecuDescriptor:
+                SchemaSecuDescriptor[idSecu].append(r["DNT_col"])
             else: SchemaSecuDescriptor[idSecu] = [r["DNT_col"]]
         SchemaSecuDescriptor = sorted(SchemaSecuDescriptor.items(), key=lambda x: x[0])
         return SchemaSecuDescriptor
 
-    def catName(self, id):
+    def catName(self, id_):
         idSchema = self.datatable.find_one({"cn": "Schema"})['DNT_col']
-        if id == idSchema:
+        if id_ == idSchema:
             return 'Schema'
-        cat = self.datatable.find_one({"DNT_col": id})['objectCategory']
+        cat = self.datatable.find_one({"DNT_col": id_})['objectCategory']
         return self.category.find_one({'id': cat})['name']
 
     def change(self, year, month, day, atrib):
@@ -101,8 +109,8 @@ class Schema(Miner):
             year = int(date[0])
             month = int(date[1])
             day = int(date[2])
-        except Exception as e:
-            raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
+        except Exception:
+            raise ValueError('Invalid date format "%s" expect YYYY-MM-DD ' % dateToTest)
         return year, month, day
 
     def run(self, options, doc):

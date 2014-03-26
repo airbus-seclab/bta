@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from collections import defaultdict
 
 
 @Miner.register
@@ -18,7 +17,8 @@ class MailBoxRights(Miner):
     def get_sid(self, sid):
         objlist = self.datatable.find({'objectSid': sid})
         for obj in objlist:
-            if 'cn' in obj: return obj['cn']
+            if 'cn' in obj:
+                return obj['cn']
 
     def getSecurityDescriptor(self, sdId):
         sd = self.sd_table.find({'sd_id': sdId})
