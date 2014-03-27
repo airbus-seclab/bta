@@ -1,18 +1,25 @@
 #! /usr/bin/env python
 
+import os
 from setuptools import setup, Command
 
 class PyLint(Command):
     description = "run pylint"
-    user_options = []
+    user_options = [("reports","r", "Output pylint reports")]
     def initialize_options(self):
-        pass
+        self.reports = False
     def finalize_options(self):
         pass
     def run(self):
         import sys,subprocess
-        errno = subprocess.call(["pylint", "--rcfile", "./lint/pylintrc", "bta"],
-                                env={"PYTHONPATH":"lint"})
+        pth = os.path.dirname(__file__)
+        lintpth = os.path.join(pth, "lint")
+        pylintrcpth = os.path.join(lintpth, "pylintrc")
+        btapth = os.path.join(pth, "bta")
+        cmd = ["pylint", "--rcfile", pylintrcpth, btapth]
+        if self.reports:
+            cmd += ["--reports=y"]
+        errno = subprocess.call(cmd, env={"PYTHONPATH":lintpth})
         raise SystemExit(errno)
 
 
