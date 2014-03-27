@@ -28,6 +28,21 @@ class PyLint(Command):
         errno = subprocess.call(cmd, env={"PYTHONPATH":lintpth})
         raise SystemExit(errno)
 
+class PyTest(Command):
+    description = "run py.test unit tests"
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import sys,subprocess
+        pth = os.path.dirname(__file__)
+        testpth = os.path.join(pth, "test")
+        runtestspth = os.path.join(pth, "runtests.py")
+        errno = subprocess.call([sys.executable, runtestspth, testpth])
+        raise SystemExit(errno)
+
 
 
 
@@ -43,6 +58,9 @@ setup(
     author_email = 'phil@secdev.org',
     description = 'Active Directory Auditing tool',
 
-    cmdclass = {'lint': PyLint},
+    cmdclass = {
+        'lint': PyLint,
+        'test': PyTest,
+    },
 
 )
