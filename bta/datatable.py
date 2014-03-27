@@ -1,7 +1,7 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-from tools.flags import Flags, Enums
+from bta.tools.flags import Flags, Enums
 
 class UserAccountControl(Flags):
     _flags_ = {

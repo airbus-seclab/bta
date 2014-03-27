@@ -41,7 +41,9 @@ class DBLogEntry(object):
             date = datetime.datetime.now(),
             program = sys.argv[0],
             args = sys.argv,
+            # pylint: disable=maybe-no-member
             version = pkg_resources.get_distribution("bta").version,
+            # pylint: enable=maybe-no-member
             actions = [],
             )
         self.entry_id = self.log.insert(e)

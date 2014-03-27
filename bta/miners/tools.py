@@ -99,7 +99,7 @@ class Family(object):
 class ObjectClass(object):
     @classmethod
     def find_my_class(cls, node, datatable):
-        classes = datatable.find({"DNT_col": node["DNT_col"]},{objectClass:1})
+        classes = datatable.find({"DNT_col": node["DNT_col"]},{"objectClass":1})
         return classes
 
     @classmethod

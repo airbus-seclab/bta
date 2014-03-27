@@ -44,9 +44,6 @@ class Passwords(Miner):
 
         return res
 
-    def get_line(self, record, line):
-        return [sane(record.get(x,"-")) for x in line]
-
     def dump_field(self, doc, field):
         t = doc.create_table("Dump of %s for " % (field))
         t.add(["name", field])

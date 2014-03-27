@@ -22,8 +22,8 @@ class ListObject(Miner):
             year = int(date[0])
             month = int(date[1])
             day = int(date[2])
-        except Exception as e:
-            raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.change)
+        except Exception:
+            raise ValueError('Invalid date format for "%s". Expecting YYYY-MM-DD ' % dateToTest)
         return year, month, day
 
     def select(self, year, month, day, category, year2=None, month2=None, day2=None, condition="whenCreated"):

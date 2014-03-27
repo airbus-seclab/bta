@@ -132,7 +132,7 @@ class Passwords(Miner):
             self.extract_scriptPath(doc)
 
         if options.logon_hours:
-           self.extract_logon_hours(doc)
+            self.extract_logon_hours(doc)
 
         if options.account_type not in self._types_:
             account_type = self.datatable.find_one({"name": self._types_[0] })["DNT_col"]

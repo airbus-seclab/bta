@@ -62,8 +62,8 @@ class MailBoxRights(Miner):
                     rules.append("+%s" % key)
 
                 for rule in rules:
-                   userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
-                   userAccess[ace['SID']][userMailboxCN] = rules
+                    userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
+                    userAccess[ace['SID']][userMailboxCN] = rules
 
 
         s = doc.create_subsection("Who can accessed to this Mailbox")

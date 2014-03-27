@@ -108,7 +108,7 @@ def main():
                       help="Add %s to list of ignored fields" % ", ".join(DEFAULT_IGNORE_LIST))
 
 
-    options, args = parser.parse_args()
+    options, _args = parser.parse_args()
 
     if options.connectionA is None:
         parser.error("Missing connection string A (--CA)")

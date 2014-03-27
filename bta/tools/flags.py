@@ -22,6 +22,7 @@ class Flags(object):
 
 
 class Enums(object):
+    _enum_ = {}
     def __init__(self, val):
         renum = {}
         for k,v in self._enum_.iteritems():
