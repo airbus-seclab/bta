@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from pprint import pprint
 import bson.binary
 
 @Miner.register

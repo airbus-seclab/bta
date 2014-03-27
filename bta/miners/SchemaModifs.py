@@ -2,10 +2,8 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from datetime import datetime, timedelta
 from bta.miners.tools import Family
-from bta.tools.WellKnownSID import SID2StringFull, SID2String
-import re
+from bta.tools.WellKnownSID import SID2StringFull
 
 @Miner.register
 class SchemaModifs(Miner):

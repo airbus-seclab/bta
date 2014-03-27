@@ -3,7 +3,6 @@
 
 from bta.miner import Miner
 from bta.miners import ListACE
-from pprint import pprint
 import re
 
 @Miner.register

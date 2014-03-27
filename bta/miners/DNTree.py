@@ -2,8 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from struct import unpack_from
-from base64 import b64decode
 from bta.miners.tools import Family
 import bson.binary
 

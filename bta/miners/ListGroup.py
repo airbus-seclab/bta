@@ -5,7 +5,6 @@ from bta.miner import Miner
 from bta.miners import ListACE
 from bta.miners.tools import Sid
 import datetime
-import subprocess
 from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
 @Miner.register

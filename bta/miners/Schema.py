@@ -3,7 +3,7 @@
 
 from bta.miner import Miner
 from bta.miners import ListACE
-import sys, datetime
+import datetime
 
 @Miner.register
 class Schema(Miner):

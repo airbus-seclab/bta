@@ -1,7 +1,6 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-import struct
 from tools.flags import Flags, Enums
 
 class UserAccountControl(Flags):

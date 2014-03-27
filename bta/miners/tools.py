@@ -1,9 +1,6 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-import os, sys
-from bta.tools.WellKnownSID import SID2StringFull
-
 local_relative_domains_sid=None
 
 class Family(object):

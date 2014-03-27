@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-import datetime
 from bta.datatable import UserAccountControl
 
 @Miner.register
@@ -49,10 +48,6 @@ class CheckUAC(Miner):
 
     def assert_consistency(self):
         Miner.assert_consistency(self)
-        #self.assert_field_exists(self.datatable, "objectCategory")
-        #self.assert_field_type(self.datatable, "objectCategory", int)
-        #self.assert_field_exists(self.datatable, "whenCreated")
-        #self.assert_field_type(self.datatable, "whenCreated", datetime.datetime)
         self.assert_field_type(self.datatable, "name", str, unicode)
         self.assert_field_type(self.datatable, "userAccountControl", dict)
         self.assert_field_type(self.datatable, "cn", str, unicode)

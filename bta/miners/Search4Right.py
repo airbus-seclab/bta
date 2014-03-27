@@ -4,8 +4,6 @@
 from bta.miner import Miner
 from bta.tools.WellKnownSID import SID2StringFull, Strings2SID
 from bta.miners.tools import Family
-from bta.miners.tools import ObjectClass
-from pprint import pprint
 
 @Miner.register
 class Search4Rights(Miner):
@@ -56,8 +54,6 @@ class Search4Rights(Miner):
                   'sd_id':1,
                   'sd_value.DACL.ACEList.ObjectType':1,
                   'sd_value.DACL.ACEList.Type':1}
-        #pprint(req)
-        #pprint(req_filter)
         for sd in self.sd_table.find(req,req_filter):
             # Making the list of deny access
             denied_ace=list()
@@ -85,7 +81,6 @@ class Search4Rights(Miner):
                                                                                              string_who,
                                                                                              SID2StringFull(ace["InheritedObjectType"],
                                                                                              self.guid)))
-        #pprint(result)
         return result
 
     def run(self, options, doc):
@@ -97,7 +92,6 @@ class Search4Rights(Miner):
             exit(1)
 
         SDs_can_create = self.ACEAllowRight(options.right, self._rights_[options.right], options.obj)
-        #pprint(SDs_can_create)
         depth = 0#1
         if options.rec:
             depth=int(options.rec)

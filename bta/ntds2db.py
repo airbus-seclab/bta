@@ -4,7 +4,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import os, sys
+import sys
 
 import libesedb
 

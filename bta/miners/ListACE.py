@@ -3,7 +3,6 @@
 
 from bta.miner import Miner
 from bta.miners.tools import Sid, Record
-import re
 
 @Miner.register
 class ListACE(Miner):

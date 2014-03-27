@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-import datetime
 
 @Miner.register
 class TrustLink(Miner):

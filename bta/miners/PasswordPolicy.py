@@ -2,7 +2,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from datetime import datetime, timedelta
+from datetime import datetime
 from bta.miners.tools import Family
 from bta.tools.WellKnownSID import SID2StringFull
 import re

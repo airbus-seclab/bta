@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from collections import defaultdict
 from bta.tools.WellKnownSID import SID2StringFull
 from datetime import datetime
 import bson.binary
