@@ -5,9 +5,13 @@ from setuptools import setup, Command
 
 class PyLint(Command):
     description = "run pylint"
-    user_options = [("reports","r", "Output pylint reports")]
+    user_options = [
+        ("reports","r", "Output pylint reports"),
+        ("errors-only", "E", "Output errors only"),
+    ]
     def initialize_options(self):
         self.reports = False
+        self.errors_only = False
     def finalize_options(self):
         pass
     def run(self):
@@ -19,6 +23,8 @@ class PyLint(Command):
         cmd = ["pylint", "--rcfile", pylintrcpth, btapth]
         if self.reports:
             cmd += ["--reports=y"]
+        if self.errors_only:
+            cmd += ["--errors-only"]
         errno = subprocess.call(cmd, env={"PYTHONPATH":lintpth})
         raise SystemExit(errno)
 
