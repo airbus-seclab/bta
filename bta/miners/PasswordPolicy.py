@@ -24,7 +24,7 @@ class PasswordPolicy(Miner):
         parser.add_argument('--cn', help='scpecify the domain')
 
     def extractGpLinks(self, gp_attr):
-        regex="\[LDAP://(?P<CN>[^;]*);(?P<activated>\d)\]"
+        regex=r"\[LDAP://(?P<CN>[^;]*);(?P<activated>\d)\]"
         m=re.findall(regex, gp_attr)
         res=list()
         for (link_DN, activation) in m:

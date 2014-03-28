@@ -12,12 +12,14 @@ def stackify(f):
     @functools.wraps(f)
     def stackified(self, f=f):
         n = f.func_code.co_argcount
+        # pylint: disable=protected-access
         self._apply(f, n)
     return stackified
 
 class RPNFilenameEditor(object):
     #pylint: disable=no-self-argument,no-member
     def __init__(self, prog):
+        self._prog = None
         self._new_prog(prog)
         self._stack = []
 

@@ -12,7 +12,6 @@ class Search4Rights(Miner):
     _rights_ = {'User-Force-Change-Password':['ADSRightDSControlAccess'],
                 'Send-As':['ADSRightDSControlAccess'],
                 'Receive-As':['ADSRightDSControlAccess'],
-                'User-Account-Control':['GenericAll','ADSRightDSWriteProp', 'GenericWrite'],
                 'Lockout-Time':['GenericWrite', 'ADSRightDSWriteProp', 'GenericAll'],
                 'Script-Path':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],
                 'Logon-Hours':['GenericWrite','ADSRightDSWriteProp', 'GenericAll'],

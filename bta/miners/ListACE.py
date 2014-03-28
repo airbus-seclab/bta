@@ -77,9 +77,7 @@ class ListACE(Miner):
     def run(self, options, doc):
         self.options = options
 
-        res = []
         desc = []
-        queries = []
         if options.subject:
             users = self.datatable.find({'objectSid': options.subject})
             desc.append("trustee=%s" % options.subject)
@@ -92,7 +90,6 @@ class ListACE(Miner):
                 user = Record(**raw_user)
                 securitydescriptor = self.getSecurityDescriptor(user.nTSecurityDescriptor)
                 aceList = self.extractACE(securitydescriptor)
-                filteredACE = []
                 for ace in aceList:
                     if options.type and ace.ObjectType != options.type:
                         continue

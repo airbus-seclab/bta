@@ -5,12 +5,12 @@
 
 import bta.backend.mongo
 import bta.dblog
-import tools.registry
+import bta.tools.registry
 import logging
 log = logging.getLogger("bta.postprocessing")
 
 
-class PostProcRegistry(tools.registry.Registry):
+class PostProcRegistry(bta.tools.registry.Registry):
     pass
 
 class PostProcessing(object):
@@ -64,20 +64,20 @@ class PostProcessing(object):
         guid.create_index("id")
         guid.create_index("name")
         # guid for shema
-        for id in self.dt.find({"schemaIDGUID": {"$exists": 1}}):
-            guid.insert({"id":id["schemaIDGUID"].lower(), "name":id["name"]})
+        for id_ in self.dt.find({"schemaIDGUID": {"$exists": 1}}):
+            guid.insert({"id":id_["schemaIDGUID"].lower(), "name":id_["name"]})
         # guid for object
-        for id in self.dt.find({"objectGUID": {"$exists": 1}}):
-            guid.insert({"id":id["objectGUID"].lower(), "name":id["name"]})
+        for id_ in self.dt.find({"objectGUID": {"$exists": 1}}):
+            guid.insert({"id":id_["objectGUID"].lower(), "name":id_["name"]})
         #guid for rights
-        for id in self.dt.find({"rightsGuid": {"$exists": 1}}):
-            guid.insert({"id":id["rightsGuid"].lower(), "name":id["name"]})
+        for id_ in self.dt.find({"rightsGuid": {"$exists": 1}}):
+            guid.insert({"id":id_["rightsGuid"].lower(), "name":id_["name"]})
         #ObjectId
-        for id in self.dt.find({"objectSid": {"$exists": 1}}):
-            guid.insert({"id":id["objectSid"].lower(), "name":id["name"]})
+        for id_ in self.dt.find({"objectSid": {"$exists": 1}}):
+            guid.insert({"id":id_["objectSid"].lower(), "name":id_["name"]})
         #
-        for id in self.dt.find({"attributeID": {"$exists": 1}}):
-            guid.insert({"id":id["attributeID"].lower(), "name":id["name"]})
+        for id_ in self.dt.find({"attributeID": {"$exists": 1}}):
+            guid.insert({"id":id_["attributeID"].lower(), "name":id_["name"]})
 
     @PostProcRegistry.register(depends={"category"})
     def domains(self):
@@ -124,14 +124,6 @@ class PostProcessing(object):
                 except:
                     error += 1
                     continue
-                    if p.get('name')=="$ROOT_OBJECT$\x00":
-                        continue
-                    if p.get('dc'):
-                        dn.append("DC=%s"%p['name'])
-                    elif p.get('cn'):
-                        dn.append("CN=%s"%p['name'])
-                    elif p.get('name'):
-                        dn.append("DC=%s"%p['name'])
             dn.reverse()
             dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
         print "NB ERRORS : %r" % error
@@ -170,7 +162,7 @@ def main():
     parser.add_option("--overwrite", dest="overwrite", action="store_true",
                       help="Delete tables that already exist in db")
 
-    options, args = parser.parse_args()
+    options, _args = parser.parse_args()
 
     if options.connection is None:
         parser.error("Missing connection string (-C)")

@@ -44,8 +44,8 @@ class NewAdmin(Miner):
                 year = int(date[0])
                 month = int(date[1])
                 day = int(date[2])
-            except Exception as e:
-                raise Exception('Invalid date format "%s" expect YYYY-MM-DD ' % options.creation)
+            except Exception:
+                raise ValueError('Invalid date format "%s" expect YYYY-MM-DD ' % options.creation)
             newAdmin = self.newAdmin(year, month, day)
             t = doc.create_table("Administrator account created after %s-%s-%s" % (year, month, day))
             for disp in newAdmin:

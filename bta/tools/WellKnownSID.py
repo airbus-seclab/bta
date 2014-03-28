@@ -121,7 +121,7 @@ def SID2StringFull(sid, guid_table, only_converted=False):
                     return u"%s"%k
                 else:
                     return "%s %s(%s)"%(k, variable, sid)
-    except:
+    except Exception:
         return sid
 
     #Try to resolve in guid table
