@@ -51,7 +51,7 @@ setup(
     version = '0.3',
     packages=['bta', 'bta/tools', 'bta/backend', 'bta/miners', 'bta/formatters', 
               'libesedb'],
-    scripts = ['bin/btaminer', 'bin/ntds2db', 'bin/btadiff', 'bin/btalist'],
+    scripts = ['bin/btaminer', 'bin/btaimport', 'bin/btadiff', 'bin/btalist'],
 
     # Metadata
     author = 'Philippe Biondi',
