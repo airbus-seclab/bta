@@ -273,69 +273,72 @@ def import_file((options, fname, connection)):
 
 
 def main():
-    import optparse
-    parser = optparse.OptionParser("Usage: %prog {-C <dbcnx>|--C-list <dbcnxlist>|--C-from <dbcnxfmt> <rpnprog>} [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
+    import argparse
 
-    parser.add_option("-C", dest="connections", default=[], action="append",
-                      help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
-    parser.add_option("--C-list", dest="connection_list",
-                      help="Comma seaparated list of backend connection strings, one for each file to import")
-    parser.add_option("--C-from-filename", nargs=2, dest="connection_from_filename",
-                      help="RPN program to infer connection name from filename. "
-                      + 'Ex: -C-from "::%s" "basename rmext - '' replace upper"', metavar="CNXFMT RPNPROG")
+    parser = argparse.ArgumentParser()
+    cnxparser = parser.add_mutually_exclusive_group(required=True)
+    cnxparser.add_argument("--connection", "-C",
+                           help=("Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL "+
+                                 "or '[ip]:[port]:dbname' for mongo"), metavar="CNX")
+    cnxparser.add_argument("--C-list",
+                           help=("Comma seaparated list of backend connection strings, "+
+                                 "one for each file to import"))
+    cnxparser.add_argument("--C-from-filename", nargs=2,
+                           help=("RPN program to infer connection name from filename. "
+                           + 'Ex: -C-from "::%%s" "basename rmext - '' replace upper"'), metavar="CNXFMT RPNPROG")
+    
+    parser.add_argument("--backend-class", "-B", default="mongo",
+                        help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+    parser.add_argument("--only", default="",
+                        help="Restrict import to TABLENAME", metavar="TABLENAME")
 
-    parser.add_option("-B", dest="backend_class", default="mongo",
-                      help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
-    parser.add_option("--only", dest="only", default="",
-                      help="Restrict import to TABLENAME", metavar="TABLENAME")
-    parser.add_option("--append", dest="append", action="store_true",
-                      help="Append ESE tables to existing data in db")
-    parser.add_option("--overwrite", dest="overwrite", action="store_true",
-                      help="Delete tables that already exist in db")
-    parser.add_option("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
-                      help="Ignore mismatch between stored data and this program's format versions")
-    parser.add_option("--no-post-processing", dest="no_post_proc", action="store_true",
-                      help="Don't post-process imported data")
-    parser.add_option("--only-post-processing", dest="only_post_proc", action="store_true",
-                      help="Do not import any tables, only post-process data")
+    parser.add_argument("--append", action="store_true",
+                        help="Append ESE tables to existing data in db")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Delete tables that already exist in db")
+    parser.add_argument("--ignore-version-mismatch", action="store_true",
+                        help="Ignore mismatch between stored data and this program's format versions")
+    parser.add_argument("--no-post-processing", dest="no_post_proc", action="store_true",
+                        help="Don't post-process imported data")
+    parser.add_argument("--only-post-processing", dest="only_post_proc", action="store_true",
+                        help="Do not import any tables, only post-process data")
+    
+    parser.add_argument("--multi", action="store_true",
+                        help="Spawn many workers")
+    parser.add_argument("--proc-number", default=None,
+                        help="Number of workers. Default: as much as processors")
+    parser.add_argument("--yes", "-y", dest="yes", action="store_true",
+                        help="Do not ask for validations")
+    parser.add_argument("--verbose", "-v", action="count", default=3,
+                        help="be more verbose (can be used many times)")
+    parser.add_argument("--quiet", "-q", action="count", default=0,
+                        help="be more quiet (can be used many times)")
 
-    parser.add_option("--multi", dest="multi", action="store_true",
-                      help="Spawn many workers")
-    parser.add_option("--proc-num", dest="procnb", default=None,
-                      help="Number of workers. Default: as much as processors")
-    parser.add_option("-y", dest="yes", action="store_true",
-                      help="Do not ask for validations")
-    parser.add_option("-v", dest="verbose", action="count", default=3,
-                      help="be more verbose (can be used many times)")
-    parser.add_option("-q", dest="quiet", action="count", default=0,
-                      help="be more quiet (can be used many times)")
+    parser.add_argument("ntds", nargs="+",
+                        help="paths to ntds.dit to import")
 
-    options, args = parser.parse_args()
-
-    if not args:
-        parser.error("Missing paths to ntds.dit files to import")
-
-    if (int(bool(options.connection_list))+
-        int(bool(options.connections))+
-        int(bool(options.connection_from_filename))) > 1:
-        parser.error("-C, --Clist and --Cfromfilename are incompatible")
+    options = parser.parse_args()
 
     options.verbosity = max(1, 50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
-    if options.connection_list:
-        options.connections = options.connection_list.split(",")
-    if options.connection_from_filename:
-        cnxfmt, dbprog = options.connection_from_filename
+    cnx = []
+    if options.connection:
+        cnx = [options.connection]
+    elif options.C_list:
+        cnx = options.C_list.split(",")
+    elif options.C_from_filename:
+        cnxfmt, dbprog = options.C_from_filename
         ed = bta.tools.RPNedit.RPNFilenameEditor(dbprog)
-        options.connections = [cnxfmt % ed(fname) for fname in args]
+        cnx = [cnxfmt % ed(fname) for fname in options.ntds]
+    options.connections = cnx
 
-    if len(args) != len(options.connections):
+    if len(options.ntds) != len(options.connections):
         parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
-                     (len(args), len(options.connections)))
+                     (len(options.ntds), len(options.connections)))
 
 
-    for fname, cnx in zip(args, options.connections):
+    for fname, cnx in zip(options.ntds, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx, fname))
     if not options.yes and len(options.connections) > 1:
         while True:
@@ -348,13 +351,13 @@ def main():
                 raise SystemExit
 
     jobs = [(options, fname, cnx)
-            for fname, cnx in zip(args, options.connections)]
+            for fname, cnx in zip(options.ntds, options.connections)]
 
     if options.multi:
         import multiprocessing
         manager = multiprocessing.Manager()
         options.progress_bar = bta.tools.progressbar.StderrMultiProgressBarMothership(manager)
-        pool = multiprocessing.Pool(options.procnb)
+        pool = multiprocessing.Pool(options.proc_number)
         pool.map(import_file, jobs)
     else:
         options.progress_bar = bta.tools.progressbar.stderr_progress_bar
