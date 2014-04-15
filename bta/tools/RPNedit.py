@@ -30,7 +30,7 @@ class RPNFilenameEditor(object):
         for w in self._prog:
             self._eval(w)
     def __call__(self, *args):
-        log.debug("### RPN: called on %r" % args)
+        log.debug("### RPN: called on %r" % (args,))
         self._stack = list(args)
         self._run_prog()
         log.debug("RPN: final stack: %r" % self._stack)
