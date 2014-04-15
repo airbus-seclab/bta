@@ -121,3 +121,27 @@ class RPNFilenameEditor(object):
     def upper(s):
         return s.upper()
 
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("program")
+    parser.add_argument("--print-stack", action="store_true")
+    parser.add_argument("--stacks", nargs="+", default=[None])
+
+    options = parser.parse_args()
+    for stk in options.stacks:
+        prog = RPNFilenameEditor(options.program)
+        res = prog() if stk is None else prog(stk)
+
+        if options.print_stack:
+            l = len(prog._stack)-1
+            for i,v in enumerate(prog._stack):
+                print "%3i: %r" % (l-i,v)
+        if stk is None:
+            print "==>", res
+        else:
+            print "%-20s <== %s" % (res, stk)
+
+if __name__ == "__main__":
+    main()
