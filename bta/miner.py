@@ -117,6 +117,7 @@ class Miner(object):
 
     def __init__(self, backend):
         self.backend = backend
+        self.metadata = backend.open_table("metadata")
         self.datatable = backend.open_table("datatable")
         self.datatable_meta = backend.open_table("datatable_meta")
         self.link_table = backend.open_table("link_table")

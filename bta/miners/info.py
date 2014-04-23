@@ -18,6 +18,11 @@ class Info(Miner):
 
     def run(self, options, doc):
         s0 = doc.create_subsection("collections in this database")
+
+
+        vers = self.metadata.find_one({"data_format_version":{"$exists":True}})["data_format_version"]
+        s0.add("Data format version: %s" % vers)
+
         tbl = s0.create_table("collections")
         tbl.add(("name", "number of records"))
         tbl.add()
