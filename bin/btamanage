@@ -1,0 +1,6 @@
+#! /usr/bin/env python
+
+import bta.manage
+
+if __name__ == "__main__":
+    bta.manage.main()
