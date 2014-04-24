@@ -262,6 +262,12 @@ class Mongo(Backend):
     # ex. added/removed extracted attributes, type changes...
     data_format_version = 1
 
+    @classmethod
+    def connect(cls, options):
+        ip,port,_ = (options.connection+"::").split(":",2)
+        ip = ip if ip else "127.0.0.1"
+        port = int(port) if port else 27017
+        return pymongo.Connection(ip, port)
 
     def __init__(self, options, connection=None):
         Backend.__init__(self, options, connection)
