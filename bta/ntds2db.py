@@ -10,6 +10,7 @@ import libesedb
 
 import bta.tools.progressbar
 import bta.tools.RPNedit
+import bta.tools.ask
 import bta.backend.mongo
 import bta.postprocessing
 import bta.dblog
@@ -341,14 +342,9 @@ def main():
     for fname, cnx in zip(options.ntds, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx, fname))
     if not options.yes and len(options.connections) > 1:
-        while True:
-            print >>sys.stderr, "Can I carry on ? (y/n) ",
-            r = raw_input().lower().strip()
-            if r == "y":
-                break
-            elif r == "n":
-                log.error("Interrupted by user.")
-                raise SystemExit
+        if bta.tools.ask.ask("Can I carry on ?", "yn") == "n":
+            log.error("Interrupted by user.")
+            raise SystemExit
 
     jobs = [(options, fname, cnx)
             for fname, cnx in zip(options.ntds, options.connections)]
