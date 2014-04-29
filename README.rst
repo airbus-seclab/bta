@@ -66,9 +66,26 @@ Protocol
 
 Audit steps:
 
-#. Extract [#SSTIC]_ the ``ntds.dit`` file
+#. Extract  the ``ntds.dit`` file
 #. Import the ``ntds.dit`` file in a database
 #. Look for control points in the database
+
+Extraction
+----------
+
+
+Here is a way to backup NTDS.dit file for a domain controller which is running on Windows 2008.
+See [#SSTIC]_ for more information or for Windows 2003 method.
+
+.. code-block ::
+
+ ntdsutil
+ activate instance ntds
+ ifm
+ create full c:{\bs}NTDS_saved
+ quit
+ quit
+
 
 .. [#SSTIC] https://www.sstic.org/2012/presentation/audit_ace_active_directory/
 
