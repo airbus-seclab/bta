@@ -124,6 +124,14 @@ class PostProcessing(object):
                 except:
                     error += 1
                     continue
+                if p.get('name')=="$ROOT_OBJECT$\x00":
+                    continue
+                if p.get('dc'):
+                    dn.append("DC=%s"%p['name'])
+                elif p.get('cn'):
+                    dn.append("CN=%s"%p['name'])
+                elif p.get('name'):
+                    dn.append("DC=%s"%p['name'])
             dn.reverse()
             dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
         print "NB ERRORS : %r" % error
