@@ -16,11 +16,11 @@ class Formatter(object):
         raise NotImplementedError
     def add_table(self, name, table):
         raise NotImplementedError
-    def add_list(self, name, lst):
+    def add_list(self, name, lvl, lst):
         raise NotImplementedError
     def add_section(self, seciton, lvl):
         raise NotImplementedError
-    def finalize(self):
+    def finalize(self, encoding=None):
         raise NotImplementedError
 
 

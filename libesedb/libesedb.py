@@ -6,6 +6,7 @@
 
 from ctypes import cdll, c_void_p, c_int, pointer, byref, create_string_buffer, string_at
 from esetypes import ColumnType,ValueFlags,native_type,multi_native_type
+from sys import platform
 
 import logging
 log = logging.getLogger("libesedb")
@@ -18,7 +19,12 @@ class LibESEDB(object):
     byref = byref
     c_void_p = c_void_p
     def __init__(self):
-        self.lib = cdll.LoadLibrary("libesedb.so")
+        if platform.startswith("linux"):
+            self.lib = cdll.LoadLibrary("libesedb.so")
+        elif platform.startswith("win32"):
+            self.lib = cdll.LoadLibrary("libesedb.dll")
+        elif platform.startswith("darwin"):
+            self.lib = cdll.LoadLibrary("libesedb.dylib")
         self.error = c_void_p()
         self.error_p = pointer(self.error)
 

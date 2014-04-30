@@ -20,9 +20,8 @@ class SDusers(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")
-    
+
     def run(self, options, doc):
-    
         match = None
         if options.match:
             match = {"$or": [
@@ -37,9 +36,9 @@ class SDusers(Miner):
                            }
                       },
                     ] }
-                    
+
         users = defaultdict(lambda:set())
-        
+
         for r in self.sd_table.find(match):
             for aclt in "SACL","DACL":
                 if r["sd_value"] and aclt in r["sd_value"]:
@@ -51,14 +50,14 @@ class SDusers(Miner):
         table = doc.create_table("Users present in security descriptors")
         table.add(["SID","# of SD", "SID obj names", "SID obj creation dates"])
         table.add()
-        
+
         for sid,lsd in sorted(users.iteritems(), key=lambda (x,y):len(y)):
             c = self.datatable.find({"objectSid":sid}) #, "name":{"$exists":True}})
             names = set([ r["name"] for r in c if "name" in r])
             c.rewind()
             dates = set([ r["whenCreated"].ctime() for r in c if "whenCreated" in r])
             table.add([sid, str(len(lsd)), ", ".join(names), ", ".join(dates)])
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.datatable, "objectSid")

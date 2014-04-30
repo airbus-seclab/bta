@@ -4,12 +4,13 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import os,sys
+import sys
 
 import libesedb
 
 import bta.tools.progressbar
 import bta.tools.RPNedit
+import bta.tools.ask
 import bta.backend.mongo
 import bta.postprocessing
 import bta.dblog
@@ -21,7 +22,7 @@ def win2epoch(x):
     return x-11644473600
 
 def dbsanecolname(x):
-    return x.replace("-","_")
+    return x.replace("-", "_")
 
 
 class ESEColumn(object):
@@ -31,7 +32,7 @@ class ESEColumn(object):
         self.type = type_
         self.index = index
     def to_json(self):
-        return dict((k,v) for (k,v) in self.__dict__.iteritems() if not k.startswith("_"))
+        return dict((k, v) for (k, v) in self.__dict__.iteritems() if not k.startswith("_"))
 
 class ESETable(object):
     _columns_ = []  # db col name # dt name # db type # index?
@@ -41,7 +42,7 @@ class ESETable(object):
     def __init__(self, options):
         self.options = options
         self.backend = options.backend
-        self.attname2col =  { col.attname:col for col in self._columns_ }
+        self.attname2col = {col.attname:col for col in self._columns_}
         self.esedb = options.esedb
         self.esetable = options.esedb[self._tablename_]
 
@@ -49,7 +50,7 @@ class ESETable(object):
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
-                esecol = self.attname2col[c.name] 
+                esecol = self.attname2col[c.name]
             else:
                 esecol = ESEColumn(dbsanecolname(c.name), c.name, "UnknownType")
             columns.append(esecol)
@@ -58,7 +59,7 @@ class ESETable(object):
     def parse_file(self, dbtable):
         total = self.esetable.number_of_records
         log.info("Parsing ESE table. %i records." % total)
-        pbar  = self.options.progress_bar(total, desc="Importing [%s.%s]" % (dbtable.db.name,self._tablename_), 
+        pbar = self.options.progress_bar(total, desc="Importing [%s.%s]" % (dbtable.db.name, self._tablename_),
                                           step=100, obj="rec")
         next(pbar)
         try:
@@ -146,8 +147,10 @@ class Datatable(ESETable):
         ESEColumn("lockOutObservationWindow", "ATTq589885", "WindowsTimestamp", False),
         ESEColumn("replPropertyMetaData", "ATTk589827", "ReplPropMeta", False),
         ESEColumn("accountExpires", "ATTq589983", "WindowsTimestamp", False),
+        ESEColumn("logonHours", "ATTk589888", "LogonHours", False),
+        ESEColumn("sIDHistory", "ATTr590433", "SID", False),
         ]
-    _indexes_ = [ "rightsGuid" ]
+    _indexes_ = ["rightsGuid"]
 
     ATTRIBUTE_ID = 131102      # ATTc131102
     ATTRIBUTE_SYNTAX = 131104  # ATTc131104
@@ -175,29 +178,29 @@ class Datatable(ESETable):
         }
 
     type2type = {
-        "DN": ("Text",False),
-        "OID": ("OID",False),
-        "CaseExactString" : ("Text",False),
-        "GeneralizedTime" : ("Timestamp",False),
-        "Integer8": ("Int",False),
-        "NTSecurityDescriptor" : ("NTSecDesc",True),
-        "ReplPropertyMetaData" : ("ReplPropMeta",True),
+        "DN": ("Text", False),
+        "OID": ("OID", False),
+        "CaseExactString" : ("Text", False),
+        "GeneralizedTime" : ("Timestamp", False),
+        "Integer8": ("Int", False),
+        "NTSecurityDescriptor" : ("NTSecDesc", True),
+        "ReplPropertyMetaData" : ("ReplPropMeta", True),
         }
-    
+
     def syntax_to_type(self, s):
-        return self.type2type.get(self.attsyntax2type.get(s), ("UnknownType",False))
+        return self.type2type.get(self.attsyntax2type.get(s), ("UnknownType", False))
 
 
     def identify_columns(self):
         log.info("Resolving column names")
         att2ldn = {}
         att2asy = {}
-        cols = { int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
+        cols = {int(c.name[4:]):c for c in self.esetable if c.name.startswith("ATT")}
         nbcols = len(cols)
-        log.info("%i columns to be identified, out of %i" % (nbcols,len(self.esetable.columns)))
+        log.info("%i columns to be identified, out of %i" % (nbcols, len(self.esetable.columns)))
 
         try:
-            lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID], 
+            lcols = [cols[self.ATTRIBUTE_ID], cols[self.MSDS_INTID],
                      cols[self.ATTRIBUTE_SYNTAX], cols[self.LDAP_DISPLAY_NAME]]
         except IndexError:
             raise Exception("Missing ldap display name or attribute id or syntax column in datatable")
@@ -206,7 +209,7 @@ class Datatable(ESETable):
         next(pbar)
         for rec in self.esetable.iter_records(columns=lcols):
             next(pbar)
-            aid,amsds,asy,ldn = list(rec)
+            aid, amsds, asy, ldn = list(rec)
             if not ldn.value:
                 continue
             if aid.value is None and amsds.value is None or not ldn.value:
@@ -221,13 +224,13 @@ class Datatable(ESETable):
                 log.info("All columns found! Ending scan early!")
                 break
 
-        log.info("Resolved %i / %i columns." % (len(att2ldn),nbcols))
+        log.info("Resolved %i / %i columns." % (len(att2ldn), nbcols))
         columns = []
         for c in self.esetable.columns:
             if c.name in self.attname2col:
-                esecol = self.attname2col[c.name] 
+                esecol = self.attname2col[c.name]
             else:
-                synt,idx = self.syntax_to_type(att2asy.get(c.name))
+                synt, idx = self.syntax_to_type(att2asy.get(c.name))
                 esecol = ESEColumn(
                     dbsanecolname(att2ldn.get(c.name, c.name)),
                     c.name, synt, idx)
@@ -246,9 +249,9 @@ def import_file((options, fname, connection)):
                 log.info("Opening [%s]" % fname)
                 options.esedb = libesedb.ESEDB(fname)
                 log.info("Opening done.")
-            
+
                 options.dblog.update_entry("Opened ESEDB file [%s]" % fname)
-                
+
                 if options.only.lower() in ["", "sdtable", "sd_table", "sd"]:
                     sd = SDTable(options)
                     sd.create()
@@ -258,9 +261,9 @@ def import_file((options, fname, connection)):
                 if options.only.lower() in ["", "datatable", "data"]:
                     dt = Datatable(options)
                     dt.create()
-                
+
                 options.backend.commit()
-        
+
             if not options.no_post_proc:
                 options.dblog.update_entry("Starting post-processing")
                 pp = bta.postprocessing.PostProcessing(options)
@@ -271,88 +274,86 @@ def import_file((options, fname, connection)):
 
 
 def main():
-    import optparse
-    parser = optparse.OptionParser("Usage: %prog {-C <dbcnx>|--C-list <dbcnxlist>|--C-from <dbcnxfmt> <rpnprog>} [options] path/to/ntds.dit [path/to/other.ntds.dit [...]]")
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    cnxparser = parser.add_mutually_exclusive_group(required=True)
+    cnxparser.add_argument("--connection", "-C",
+                           help=("Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL "+
+                                 "or '[ip]:[port]:dbname' for mongo"), metavar="CNX")
+    cnxparser.add_argument("--C-list",
+                           help=("Comma seaparated list of backend connection strings, "+
+                                 "one for each file to import"))
+    cnxparser.add_argument("--C-from-filename", nargs=2,
+                           help=("RPN program to infer connection name from filename. "
+                           + 'Ex: -C-from "::%%s" "basename rmext - '' replace upper"'), metavar="CNXFMT RPNPROG")
     
-    parser.add_option("-C", dest="connections", default=[], action="append",
-                      help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
-    parser.add_option("--C-list", dest="connection_list",
-                      help="Comma seaparated list of backend connection strings, one for each file to import")
-    parser.add_option("--C-from-filename", nargs=2, dest="connection_from_filename",
-                      help="RPN program to infer connection name from filename. "
-                      + 'Ex: -C-from "::%s" "basename rmext - '' replace upper"', metavar="CNXFMT RPNPROG")
+    parser.add_argument("--backend-class", "-B", default="mongo",
+                        help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+    parser.add_argument("--only", default="",
+                        help="Restrict import to TABLENAME", metavar="TABLENAME")
 
-    parser.add_option("-B", dest="backend_class", default="mongo",
-                      help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
-
+    parser.add_argument("--append", action="store_true",
+                        help="Append ESE tables to existing data in db")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Delete tables that already exist in db")
+    parser.add_argument("--ignore-version-mismatch", action="store_true",
+                        help="Ignore mismatch between stored data and this program's format versions")
+    parser.add_argument("--no-post-processing", dest="no_post_proc", action="store_true",
+                        help="Don't post-process imported data")
+    parser.add_argument("--only-post-processing", dest="only_post_proc", action="store_true",
+                        help="Do not import any tables, only post-process data")
     
-    parser.add_option("--only", dest="only", default="",
-                      help="Restrict import to TABLENAME", metavar="TABLENAME")
-    parser.add_option("--append", dest="append", action="store_true",
-                      help="Append ESE tables to existing data in db")
-    parser.add_option("--overwrite", dest="overwrite", action="store_true",
-                      help="Delete tables that already exist in db")
-    parser.add_option("--no-post-processing", dest="no_post_proc", action="store_true",
-                      help="Don't post-process imported data")
-    parser.add_option("--only-post-processing", dest="only_post_proc", action="store_true",
-                      help="Do not import any tables, only post-process data")
+    parser.add_argument("--multi", action="store_true",
+                        help="Spawn many workers")
+    parser.add_argument("--proc-number", default=None,
+                        help="Number of workers. Default: as much as processors")
+    parser.add_argument("--yes", "-y", dest="yes", action="store_true",
+                        help="Do not ask for validations")
+    parser.add_argument("--verbose", "-v", action="count", default=3,
+                        help="be more verbose (can be used many times)")
+    parser.add_argument("--quiet", "-q", action="count", default=0,
+                        help="be more quiet (can be used many times)")
 
-    parser.add_option("--multi", dest="multi", action="store_true",
-                      help="Spawn many workers")
-    parser.add_option("--proc-num", dest="procnb", default=None,
-                      help="Number of workers. Default: as much as processors")
-    parser.add_option("-y", dest="yes", action="store_true",
-                      help="Do not ask for validations")
-    parser.add_option("-v", dest="verbose", action="count", default=3,
-                      help="be more verbose (can be used many times)")
-    parser.add_option("-q", dest="quiet", action="count", default=0,
-                      help="be more quiet (can be used many times)")
+    parser.add_argument("ntds", nargs="+",
+                        help="paths to ntds.dit to import")
 
-    options, args = parser.parse_args()
-    
-    if not args:
-        parser.error("Missing paths to ntds.dit files to import")
+    options = parser.parse_args()
 
-    if (int(bool(options.connection_list))+
-        int(bool(options.connections))+
-        int(bool(options.connection_from_filename))) > 1:
-        parser.error("-C, --Clist and --Cfromfilename are incompatible")
-
-    options.verbosity = max(1,50+10*(options.quiet-options.verbose))
+    options.verbosity = max(1, 50+10*(options.quiet-options.verbose))
     logging.basicConfig(format="%(levelname)-5s: %(message)s", level=options.verbosity)
 
-    if options.connection_list:
-        options.connections = options.connection_list.split(",")
-    if options.connection_from_filename:
-        cnxfmt,dbprog = options.connection_from_filename
+    cnx = []
+    if options.connection:
+        cnx = [options.connection]
+    elif options.C_list:
+        cnx = options.C_list.split(",")
+    elif options.C_from_filename:
+        cnxfmt, dbprog = options.C_from_filename
         ed = bta.tools.RPNedit.RPNFilenameEditor(dbprog)
-        options.connections = [cnxfmt % ed(fname) for fname in args]
+        cnx = [cnxfmt % ed(fname) for fname in options.ntds]
+    options.connections = cnx
 
-    if len(args) != len(options.connections):
+    if len(options.ntds) != len(options.connections):
         parser.error("There are %i ntds.dit files to import while there are only %i destinations (-C)" %
-                     (len(args), len(options.connections)))
-    
+                     (len(options.ntds), len(options.connections)))
 
-    for fname,cnx in zip(args, options.connections):
-        log.info("Going to import %-15s <- %s" % (cnx,fname))
+
+    for fname, cnx in zip(options.ntds, options.connections):
+        log.info("Going to import %-15s <- %s" % (cnx, fname))
     if not options.yes and len(options.connections) > 1:
-        while True:
-            print >>sys.stderr,"Can I carry on ? (y/n) ",
-            r = raw_input().lower().strip()
-            if r == "y":
-                break
-            elif r == "n":
-                log.error("Interrupted by user.")
-                raise SystemExit
+        if bta.tools.ask.ask("Can I carry on ?", "yn") == "n":
+            log.error("Interrupted by user.")
+            raise SystemExit
 
-    jobs = [ (options, fname, cnx) 
-             for fname,cnx in zip(args, options.connections) ]
+    jobs = [(options, fname, cnx)
+            for fname, cnx in zip(options.ntds, options.connections)]
 
     if options.multi:
         import multiprocessing
         manager = multiprocessing.Manager()
         options.progress_bar = bta.tools.progressbar.StderrMultiProgressBarMothership(manager)
-        pool = multiprocessing.Pool(options.procnb)
+        pool = multiprocessing.Pool(options.proc_number)
         pool.map(import_file, jobs)
     else:
         options.progress_bar = bta.tools.progressbar.stderr_progress_bar

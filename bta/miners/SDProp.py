@@ -3,20 +3,19 @@
 
 from bta.miner import Miner
 from bta.miners import ListACE
-from pprint import pprint
 import re
 
 @Miner.register
 class SDProp(Miner):
     _name_ = "SDProp"
     _desc_ = "check integrity of SDHolder and protected account"
-    
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--list", action="store_true", help="Find accounts protected by SDHolder")
         parser.add_argument("--orphan", action="store_true", help="Find accounts unlinked from SDHolder")
         parser.add_argument("--checkACE", action="store_true", help="Check ACE replicated by AdminSDHolder")
-    
+
     def list(self):
         user = list()
         group = list()
@@ -37,7 +36,7 @@ class SDProp(Miner):
         t.insert(0, [])
         t.insert(0, ["cn","type","SID"])
         return t
-        
+
     def orphanSD(self):
         user = list()
         group = list()
@@ -58,24 +57,24 @@ class SDProp(Miner):
         t.insert(0, [])
         t.insert(0, ["cn","type","SID"])
         return t
-        
+
     def checkACE(self):
         secDesc = int(self.datatable.find_one({"cn": "AdminSDHolder"})['nTSecurityDescriptor'])
         hdlACE = ListACE.ListACE(self.backend)
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
-        
+
         t = list()
         for ace in aceList:
             name = self.datatable.find_one({"objectSid": ace['SID']}, {"cn"})['cn']
             if ace['InheritedObjectType'] != None:
                 cible = self.datatable.find_one({"schemaIDGUID" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
-                if cible == None: 
+                if cible == None:
                     cible = self.datatable.find_one({"rightsGuid" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
                 cible = cible['cn']
             elif ace['ObjectType'] != None:
                 cible = self.datatable.find_one({"schemaIDGUID" : re.compile(ace['ObjectType'], re.IGNORECASE)})
-                if cible == None: 
+                if cible == None:
                     cible = self.datatable.find_one({"rightsGuid" : re.compile(ace['ObjectType'], re.IGNORECASE)})
                 cible = cible['cn']
             else:
@@ -108,7 +107,7 @@ class SDProp(Miner):
                 t.add(disp)
             t.flush()
             t.finished()
-            
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "adminCount", int)

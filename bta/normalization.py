@@ -9,4 +9,5 @@ class Normalizer(object):
     def normal(self, val):
         return val
     def empty(self, val):
+        # pylint: disable=unused-argument
         return False

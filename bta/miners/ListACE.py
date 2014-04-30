@@ -3,7 +3,6 @@
 
 from bta.miner import Miner
 from bta.miners.tools import Sid, Record
-import re
 
 @Miner.register
 class ListACE(Miner):
@@ -32,7 +31,7 @@ class ListACE(Miner):
                 return ', '.join(map(lambda s: unicode(Sid(s, self.datatable)), x))
             return unicode(Sid(x, self.datatable))
         return (r(truste), r(subject), self.type2human(perm))
-        
+
     def summarize_ace(self, trustee, securitydescriptor, aceList):
         perms=[]
         for ace in aceList:
@@ -42,7 +41,7 @@ class ListACE(Miner):
             if 'ObjectType' in ace:
                 objtype = self.type2human(ace['ObjectType'])
             else:
-                objtype = "No object type /!\ DANGEROUS"
+                objtype = r"No object type /!\ DANGEROUS"
         return [trustee,
                 unicode(Sid(ace['SID'], self.datatable), self.usersid),
                 objtype,
@@ -78,9 +77,7 @@ class ListACE(Miner):
     def run(self, options, doc):
         self.options = options
 
-        res = []
         desc = []
-        queries = []
         if options.subject:
             users = self.datatable.find({'objectSid': options.subject})
             desc.append("trustee=%s" % options.subject)
@@ -93,7 +90,6 @@ class ListACE(Miner):
                 user = Record(**raw_user)
                 securitydescriptor = self.getSecurityDescriptor(user.nTSecurityDescriptor)
                 aceList = self.extractACE(securitydescriptor)
-                filteredACE = []
                 for ace in aceList:
                     if options.type and ace.ObjectType != options.type:
                         continue
@@ -126,18 +122,20 @@ class ListACE(Miner):
                 query = {
                     'nTSecurityDescriptor': securitydescriptor.sd_id,
                     'objectSid': {'$exists': 1},
-                    'objectCategory': {'$in': [self.categories.person, self.categories.group]} 
+                    'objectCategory': {'$in': [self.categories.person, self.categories.group]}
                 }
                 subjects=set()
                 for subject in self.datatable.find(query, {'objectSid': True}):
                     subjects.add(subject['objectSid'])
                 if not subjects:
                     continue
-    
+
                 aceList = self.extractACE(securitydescriptor)
                 for ace in aceList:
-                    if options.type and ace.ObjectType != options.type: continue
-                    if options.trustee and ace.SID != options.trustee: continue
+                    if options.type and ace.ObjectType != options.type:
+                        continue
+                    if options.trustee and ace.SID != options.trustee:
+                        continue
 
                     aceobj = self.formatACE(ace.SID, subjects, ace.ObjectType)
                     table.add(aceobj)

@@ -2,9 +2,15 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from collections import defaultdict
 from bta.tools.WellKnownSID import SID2StringFull
 from datetime import datetime
+import bson.binary
+
+def sane(o):
+    if type(o) is bson.binary.Binary:
+        return o.encode("hex")
+    return unicode(o)
+
 
 @Miner.register
 class Passwords(Miner):
@@ -23,24 +29,24 @@ class Passwords(Miner):
         parser.add_argument("--never-logged", action="store_true", help="List all account never used")
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
         parser.add_argument("--pso-details", action="store_true", help="Give details about all Passwords Settings Objects")
-    
+
     def get_line(self, record, line, flags=None):
-    	res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
+        res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
         if "objectSid" in record:
             res.append(SID2StringFull(record["objectSid"], self.guid))
         else:
             res.append("NOSID:%s" % record['name'])
-	if not flags is None:
-		if "userAccountControl" in record:
-			res.append("%s:%r" % (flags,record["userAccountControl"]["flags"][flags]))
-		else:
-			res.append("NoAccountControl")
-			
+        if not flags is None:
+            if "userAccountControl" in record:
+                res.append("%s:%r" % (flags,record["userAccountControl"]["flags"][flags]))
+            else:
+                res.append("NoAccountControl")
+
         return res
 
     def dump_field(self, doc, field):
         t = doc.create_table("Dump of %s for " % (field))
-        t.add(["name", field, "comments"])
+        t.add(["name", field])
         t.add()
         for r in self.datatable.find({field:{"$exists": True}}):
             t.add(self.get_line(r, ["name", field]))
@@ -51,9 +57,9 @@ class Passwords(Miner):
         t.add(["name", "whenCreated", "comments"])
         t.add()
         for account in self.datatable.find({"whenCreated":{"$exists":True},
-                                            "objectCategory":{"$in":[account_type]}, 
+                                            "objectCategory":{"$in":[account_type]},
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-            t.add(self.get_line(account, ["name", "whenCreated"]))
+            t.add(self.get_line(account, ["name", "whenCreated"])+[''])
             t.flush()
 
     def extract_field_since(self, doc, field, since, account_type):
@@ -84,19 +90,18 @@ class Passwords(Miner):
         t.add()
 
         for account in self.datatable.find({field:{"$exists":False},
-                                            "objectCategory":{"$in":[account_type]}, 
+                                            "objectCategory":{"$in":[account_type]},
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
-	    x = self.get_line(account, [], "accountDisable") 
+            x = self.get_line(account, ["name"], "accountDisable")
             t.add(x)
             t.flush()
-    
+
     def pso_details(self, doc):
         PSObjects_category=self.datatable.find_one({"name":"ms-DS-Password-Settings"},{"DNT_col":True})["DNT_col"]
         PSObjects = self.datatable.find({"objectCategory":PSObjects_category})
         t = doc.create_list("Password Objects details")
 
         for obj in PSObjects:
-            t.create_list("Details of %s"%obj["name"])
             t.add("Display name: %s"%obj["displayName"])
             t.add("Lockout duration: %s"%obj["msDS_LockoutDuration"])
             t.add("Lockout observation Windows: %s"%obj["msDS_LockoutObservationWindow"])
@@ -129,7 +134,7 @@ class Passwords(Miner):
 
         if options.password_age is not None:
             arg=options.password_age
-            self.extract_field_since(doc, "pwdLastSet", abs(arg), account_type)
+            self.extract_field_since(doc, "pwdLastSet", arg, account_type)
 
         if options.last_logon is not None:
             self.extract_field_since(doc, "lastLogonTimestamp", options.last_logon, account_type)
@@ -142,7 +147,7 @@ class Passwords(Miner):
 
         if options.never_logged:
             self.never_logged(doc, "lastLogonTimestamp", account_type)
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "badPwdCount", int)

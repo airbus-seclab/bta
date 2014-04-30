@@ -12,7 +12,7 @@ class Skel(Miner):
     def create_arg_subparser(cls, parser):
         parser.add_argument("--dummy", help="dummy option")
         parser.add_argument("--dummy_flag", help="dummy flag", action="store_true")
-    
+
     def run(self, options, doc):
         doc.add("Option dummy is %s" % options.dummy)
 
@@ -22,7 +22,6 @@ class Skel(Miner):
 
         for r in self.sd_table.find({"sd_id": {"$lt":50}}):
             table.add([r["sd_id"],r["sd_hash"]])
-            
         table.finished()
 
     def assert_consistency(self):

@@ -1,9 +1,6 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-import os, sys
-from bta.tools.WellKnownSID import SID2StringFull
-
 local_relative_domains_sid=None
 
 class Family(object):
@@ -102,7 +99,7 @@ class Family(object):
 class ObjectClass(object):
     @classmethod
     def find_my_class(cls, node, datatable):
-        classes = datatable.find({"DNT_col": node["DNT_col"]},{objectClass:1})
+        classes = datatable.find({"DNT_col": node["DNT_col"]},{"objectClass":1})
         return classes
 
     @classmethod
@@ -121,7 +118,7 @@ class ObjectClass(object):
         return []
 
     @classmethod
-    def test():
+    def test(cls):
         return ""
 
 class Sid(object):

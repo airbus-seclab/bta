@@ -33,11 +33,13 @@ def stderr_progress_bar(*args, **kargs):
     while True:
         r = spb.send(nval)
         if r is not None:
+            # pylint: disable=anomalous-backslash-in-string
             sys.stderr.write("\033[A\033[K%s\n" % r)
         nval = yield
 
 
 def null_progress_bar(total, desc="Progress", step=100, obj="rec"):
+    # pylint: disable=unused-argument
     while True:
         yield
 
@@ -74,9 +76,10 @@ class StderrMultiProgressBarMothership(object):
         del(self.progress[id(child)])
         self.refresh_screen()
     def refresh_screen(self):
+        # pylint: disable=anomalous-backslash-in-string
         with self.lock:
             # retrieve terminal window size
-            rows,cols = struct.unpack("HH", fcntl.ioctl(sys.stderr, self.TIOCGWINSZ,"xxxx"))
+            rows,_cols = struct.unpack("HH", fcntl.ioctl(sys.stderr, self.TIOCGWINSZ,"xxxx"))
             sys.stderr.write("\033[s\033[r") # save cursor pos and remove scroll restrictions
             for row,p in enumerate(self.progress.values()+["=================="]):
                 # go to row i, erase and write progress
@@ -84,4 +87,5 @@ class StderrMultiProgressBarMothership(object):
             # set up scrolling to protect upper lines and restore cursor
             sys.stderr.write("\033[%i;%ir\033[u" % (len(self.progress)+2,rows))
     def __del__(self):
-        sys.sdterr.write("\033[r") # remove scrolling restrictions
+        # pylint: disable=anomalous-backslash-in-string
+        sys.stderr.write("\033[r") # remove scrolling restrictions
