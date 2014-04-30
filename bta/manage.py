@@ -66,7 +66,6 @@ class Remove(Command):
     def create_arg_subparser(cls, parser):
         parser.add_argument("dbnames", nargs="+")
         parser.add_argument("--force", "-f", action="store_true")
-        parser.add_argument("--interactive", "-i", action="store_true")
         parser.add_argument("--dry-run", "-N", action="store_true")
 
     def run(self):
@@ -79,11 +78,17 @@ class Remove(Command):
                 else:
                     print ". Nothing done."
                     continue
-            if self.options.interactive:
+            if not self.options.force:
+                acts = db.log.find().sort("date",-1).limit(1).next()
+                dtl = db.datatable.count()
+                sdl = db.sd_table.count()
+                print "{0}: last action is [{1}]".format(dbn, acts["actions"][-1]["action"])
+                print "{0}: datatable has {1} records ; sd_table has {2} records".format(dbn, dtl,sdl)
                 if ask("Remove {0} ?".format(dbn),"yn") == "n":
                     continue
             if not self.options.dry_run:
                 self.db.drop_database(dbn)
+                print "{0} removed".format(dbn)
 
 def main():
     parser = Command.create_arg_parser()
