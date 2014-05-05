@@ -2,6 +2,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 import argparse
+import pkgutil
 import bta.backend.mongo
 import bta.docstruct
 from bta.docstruct import LiveRootDoc, RootDoc
@@ -67,7 +68,22 @@ class Miner(object):
 
     @classmethod
     def main(cls):
+
+
+        preparser = argparse.ArgumentParser(add_help=False)
+        preparser.add_argument("--module", "-m", action="append", default=[])
+
+        modoptions, other = preparser.parse_known_args()
+        for m in modoptions.module:
+            imp = pkgutil.get_loader(m)
+            if not imp:
+                preparser.error("Could not find module [%s]" % m)
+            mod = imp.load_module(m)
+            if hasattr(mod, "import_all"):
+                mod.import_all()
+
         parser = cls.create_arg_parser()
+        parser.add_argument("--module", "-m", action="append", default=[])
         options = parser.parse_args()
 
         if options.connection is None:
