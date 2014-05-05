@@ -33,10 +33,15 @@ class Miner(object):
     def register(f):
         return MinerRegistry.register_ref(f, key="_name_")
 
-    @classmethod
-    def create_arg_parser(cls):
 
-        parser = argparse.ArgumentParser()
+    @classmethod
+    def create_arg_subparser(cls, parser):
+        pass
+
+    @classmethod
+    def main(cls):
+
+        parser = argparse.ArgumentParser(add_help=False)
 
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
@@ -56,26 +61,17 @@ class Miner(object):
         parser.add_argument("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
                             help="Ignore mismatch between stored data and this program's format versions")
 
-        subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
-        for miner in MinerRegistry.itervalues():
-            p = subparsers.add_parser(miner._name_, help=miner._desc_)
-            miner.create_arg_subparser(p)
+        parser.add_argument("--module", "-m", action="append", default=[])
 
-        return parser
+        globaloptions, other = parser.parse_known_args()
 
-    @classmethod
-    def create_arg_subparser(cls, parser):
-        pass
+        if globaloptions.connection is None:
+            parser.error("Missing connection string (-C)")
 
-    @classmethod
-    def main(cls):
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)-5s: %(message)s")
 
-
-        preparser = argparse.ArgumentParser(add_help=False)
-        preparser.add_argument("--module", "-m", action="append", default=[])
-
-        modoptions, other = preparser.parse_known_args()
-        for m in modoptions.module:
+        for m in globaloptions.module:
             imp = pkgutil.get_loader(m)
             if not imp:
                 preparser.error("Could not find module [%s]" % m)
@@ -83,26 +79,27 @@ class Miner(object):
             if hasattr(mod, "import_all"):
                 mod.import_all()
 
-        parser = cls.create_arg_parser()
-        parser.add_argument("--module", "-m", action="append", default=[])
 
+        modparser = argparse.ArgumentParser(parents=[parser])
+
+        subparsers = modparser.add_subparsers(dest='miner_name', help="Miners")
+        for miner in MinerRegistry.itervalues():
+            p = subparsers.add_parser(miner._name_, help=miner._desc_)
+            miner.create_arg_subparser(p)
+
+        miners = []
         remain = sys.argv[1:]
         remain.append("--")
-        options = argparse.Namespace(miners=[])
         while remain:
+            options = argparse.Namespace(miner_name=None,**vars(globaloptions))
             i = remain.index("--")
             remain,r2 = remain[:i],remain[i:]
-            options,remain = parser.parse_known_args(remain, namespace=options)
+            options,remain = modparser.parse_known_args(remain, namespace=options)
             remain = remain+r2 if remain else r2[1:]
             if options.miner_name:
-                options.miners.append(options.miner_name)
-                options.miner_name = None
+                miners.append([options.miner_name, options])
 
-        if options.connection is None:
-            parser.error("Missing connection string (-C)")
 
-        logging.basicConfig(level=logging.INFO,
-                            format="%(levelname)-5s: %(message)s")
 
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
@@ -112,12 +109,12 @@ class Miner(object):
 
         docC = LiveRootDoc if options.live_output else RootDoc
 
-        multiminers = len(options.miners) > 1
+        multiminers = len(miners) > 1
 
-        doc = docC("Analysis by miner%s: [%s]" % ("s" if multiminers else "",", ".join(options.miners)))
+        doc = docC("Analysis by miner%s: [%s]" % ("s" if multiminers else "",", ".join(mn for mn,o in miners)))
         doc.start_stream()
 
-        for miner_name in options.miners:
+        for miner_name,opt in miners:
             miner = MinerRegistry.get(miner_name)
             m = miner(options.backend)
             if options.force_consistency:
@@ -131,10 +128,10 @@ class Miner(object):
 
             if multiminers:
                 sec = doc.create_subsection("Analysis by miner [%s]" % miner_name)
-                m.run(options, sec)
+                m.run(opt, sec)
                 sec.finished()
             else:
-                m.run(options, doc)
+                m.run(opt, doc)
         doc.finish_stream()
 
         if options.output_type:
