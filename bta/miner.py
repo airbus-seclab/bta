@@ -3,6 +3,7 @@
 
 import argparse
 import pkgutil
+import sys
 import bta.backend.mongo
 import bta.docstruct
 from bta.docstruct import LiveRootDoc, RootDoc
@@ -84,7 +85,18 @@ class Miner(object):
 
         parser = cls.create_arg_parser()
         parser.add_argument("--module", "-m", action="append", default=[])
-        options = parser.parse_args()
+
+        remain = sys.argv[1:]
+        remain.append("--")
+        options = argparse.Namespace(miners=[])
+        while remain:
+            i = remain.index("--")
+            remain,r2 = remain[:i],remain[i:]
+            options,remain = parser.parse_known_args(remain, namespace=options)
+            remain = remain+r2 if remain else r2[1:]
+            if options.miner_name:
+                options.miners.append(options.miner_name)
+                options.miner_name = None
 
         if options.connection is None:
             parser.error("Missing connection string (-C)")
@@ -98,24 +110,31 @@ class Miner(object):
         if not options.output_type:
             options.live_output = True
 
-        miner = MinerRegistry.get(options.miner_name)
-        m = miner(options.backend)
-        if options.force_consistency:
-            log.warning("Consistency checks disabled by user")
-        else:
-            try:
-                m.assert_consistency()
-            except AssertionError, e:
-                log.error("Consistency check failed: %s" %e)
-                raise SystemExit()
-
         docC = LiveRootDoc if options.live_output else RootDoc
 
-        doc = docC("Analysis by miner [%s]" % options.miner_name)
+        multiminers = len(options.miners) > 1
+
+        doc = docC("Analysis by miner%s: [%s]" % ("s" if multiminers else "",", ".join(options.miners)))
         doc.start_stream()
 
-        m.run(options, doc)
+        for miner_name in options.miners:
+            miner = MinerRegistry.get(miner_name)
+            m = miner(options.backend)
+            if options.force_consistency:
+                log.warning("Consistency checks disabled by user")
+            else:
+                try:
+                    m.assert_consistency()
+                except AssertionError, e:
+                    log.error("Consistency check failed: %s" %e)
+                    raise SystemExit()
 
+            if multiminers:
+                sec = doc.create_subsection("Analysis by miner [%s]" % miner_name)
+                m.run(options, sec)
+                sec.finished()
+            else:
+                m.run(options, doc)
         doc.finish_stream()
 
         if options.output_type:
