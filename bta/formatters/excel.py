@@ -18,12 +18,20 @@ class Excel(Formatter):
         self.reportsheet.show_grid = False
         self.row = 0
         self.col = 0
+        self.sheetnames = set()
 
     def add_table(self, name, table):
-        sht = self.book.add_sheet(name)
 
-        self.reportsheet.write(self.row, 0, xlwt.Formula('HYPERLINK("#{0}!A1", "See {1}")'.format(
-            xlwt.Utils.quote_sheet_name(name),  name)))
+        shtname = name
+        n = 0
+        while shtname in self.sheetnames:
+            n += 1
+            shtname = "%s (%i)" % (name, n)
+        self.sheetnames.add(shtname)
+        sht = self.book.add_sheet(shtname)
+        self.reportsheet.write(self.row, 0, 
+                               xlwt.Formula('HYPERLINK("#{0}!A1", "See {1}")'.format(
+                                   xlwt.Utils.quote_sheet_name(shtname),  name)))
         self.row += 1
 
         style = self.style_normal
