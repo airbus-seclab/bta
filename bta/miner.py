@@ -65,9 +65,6 @@ class Miner(object):
 
         globaloptions, other = parser.parse_known_args()
 
-        if globaloptions.connection is None:
-            parser.error("Missing connection string (-C)")
-
         logging.basicConfig(level=logging.INFO,
                             format="%(levelname)-5s: %(message)s")
 
@@ -100,6 +97,8 @@ class Miner(object):
                 miners.append([options.miner_name, options])
 
 
+        if globaloptions.connection is None:
+            parser.error("Missing connection string (-C)")
 
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
@@ -184,3 +183,46 @@ class Miner(object):
         if r is not None:
             vtype = type(r[field])
             assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)
+
+
+
+class MinerGroup(Miner):
+    pass
+
+
+class MinerList(MinerGroup):
+    _report_ = None
+    def run(self, options, doc):
+        for m in self._report_:
+
+            if type(m) is tuple:
+                m,mopt = m[0],m[1:]
+            else:
+                mopt = ()
+
+            log.info("Running miner [%s] with opt=%r" % (m,mopt))
+            mdoc = doc.create_subsection("Analysis by miner [%s]" % m)
+
+            miner = bta.miner.MinerRegistry.get(m)
+
+            miner_parser = argparse.ArgumentParser()
+            miner.create_arg_subparser(miner_parser)
+            namespace = argparse.Namespace(**vars(options))
+            opt = miner_parser.parse_args(mopt, namespace=namespace)
+
+            m = miner(options.backend)
+
+            if options.force_consistency:
+                log.warning("Consistency checks disabled by user")
+            else:
+                try:
+                    m.assert_consistency()
+                except AssertionError,e:
+                    log.error("Consistency check failed: %s" %e)
+                    raise SystemExit()
+
+
+            m.run(opt, mdoc)
+
+            mdoc.flush()
+
