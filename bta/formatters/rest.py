@@ -30,6 +30,15 @@ def format_table(table,  width_hint=200):
     hhline = hhfmt % tuple(["="*l for l in tl])
     return fmt, hline, hhline
 
+def normalize_table(table):
+    #ensure all lines have the same number of columns
+    maxcol = max(len(l) for l in table if l)
+    t2 = []
+    for l in table:
+        if l:
+            l += ("",)*(maxcol-len(l))
+        t2.append(l)
+    return t2
 
 
 @Formatter.register
@@ -39,6 +48,7 @@ class ReST(Formatter):
         self.doc = []
 
     def add_table(self, name, table):
+        table = normalize_table(table)
         t = []
         fmt,hline,hhline = format_table(table)
 
