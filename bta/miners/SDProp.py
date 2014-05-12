@@ -67,7 +67,8 @@ class SDProp(Miner):
         
         t = list()
         for ace in aceList:
-            name = self.datatable.find_one({"objectSid": ace['SID']}, {"cn"})['cn']
+            resp = self.datatable.find_one({"objectSid": ace['SID']}, {"cn", "name"})
+            name = resp.get("cn") or resp.get("name", "??")
             if ace['InheritedObjectType'] != None:
                 cible = self.datatable.find_one({"schemaIDGUID" : re.compile(ace['InheritedObjectType'], re.IGNORECASE)})
                 if cible == None: 
