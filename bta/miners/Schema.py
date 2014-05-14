@@ -140,7 +140,11 @@ class Schema(Miner):
                 numOwnShema = len(shema[1])
                 desc = hdlACE.getSecurityDescriptor(shema[0])
                 ownersid = desc['sd_value']['Owner']
-                name = self.datatable.find_one({'objectSid': ownersid})['cn']
+                resp = self.datatable.find_one({"objectSid": ownersid}, {"cn", "name"})
+                if resp is None:
+                    name = ownersid
+                else:
+                    name = resp.get("cn") or resp.get("name", "??")
                 catego = self.catName(shema[1][0])
                 table.add([name, ownersid, numOwnShema, catego])
             table.finished()
