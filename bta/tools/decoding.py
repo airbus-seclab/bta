@@ -31,7 +31,7 @@ def decode_ancestors(ancestors):
 
 def decode_OID(OID_interger):
     return "%s%s"%(bta.datatable.OIDPrefix(OID_interger&0xffff0000).to_json(), OID_interger&0xffff)
-    
+
 def decode_ReplPropMeta(bin_data):
     def insert_dash(string, indexes):
         final_string=string
@@ -52,7 +52,7 @@ def decode_ReplPropMeta(bin_data):
     for i in range(nb_of_prop):
         (oid, version, date, objectId, OrgUSN, LocUSN) = struct.unpack_from(unpack_string,bin_data,16+i*struct.calcsize(unpack_string))
         list_prop.append({"OID":decode_OID(oid),
-                          "version":version, 
+                          "version":version,
                           "date":datetime(1601,1,1,1,0,0) + timedelta(seconds=date),
                           "objectId":insert_dash(shift_eight_first(objectId.encode('hex')),[8,12,16,20]),
                           "LocUSN":LocUSN,

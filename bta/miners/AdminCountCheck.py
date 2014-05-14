@@ -28,7 +28,7 @@ class AdminCountCheck(Miner):
                        "Group Policy Creator Owners",
                        "Incoming Forest Trust Builders",
                        "Cert Publishers"]
-        
+
         # Find all those account in the database
         adminAccountsObjects=list()
         for account in adminAccounts:
@@ -36,17 +36,17 @@ class AdminCountCheck(Miner):
                 {"$or": [ { "name": { "$regex": account } },
                 { "objectSid": { "$regex": account } }
                 ]}]}
-                                                                                                                          
+
             l = self.datatable.find(match)
             for i in l:
                 adminAccountsObjects.append(i)
-        
+
         # Find all members of those account thanx to the miner ListGroup
         LGMiner=ListGroup.ListGroup(self.backend)
         adminAccountsMembers=list()
         for account in adminAccountsObjects:
             adminAccountsMembers+=LGMiner.get_members_of(account['objectSid'], True)
-        adminAccountsMembersSid=[a for a,b,c,d in adminAccountsMembers]
+        adminAccountsMembersSid=[a for a,_,_,_ in adminAccountsMembers]
         # Find all accounts with adminCount=1
         accountsWithAdminCount=list()
         for a in self.datatable.find({'$and': [{'objectCategory': self.categories.person},{"adminCount":1}]}):

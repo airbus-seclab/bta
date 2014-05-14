@@ -2,10 +2,8 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from datetime import datetime, timedelta
 from bta.miners.tools import Family
-from bta.tools.WellKnownSID import SID2StringFull, SID2String
-import re
+from bta.tools.WellKnownSID import SID2StringFull
 
 @Miner.register
 class SchemaModifs(Miner):
@@ -18,7 +16,7 @@ class SchemaModifs(Miner):
         parser.add_argument('--changes', action="store_true", help='Schema Partition changes')
         parser.add_argument("--owner", action="store_true", help="List owners of Schema objects")
         parser.add_argument("--version", action="store_true", help="List owners of Schema objects")
-   
+
     def extract_dates(self, doc, dn, the_node):
         t = doc.create_list("All changes in the schema partition %s are" % dn)
         u = t.create_list("All dates of changes are:")
@@ -60,7 +58,7 @@ class SchemaModifs(Miner):
                 owners[owner_name]=[obj["name"]]
             else:
                 owners[owner_name].append(obj["name"])
-        
+
         for owner, objs in owners.items():
             t = doc.create_list("%s Owns the following objects" % owner)
             for o in objs:
@@ -79,7 +77,7 @@ class SchemaModifs(Miner):
             print "the schema partition distinguish name is mandatory"
             exit(1)
         the_node=Family.find_the_one(options.dn, self.datatable)
-        
+
         if options.changes:
             self.extract_dates(doc, options.dn, the_node)
 

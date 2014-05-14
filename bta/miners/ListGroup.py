@@ -5,7 +5,6 @@ from bta.miner import Miner
 from bta.miners import ListACE
 from bta.miners.tools import Sid
 import datetime
-import subprocess 
 from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
 @Miner.register
@@ -49,10 +48,10 @@ class ListGroup(Miner):
         if len(members)==0:
             members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.guid)))
         return members
-        
+
     def getInfo_fromSid(self, sid):
         return self.datatable.find_one({'objectSid': sid})
-    
+
     def find_dn(self, r):
         if not r:
             return ""
@@ -68,26 +67,26 @@ class ListGroup(Miner):
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
 
-	Mylist = list()	
-	for ace in aceList:
-	    info = self.getInfo_fromSid(ace['SID'])
+        Mylist = list()
+        for ace in aceList:
+            info = self.getInfo_fromSid(ace['SID'])
             if info is None:
                 trustee_cn = trustee_string = "NULLOBJECT-%s" % ace['SID']
             else:
-		if "cn" in info:
-	                trustee_cn=info['cn']
-        	        trustee_string=SID2String(info['cn'])
-		else:
-			trustee_string = trustee_cn = info['name']
+                if "cn" in info:
+                    trustee_cn=info['cn']
+                    trustee_string=SID2String(info['cn'])
+                else:
+                    trustee_string = trustee_cn = info['name']
             trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
-	    info2 = self.getInfo_fromSid(membersid)
-	    subject = info2['cn']
+            info2 = self.getInfo_fromSid(membersid)
+            subject = info2['cn']
             if ace['ObjectType']:
-	        objtype = hdlACE.type2human(ace['ObjectType'])    
+                objtype = hdlACE.type2human(ace['ObjectType'])
             else:
                 objtype = '(none)'
-	    Mylist.append([trustee, subject, ace['Type'], objtype])
-	return Mylist
+            Mylist.append([trustee, subject, ace['Type'], objtype])
+        return Mylist
 
     def run(self, options, doc):
         def deleted_last(l):
@@ -99,9 +98,9 @@ class ListGroup(Miner):
                     deleteditems.append(i)
             for i in deleteditems:
                 yield i
-                
+
         match = None
-        
+
         doc.add("List of groups matching [%s]" % options.match)
         if options.match:
             match = {"$and": [{'objectCategory': self.categories.group},
@@ -116,16 +115,15 @@ class ListGroup(Miner):
             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
         headers=['User', 'Deletion', 'Flags', 'Recursive']
-        
+
         listemptyGroup=[]
         for groupSid,membership in groups.items():
-            if len(membership)==0: 
+            if len(membership)==0:
                 listemptyGroup.append(groupSid)
                 continue
             info = self.getInfo_fromSid(groupSid)
             name = info['cn']
             guid = info['objectGUID']
-            
             sec = doc.create_subsection("Group %s" % name)
             sec.add("sid = %s" % groupSid)
             sec.add("guid = %s" % guid)
@@ -134,7 +132,7 @@ class ListGroup(Miner):
             table.add(headers)
             table.add()
             for sid,deleted,fromgrp,name in deleted_last(membership):
-                fromgrp = fromgrp.split(":")[0] 
+                fromgrp = fromgrp.split(":")[0]
                 sidobj = Sid(sid, self.datatable)
                 member = unicode(sidobj)
                 if fromgrp:
@@ -144,14 +142,14 @@ class ListGroup(Miner):
             table.finished()
 
             for sid,deleted,fromgrp,name in deleted_last(membership):
-               	sec.add("User %s (%s)" % (name, sid))
+                sec.add("User %s (%s)" % (name, sid))
                 table = sec.create_table("ACE")
                 table.add(["Trustee", "Member", "ACE Type", "Object type"])
                 table.add()
-		listACE=self.checkACE(sid)
-		for ace in listACE:
-			table.add(ace)
-	    	table.finished()
+                listACE=self.checkACE(sid)
+                for ace in listACE:
+                    table.add(ace)
+                table.finished()
             sec.finished()
 
         if len(listemptyGroup) > 0:
@@ -166,7 +164,7 @@ class ListGroup(Miner):
                 guid = info['objectGUID']
                 table.add((name, groupSid, guid))
             table.finished()
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "objectSid", str, unicode)

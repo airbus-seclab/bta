@@ -2,7 +2,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from collections import defaultdict
 
 
 @Miner.register
@@ -18,7 +17,8 @@ class MailBoxRights(Miner):
     def get_sid(self, sid):
         objlist = self.datatable.find({'objectSid': sid})
         for obj in objlist:
-            if 'cn' in obj: return obj['cn']
+            if 'cn' in obj:
+                return obj['cn']
 
     def getSecurityDescriptor(self, sdId):
         sd = self.sd_table.find({'sd_id': sdId})
@@ -40,9 +40,9 @@ class MailBoxRights(Miner):
         mailboxAccess = {}  # Permissions per mailbox
         match = ""
         if options.userid:
-            match =  { "objectSid": options.user }  
+            match =  { "objectSid": options.user }
         elif options.user:
-            match =  { "sAMAccountName": { "$regex" : options.userid, "$options":"i" } } 
+            match =  { "sAMAccountName": { "$regex" : options.userid, "$options":"i" } }
         if match =="":
             print "Argument user or userid missing !\nType \"$btaminer %s -h\" for usage "% self._name_
             exit(1)
@@ -62,10 +62,10 @@ class MailBoxRights(Miner):
                     rules.append("+%s" % key)
 
                 for rule in rules:
-                   userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
-                   userAccess[ace['SID']][userMailboxCN] = rules
+                    userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
+                    userAccess[ace['SID']][userMailboxCN] = rules
 
-        
+
         s = doc.create_subsection("Who can accessed to this Mailbox")
         table = s.create_table("")
 
@@ -73,7 +73,7 @@ class MailBoxRights(Miner):
             table.add([k,  ' '.join(map(lambda b: '{%s %s}' % (b[0],b[1]), v.items()))])
         table.finished()
         s.finished()
-    
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.sd_table, "sd_id")
@@ -84,5 +84,3 @@ class MailBoxRights(Miner):
         self.assert_field_type(self.datatable, "cn", str, unicode)
         self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)
         self.assert_field_type(self.datatable, "msExchMailboxSecurityDescriptor", int)
-        
-        

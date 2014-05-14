@@ -2,8 +2,8 @@
 # (c) EADS CERT and EADS Innovation Works
 
 import struct
-import tools.decoding
-from tools.flags import Flags, Enums
+import bta.tools.decoding
+from bta.tools.flags import Flags, Enums
 
 # Heavily inspired by reading WinNT.h
 
@@ -26,7 +26,7 @@ class SE:
 class SecurityDescriptor(object):
     def __init__(self, sd):
         self.raw_sd = sd
-        rev,sbz,ctrl,owner,group,sacl,dacl = struct.unpack_from("<BBHIIII", sd)
+        _rev,_sbz,ctrl,owner,group,sacl,dacl = struct.unpack_from("<BBHIIII", sd)
         self.ctrl = ctrl
         self.owner = owner
         self.group = group
@@ -37,19 +37,17 @@ class SecurityDescriptor(object):
                 self.sacl = sd[sacl:dacl]
             if self.ctrl & SE.SE_DACL_PRESENT:
                 self.dacl = sd[dacl:]
-        
 
 
 class ACL(object):
     def __init__(self, acl):
-        rev,sbz,sz,count,sbz = struct.unpack_from("<BBHHH", acl)
+        _rev,_sbz,_sz,_count,_sbz2 = struct.unpack_from("<BBHHH", acl)
 
 
 class ACE(object):
     def __init__(self, ace):
-        type,flags,size = struct.unpack_from("<BBH", ace)
-        
-    
+        _type,_flags,_size = struct.unpack_from("<BBH", ace)
+
 
 class ACEType(Enums):
     _enum_ = {
@@ -63,7 +61,7 @@ class ACEType(Enums):
         "SystemAuditObject" : 7,
         "SystemAlarmObject" : 8,
         }
-        
+
 
 class SidTypeName(Enums):
     _enum_ = {
@@ -105,7 +103,8 @@ class ACEFlags(Flags):
         "SuccessfulAccessAceFlag" : 0x40,
         "FailedAccessAceFlag" : 0x80,
         }
-    
+
+
 class ACEObjectFlags(Flags):
     _flags_ = {
         "ObjectTypePresent" : 0x1,
@@ -137,11 +136,11 @@ class AccessMask(Flags):
         "ADSRightDSWriteProp":      0x00000020,
         "ADSRightDSDeleteTree":     0x00000040,
         "ADSRightDSListObject":     0x00000080,
-        "ADSRightDSControlAccess":  0x00000100,  
+        "ADSRightDSControlAccess":  0x00000100,
     }
 
 def acl_to_json(acl):
-    rev,sbz,size,count,sbz2 = struct.unpack_from("<BBHHH", acl)
+    rev,_sbz,size,count,_sbz2 = struct.unpack_from("<BBHHH", acl)
     ACL = {}
     ACL["Revision"] = rev
     ACL["Size"] = size
@@ -157,25 +156,21 @@ def acl_to_json(acl):
         ACE["Size"] = size
         amask, = struct.unpack_from("<I", acestr[4:])
         ACE["AccessMask"] = AccessMask(amask).to_json()
-        
-        
         sstr = acestr[8:size]
-
-        if typeraw in [5, 6, 7, 8]: 
+        if typeraw in [5, 6, 7, 8]:
             objflagsraw, = struct.unpack_from("<I", sstr)
             sstr = sstr[4:]
             objflags = ACEObjectFlags(objflagsraw)
             ACE["ObjectFlags"] = objflags.to_json()
             if objflags.ObjectTypePresent:
-                ACE["ObjectType"] = tools.decoding.decode_guid(sstr[:16])
+                ACE["ObjectType"] = bta.tools.decoding.decode_guid(sstr[:16])
                 sstr = sstr[16:]
             if objflags.InheritedObjectTypePresent:
-                ACE["InheritedObjectType"] = tools.decoding.decode_guid(sstr[:16])
+                ACE["InheritedObjectType"] = bta.tools.decoding.decode_guid(sstr[:16])
                 sstr = sstr[16:]
 
         if typeraw in [0, 1, 2, 3, 5, 6, 7, 8]:
-            ACE["SID"] = tools.decoding.decode_sid(sstr)
-
+            ACE["SID"] = bta.tools.decoding.decode_sid(sstr)
 
         if type == 0: # ACCESS_ALLOWED
             pass
@@ -195,7 +190,6 @@ def acl_to_json(acl):
             pass
         elif type == 8: # SYSTEM_ALARM_OBJECT
             pass
-            
 
         ACEList.append(ACE)
         acestr = acestr[size:]
@@ -206,20 +200,18 @@ def acl_to_json(acl):
 def sd_to_json(sd):
     jsd = {}
 
-    rev,sbz,rctrl,owner,group,saclofs,daclofs = struct.unpack_from("<BBHIIII", sd)
-    
+    rev,_sbz,rctrl,owner,group,saclofs,daclofs = struct.unpack_from("<BBHIIII", sd)
     ctrl = ControlFlags(rctrl)
-    
     jsd["Revision"] = rev
     jsd["Control"] = ctrl.to_json()
     if ctrl.SelfRelative:
-        jsd["Owner"] = tools.decoding.decode_sid(sd[owner:])
-        jsd["Group"] = tools.decoding.decode_sid(sd[group:])
+        jsd["Owner"] = bta.tools.decoding.decode_sid(sd[owner:])
+        jsd["Group"] = bta.tools.decoding.decode_sid(sd[group:])
         if ctrl.SACLPresent:
             jsd["SACL"] = acl_to_json(sd[saclofs:])
         if ctrl.DACLPresent:
-            jsd["DACL"] = acl_to_json(sd[daclofs:])        
-    return jsd 
+            jsd["DACL"] = acl_to_json(sd[daclofs:])
+    return jsd
 
 if __name__ == "__main__":
     from pprint import pprint

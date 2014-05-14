@@ -1,14 +1,16 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-import sys
 import argparse
+import pkgutil
+import sys
 import bta.backend.mongo
 import bta.docstruct
 from bta.docstruct import LiveRootDoc, RootDoc
 from bta.formatters import Formatter
 import bta.formatters.rest
 import bta.formatters.csvzip
+import bta.formatters.excel
 from bta.tools.registry import Registry
 import logging
 
@@ -17,7 +19,7 @@ log = logging.getLogger("bta.miner")
 class categories(object):
     def __init__(self, ct):
         for entry in ct.find():
-            setattr(self, entry['name'].lower().replace('-','_'), int(entry['id']))
+            setattr(self, entry['name'].lower().replace('-', '_'), int(entry['id']))
 
 
 class MinerRegistry(Registry):
@@ -31,10 +33,15 @@ class Miner(object):
     def register(f):
         return MinerRegistry.register_ref(f, key="_name_")
 
+
     @classmethod
-    def create_arg_parser(cls):
-        
-        parser = argparse.ArgumentParser()
+    def create_arg_subparser(cls, parser):
+        pass
+
+    @classmethod
+    def main(cls):
+
+        parser = argparse.ArgumentParser(add_help=False)
 
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
@@ -51,54 +58,79 @@ class Miner(object):
                             help="output file", metavar="FILENAME")
         parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",
                             help="output encoding. Default: utf8", metavar="ENCODING")
-        
+        parser.add_argument("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
+                            help="Ignore mismatch between stored data and this program's format versions")
 
-        subparsers = parser.add_subparsers(dest='miner_name', help="Miners")
+        parser.add_argument("--module", "-m", action="append", default=[])
+
+        globaloptions, other = parser.parse_known_args()
+
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)-5s: %(message)s")
+
+        for m in globaloptions.module:
+            imp = pkgutil.get_loader(m)
+            if not imp:
+                preparser.error("Could not find module [%s]" % m)
+            mod = imp.load_module(m)
+            if hasattr(mod, "import_all"):
+                mod.import_all()
+
+
+        modparser = argparse.ArgumentParser(parents=[parser])
+
+        subparsers = modparser.add_subparsers(dest='miner_name', help="Miners")
         for miner in MinerRegistry.itervalues():
             p = subparsers.add_parser(miner._name_, help=miner._desc_)
             miner.create_arg_subparser(p)
 
-        return parser
+        miners = []
+        remain = sys.argv[1:]
+        remain.append("--")
+        while remain:
+            options = argparse.Namespace(miner_name=None,**vars(globaloptions))
+            i = remain.index("--")
+            remain,r2 = remain[:i],remain[i:]
+            options,remain = modparser.parse_known_args(remain, namespace=options)
+            remain = remain+r2 if remain else r2[1:]
+            if options.miner_name:
+                miners.append([options.miner_name, options])
 
-    @classmethod
-    def create_arg_subparser(cls, parser):
-        pass
-        
-    @classmethod
-    def main(cls):
-        parser = cls.create_arg_parser()
-        options = parser.parse_args()
-        
-        if options.connection is None:
+
+        if globaloptions.connection is None:
             parser.error("Missing connection string (-C)")
-    
-        logging.basicConfig(level=logging.INFO,
-                            format="%(levelname)-5s: %(message)s")
 
         backend_type = bta.backend.Backend.get_backend(options.backend_type)
         options.backend = backend_type(options)
-        
+
         if not options.output_type:
             options.live_output = True
 
-        miner = MinerRegistry.get(options.miner_name)
-        m = miner(options.backend)
-        if options.force_consistency:
-            log.warning("Consistency checks disabled by user")
-        else:
-            try:
-                m.assert_consistency()
-            except AssertionError,e:
-                log.error("Consistency check failed: %s" %e)
-                raise SystemExit()
-
         docC = LiveRootDoc if options.live_output else RootDoc
 
-        doc = docC("Analysis by miner [%s]" % options.miner_name)
+        multiminers = len(miners) > 1
+
+        doc = docC("Analysis by miner%s: [%s]" % ("s" if multiminers else "",", ".join(mn for mn,o in miners)))
         doc.start_stream()
 
-        m.run(options, doc)
+        for miner_name,opt in miners:
+            miner = MinerRegistry.get(miner_name)
+            m = miner(options.backend)
+            if options.force_consistency:
+                log.warning("Consistency checks disabled by user")
+            else:
+                try:
+                    m.assert_consistency()
+                except AssertionError, e:
+                    log.error("Consistency check failed: %s" %e)
+                    raise SystemExit()
 
+            if multiminers:
+                sec = doc.create_subsection("Analysis by miner [%s]" % miner_name)
+                m.run(opt, sec)
+                sec.finished()
+            else:
+                m.run(opt, doc)
         doc.finish_stream()
 
         if options.output_type:
@@ -116,6 +148,7 @@ class Miner(object):
 
     def __init__(self, backend):
         self.backend = backend
+        self.metadata = backend.open_table("metadata")
         self.datatable = backend.open_table("datatable")
         self.datatable_meta = backend.open_table("datatable_meta")
         self.link_table = backend.open_table("link_table")
@@ -127,7 +160,7 @@ class Miner(object):
         self.dnames = backend.open_table("dnames")
         self.categories = categories(self.category)
 
-    def run(self, options):
+    def run(self, options, doc):
         raise NotImplementedError("run")
 
     def assert_consistency(self):
@@ -146,7 +179,50 @@ class Miner(object):
         assert cnt > 0, "no record with [%s] attribute in [%s]" % (field, table.name)
     @classmethod
     def assert_field_type(cls, table, field, *types):
-        r = table.find_one({field : {"$exists":True}},{field:True})
+        r = table.find_one({field : {"$exists":True}}, {field:True})
         if r is not None:
             vtype = type(r[field])
             assert vtype in types, "unexpected type for value of attribute [%s] in table [%s] (got %r, wanted %r)" % (field, table.name, vtype, types)
+
+
+
+class MinerGroup(Miner):
+    pass
+
+
+class MinerList(MinerGroup):
+    _report_ = None
+    def run(self, options, doc):
+        for m in self._report_:
+
+            if type(m) is tuple:
+                m,mopt = m[0],m[1:]
+            else:
+                mopt = ()
+
+            log.info("Running miner [%s] with opt=%r" % (m,mopt))
+            mdoc = doc.create_subsection("Analysis by miner [%s]" % m)
+
+            miner = bta.miner.MinerRegistry.get(m)
+
+            miner_parser = argparse.ArgumentParser()
+            miner.create_arg_subparser(miner_parser)
+            namespace = argparse.Namespace(**vars(options))
+            opt = miner_parser.parse_args(mopt, namespace=namespace)
+
+            m = miner(options.backend)
+
+            if options.force_consistency:
+                log.warning("Consistency checks disabled by user")
+            else:
+                try:
+                    m.assert_consistency()
+                except AssertionError,e:
+                    log.error("Consistency check failed: %s" %e)
+                    raise SystemExit()
+
+
+            m.run(opt, mdoc)
+
+            mdoc.flush()
+

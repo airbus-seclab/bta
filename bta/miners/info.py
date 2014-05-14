@@ -15,9 +15,14 @@ class Info(Miner):
     def __init__(self, backend):
         Miner.__init__(self, backend)
         self.dblog = backend.open_table("log")
-    
+
     def run(self, options, doc):
         s0 = doc.create_subsection("collections in this database")
+
+
+        vers = self.metadata.find_one({"data_format_version":{"$exists":True}})["data_format_version"]
+        s0.add("Data format version: %s" % vers)
+
         tbl = s0.create_table("collections")
         tbl.add(("name", "number of records"))
         tbl.add()
@@ -59,7 +64,7 @@ class Info(Miner):
             for r in self.datatable_meta.find():
                 tbl.add((r["name"], r["attname"], r["type"] ))
             tbl.finished()
-        
+
         if options.verbose:
             tbl = s2.create_table("categories")
             tbl.add(("id", "name", "number of records"))

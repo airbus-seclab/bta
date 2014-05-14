@@ -2,7 +2,7 @@
 # (c) EADS CERT and EADS Innovation Works
 
 from bta.miner import Miner
-from datetime import datetime, timedelta
+from datetime import datetime
 from bta.miners.tools import Family
 from bta.tools.WellKnownSID import SID2StringFull
 import re
@@ -22,16 +22,16 @@ class PasswordPolicy(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--cn', help='scpecify the domain')
-   
+
     def extractGpLinks(self, gp_attr):
-        regex="\[LDAP://(?P<CN>[^;]*);(?P<activated>\d)\]"
+        regex=r"\[LDAP://(?P<CN>[^;]*);(?P<activated>\d)\]"
         m=re.findall(regex, gp_attr)
         res=list()
         for (link_DN, activation) in m:
             convertion = self.dnames.find_one({"DName":{"$regex":"^%s"%link_DN,"$options":"i"}})
             res.append((link_DN, convertion, activation))
         return res
-    
+
     def run(self, options, doc):
         if not options.cn:
             print "The root is mandatory, you need to specify the \"cn\" argument"
@@ -42,11 +42,11 @@ class PasswordPolicy(Miner):
         # Display all attributes in _ListOfAttributes_
         for att in self._ListOfAttributes_:
             att_value=""
-            if (att in the_node.keys()): 
+            if (att in the_node.keys()):
                 if isinstance(the_node[att],datetime):
                     att_value = str(the_node[att]-datetime.fromtimestamp(0))
                 else:
-                    att_value = the_node[att] 
+                    att_value = the_node[att]
                 if att == "gPLink":
                     tt = t.create_list("The attribute %s contains"%att)
                     gplinks = self.extractGpLinks(the_node[att])
@@ -63,7 +63,7 @@ class PasswordPolicy(Miner):
             for ace in the_link_acl["sd_value"]["DACL"]["ACEList"]:
                 tttt=ttt.create_list("%s has the right %s on %s"%(SID2StringFull(ace["SID"],self.guid),
                                                                   ace["Type"],
-                                                                  SID2StringFull(ace.get("ObjectType","everything"),self.guid,only_converted=True))) 
+                                                                  SID2StringFull(ace.get("ObjectType","everything"),self.guid,only_converted=True)))
                 for flag in [a for a,b in ace["AccessMask"]["flags"].items() if b]:
                     tttt.add("%s"%flag)
 
@@ -71,7 +71,7 @@ class PasswordPolicy(Miner):
 
         t.flush()
         t.finished()
-        
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "cn", str, unicode)

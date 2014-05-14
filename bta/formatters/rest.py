@@ -14,9 +14,11 @@ def get_bullet(lvl):
 
 
 def format_table(table,  width_hint=200):
+    # pylint: disable=multiple-statements
     sep = " | " ; lsep = "| " ; rsep = " |"
     cross = "-+-" ; lcross = "+-"; rcross = "-+"
     dcross = "=+=" ; ldcross = "+="; rdcross = "=+"
+    # pylint: enable=multiple-statements
     tl = map(max, zip(*[map(len,l) for l in table if l]))
     total_width = sum(tl)+len(tl)*len(sep)
     if total_width > width_hint:
@@ -27,7 +29,16 @@ def format_table(table,  width_hint=200):
     hhfmt = ldcross + ( dcross.join(["%%-%is"]*len(tl)) % tuple(tl) ) + rdcross
     hhline = hhfmt % tuple(["="*l for l in tl])
     return fmt, hline, hhline
-    
+
+def normalize_table(table):
+    #ensure all lines have the same number of columns
+    maxcol = max(len(l) for l in table if l)
+    t2 = []
+    for l in table:
+        if l:
+            l += ("",)*(maxcol-len(l))
+        t2.append(l)
+    return t2
 
 
 @Formatter.register
@@ -37,6 +48,7 @@ class ReST(Formatter):
         self.doc = []
 
     def add_table(self, name, table):
+        table = normalize_table(table)
         t = []
         fmt,hline,hhline = format_table(table)
 

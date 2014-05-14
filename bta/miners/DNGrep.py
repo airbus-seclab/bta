@@ -10,7 +10,7 @@ class DNGrep(Miner):
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")
-    
+
     def run(self, options, doc):
         doc.add("Listing DN of all objects whose CN matches [%s]" % options.cn)
 
@@ -23,12 +23,12 @@ class DNGrep(Miner):
                 return ""
             r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
             return find_dn(r2)+"."+cn
-    
+
         c = self.datatable.find({"cn":{"$regex":".*%s.*"%options.cn, "$options": 'i'}})
         for r in c:
             l.add("%s: %s" % ((r.get("cn")if not "None" else ""),find_dn(r)))
         l.finished()
-        
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_exists(self.datatable, "PDNT_col")
