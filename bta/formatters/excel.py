@@ -22,11 +22,11 @@ class Excel(Formatter):
 
     def add_table(self, name, table):
 
-        shtname = name
+        shtname = name[:31]
         n = 0
         while shtname in self.sheetnames:
             n += 1
-            shtname = "%s (%i)" % (name, n)
+            shtname = "%s (%i)" % (name[:25], n)
         self.sheetnames.add(shtname)
         sht = self.book.add_sheet(shtname)
         self.reportsheet.write(self.row, 0, 
