@@ -212,6 +212,7 @@ Other features
 Authors
 =======
 
-* EADS CERT
-* EADS Innovation Works
+* Airbus Group CERT
+* Airbus Group Innovations
+* Airbus DS CyberSecurity
 
