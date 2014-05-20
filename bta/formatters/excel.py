@@ -1,66 +1,101 @@
 # This file is part of the BTA toolset
 # (c) EADS CERT and EADS Innovation Works
 
-from bta.formatters import Formatter
-import StringIO
-from collections import defaultdict
-import xlwt
+try:
+    import openpyxl
+except ImportError:
+    pass
+else:
 
-@Formatter.register
-class Excel(Formatter):
-    _name_ = "excel"
-    def __init__(self):
-        self.style_topborder = xlwt.easyxf("font: name Fixed; border: top 12")
-        self.style_normal = xlwt.easyxf("font: name Fixed")
-        self.style_section = xlwt.easyxf("font: bold 1")
-        self.book = xlwt.Workbook()
-        self.reportsheet = self.book.add_sheet("Report")
-        self.reportsheet.show_grid = False
-        self.row = 0
-        self.col = 0
-        self.sheetnames = set()
+    from bta.formatters import Formatter
+    import StringIO
+    from collections import defaultdict
+    import re
 
-    def add_table(self, name, table):
+    from openpyxl.workbook import Workbook
+    from openpyxl.styles import Style, Color, Font, Border, Side, PatternFill, fills, borders
+    headcolor = Color(rgb="ff9dc5ff")
+    oddcolor = Color(rgb="ffffefd4")
+    evencolor = Color(rgb="ffffd794")
+    hline = Border(bottom=Side(border_style=borders.BORDER_THICK))
+    headstyle = Style(font=Font(name='Courier', size=11, bold=True),
+                      fill=PatternFill(fill_type=fills.FILL_SOLID,
+                                       start_color=headcolor,
+                                       end_color=headcolor),
+                      border=Border(top=Side(border_style=borders.BORDER_THICK),
+                                    bottom=Side(border_style=borders.BORDER_THICK)),
+                      )
+    oddstyle =  Style(font=Font(name='Courier', size=11),
+                      fill=PatternFill(fill_type=fills.FILL_SOLID,
+                                       start_color=oddcolor,
+                                       end_color=oddcolor),
+                  )
+    evenstyle = Style(font=Font(name='Courier', size=11),
+                      fill=PatternFill(fill_type=fills.FILL_SOLID,
+                                       start_color=evencolor,
+                                       end_color=evencolor),
+                 )
+    linestyle = [oddstyle, evenstyle]
+    
+    @Formatter.register
+    class Excel(Formatter):
+        _name_ = "excel"
+        def __init__(self):
+            self.wb = Workbook()
+            self.wb.properties.title = "BTA report"
+            self.wb.properties.creator = "BTA"
+            self.reportsheet = self.wb.get_active_sheet()
+            self.reportsheet.title = "BTA Report"
+            self.reportsheet.show_gridlines = False
+            self.indent = 1
+            self.sheetnames = set()
+        def do_add_table(self, name, lvl, table):
+            sht = self.wb.create_sheet()
+            shtname = self.reportsheet.bad_title_char_re.sub("", name)
+            shtname = shtname[:29]
+            sht.title = shtname
+            sht.default_column_dimension.bestFit = True
+            sht.default_column_dimension.auto_size = True
+            self.reportsheet.append({self.indent:'=HYPERLINK("#\'%s\'!A1", "see %s")' % (shtname, name)})
 
-        shtname = name[:31]
-        n = 0
-        while shtname in self.sheetnames:
-            n += 1
-            shtname = "%s (%i)" % (name[:25], n)
-        self.sheetnames.add(shtname)
-        sht = self.book.add_sheet(shtname)
-        self.reportsheet.write(self.row, 0, 
-                               xlwt.Formula('HYPERLINK("#{0}!A1", "See {1}")'.format(
-                                   xlwt.Utils.quote_sheet_name(shtname),  name)))
-        self.row += 1
+            lengths=defaultdict(int)
+            hlines = []
+            for rownb,row in enumerate(table):
+                if row:
+                    sht.append([""]*lvl+row)
+                    for c,val in enumerate(row):
+                        lengths[c] = max(lengths[c],len(val))
+                else:
+                    hlines.append(rownb)
+            hlines.append(sht.max_row)
 
-        style = self.style_normal
-        r = 0
-        lengths=defaultdict(int)
-        for row in table:
-            if row:
-                for c,val in enumerate(row):
-                    sht.write(r, c, val, style)
-                    lengths[c] = max(lengths[c],len(val))
-                r += 1
-                style = self.style_normal
-            else:
-                style = self.style_topborder
-        for c,v in lengths.iteritems():
-            sht.col(c).width = int(256*1.2*v)
-    def add_list(self, name, lvl, lst):
-        self.add_table(name, lst)
+            
+            for col in range(1, sht.max_column+1):
+                sht.cell(row=1, column=col).style = headstyle
+            for row in range(2,sht.max_row+1):
+                styl = [oddstyle,evenstyle][row%2]
+                for col in range(1,sht.max_column+1):
+                    cell = sht.cell(row=row, column=col)
+                    cell.style = styl
 
-    def add_section(self, section_name, lvl):
-        self.reportsheet.write(self.row, lvl, section_name, self.style_section)
-        self.row += 1
+            for coldim in sht.column_dimensions.itervalues():
+                col = openpyxl.worksheet.column_index_from_string(coldim.index)
+                coldim.width = lengths[col-1]
 
-    def add_content(self, content):
-        self.reportsheet.write(self.row, 0, content)
-        self.row += 1
+        def add_table(self, name, table):
+            self.do_add_table(name, 0, table)
+            
+        def add_list(self, name, lvl, lst):
+            self.do_add_table(name, lvl, lst)
 
+        def add_section(self, section_name, lvl):
+            self.reportsheet.append({lvl+1: section_name})
+            self.indent=lvl+2
 
-    def finalize(self, encoding=None):
-        s = StringIO.StringIO()
-        self.book.save(s)
-        return s.getvalue()
+        def add_content(self, content):
+            self.reportsheet.append({self.indent: content})
+
+        def finalize(self, encoding=None):
+            s = StringIO.StringIO()
+            self.wb.save(s)
+            return s.getvalue()

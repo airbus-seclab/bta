@@ -37,6 +37,7 @@ Dependencies:
 
 * mongodb (``apt-get install mongodb-server python-pymongo``)
 * libesedb http://code.google.com/p/libesedb/
+* openpyxl (>= 2.0.2)
 
 Installation:
 
