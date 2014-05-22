@@ -1,3 +1,6 @@
+# This file is part of the BTA toolset
+# (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
+
 """ Test DBMetadataEntry class """
 
 from bta import dbmeta

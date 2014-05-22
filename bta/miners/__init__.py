@@ -1,5 +1,5 @@
 # This file is part of the BTA toolset
-# (c) EADS CERT and EADS Innovation Works
+# (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 
 from bta.tools.importer import importer_for

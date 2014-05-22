@@ -1,5 +1,5 @@
 # This file is part of the BTA toolset
-# (c) EADS CERT and EADS Innovation Works
+# (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 WellKnownSID = {'ML_PROTECTED_PROCESS': 'S-1-16-20480',
                 'PRINTER_OPERATORS': 'S-1-5-32-550',

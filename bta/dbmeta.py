@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 # This file is part of the BTA toolset
-# (c) EADS CERT and EADS Innovation Works
+# (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 """
 Stores metadata to the "metadata" table in backend.
