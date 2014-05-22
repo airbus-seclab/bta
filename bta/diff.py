@@ -28,7 +28,7 @@ class TableDiff(object):
         print "---------------"
         icA = icB = None
 
-        total = old = new = diff = readA = readB = 0
+        total = old = new = diff = _readA = _readB = 0
 
         while True:
             total += 1
@@ -38,7 +38,7 @@ class TableDiff(object):
                 except StopIteration:
                     pass
                 else:
-                    readA += 1
+                    _readA += 1
                     icA = rA[self.indexcol]
             if icB is None:
                 try:
@@ -46,7 +46,7 @@ class TableDiff(object):
                 except StopIteration:
                     pass
                 else:
-                    readB += 1
+                    _readB += 1
                     icB = rB[self.indexcol]
 
             if (icA is None) and (icB is None):

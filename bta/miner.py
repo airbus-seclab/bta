@@ -63,7 +63,7 @@ class Miner(object):
 
         parser.add_argument("--module", "-m", action="append", default=[])
 
-        globaloptions, other = parser.parse_known_args()
+        globaloptions,_ = parser.parse_known_args()
 
         logging.basicConfig(level=logging.INFO,
                             format="%(levelname)-5s: %(message)s")
@@ -71,7 +71,7 @@ class Miner(object):
         for m in globaloptions.module:
             imp = pkgutil.get_loader(m)
             if not imp:
-                preparser.error("Could not find module [%s]" % m)
+                parser.error("Could not find module [%s]" % m)
             mod = imp.load_module(m)
             if hasattr(mod, "import_all"):
                 mod.import_all()
@@ -187,6 +187,7 @@ class Miner(object):
 
 
 class MinerGroup(Miner):
+    # pylint: disable=abstract-method
     pass
 
 

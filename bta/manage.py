@@ -5,7 +5,6 @@ import logging
 from bta.tools.registry import Registry
 from bta.backend import Backend
 from bta.tools.ask import ask
-import bta.backend.mongo
 
 log = logging.getLogger("bta.manage")
 

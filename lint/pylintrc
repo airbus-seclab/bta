@@ -21,7 +21,7 @@ load-plugins=doseol
 disable = no-space-before-operator, no-space-after-operator, duplicate-code,  no-space-after-comma, missing-docstring, invalid-name, line-too-long, 
 	bad-builtin, star-args,
 	too-few-public-methods, too-many-instance-attributes, too-many-branches, no-self-use, too-many-locals, too-many-statements, 
-	abstract-class-not-used, abstract-class-little-used
+	abstract-class-not-used, abstract-class-little-used, protected-access,
 
 
 [REPORTS]

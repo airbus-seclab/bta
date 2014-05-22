@@ -76,7 +76,6 @@ class DNTree(Miner):
                                 doc.add(u"%s:%s"%(str(key), str(value)))
 
         def find_ACE(node):
-            ace=list()
             id_sd = node.get('nTSecurityDescriptor')
             sd = self.sd_table.find({"sd_id":id_sd}).limit(1)[0]
             return sd

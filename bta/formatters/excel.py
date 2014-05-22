@@ -10,7 +10,6 @@ else:
     from bta.formatters import Formatter
     import StringIO
     from collections import defaultdict
-    import re
 
     from openpyxl.workbook import Workbook
     from openpyxl.styles import Style, Color, Font, Border, Side, PatternFill, fills, borders

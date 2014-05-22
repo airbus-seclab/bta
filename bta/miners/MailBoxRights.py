@@ -31,13 +31,12 @@ class MailBoxRights(Miner):
                         continue
                     truc['SID'] = self.get_sid(truc['SID'])
                     aces.append(truc)
-            except Exception, e:
-                pass
+            except Exception,e:
+                log.warning(e)
         return aces
 
     def run(self, options, doc):
         userAccess = {}     # Permissions per User
-        mailboxAccess = {}  # Permissions per mailbox
         match = ""
         if options.userid:
             match =  { "objectSid": options.user }
@@ -48,22 +47,20 @@ class MailBoxRights(Miner):
             exit(1)
 
         mailboxes=self.datatable.find_one(match)
-        for mbox in mailboxes:
-            userMailboxCN = mailboxes['cn']
-            userMailBoxSecurityDescriptor = mailboxes['msExchMailboxSecurityDescriptor']
-            aces = self.getSecurityDescriptor(userMailBoxSecurityDescriptor)
-            if not aces:
-                continue
-            for ace in aces:
-                rules=[]
-                for key,val in ace['AccessMask'].items():
-                    if not val:
-                        continue
-                    rules.append("+%s" % key)
+        userMailboxCN = mailboxes['cn']
+        userMailBoxSecurityDescriptor = mailboxes['msExchMailboxSecurityDescriptor']
+        aces = self.getSecurityDescriptor(userMailBoxSecurityDescriptor)
+        if not aces:
+            continue
+        for ace in aces:
+            rules=[]
+            for key,val in ace['AccessMask'].items():
+                if not val:
+                    continue
+                rules.append("+%s" % key)
 
-                for rule in rules:
-                    userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
-                    userAccess[ace['SID']][userMailboxCN] = rules
+            userAccess[ace['SID']] =  userAccess.get(ace['SID'], {})
+            userAccess[ace['SID']][userMailboxCN] = rules
 
 
         s = doc.create_subsection("Who can accessed to this Mailbox")

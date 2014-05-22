@@ -33,7 +33,6 @@ class Family(object):
 
         def find_rec(node, offspring, datatable, rec):
             childs=Family.find_childs(node, datatable)
-            id_dict=needed(node)
             for s in childs:
                 id_new_node=needed(s)
                 if (len(Family.find_childs(s, datatable))==0 or rec==0):

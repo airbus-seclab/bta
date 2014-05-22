@@ -40,7 +40,7 @@ class CSVZIP(Formatter):
     def add_table(self, name, table):
         self._add_csv(name+".csv", [map(utf8,x) if x is not None else [""] for x in table])
 
-    def add_list(self, name, lst):
+    def add_list(self, name, lvl, lst):
         self._add_csv(name+".csv", [([""]*lvl+[x]) for lvl,x in lst])
 
     def add_section(self, section_name, lvl):

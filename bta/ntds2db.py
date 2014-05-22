@@ -4,8 +4,6 @@
 # (c) EADS CERT and EADS Innovation Works
 
 
-import sys
-
 import libesedb
 
 import bta.tools.progressbar
