@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 
 import bta.miner
-import bta.miners
-
-bta.miners.import_all()
 
 if __name__ == "__main__":
     bta.miner.Miner.main()

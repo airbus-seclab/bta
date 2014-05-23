@@ -4,17 +4,17 @@
 import argparse
 import pkgutil
 import sys
-import bta.backend.mongo
 import bta.docstruct
 from bta.docstruct import LiveRootDoc, RootDoc
-from bta.formatters import Formatter
-import bta.formatters.rest
-import bta.formatters.csvzip
-import bta.formatters.excel
+import bta.backend
+import bta.formatters
+import bta.miners
 from bta.tools.registry import Registry
 import logging
 
 log = logging.getLogger("bta.miner")
+
+
 
 class categories(object):
     def __init__(self, ct):
@@ -41,6 +41,14 @@ class Miner(object):
     @classmethod
     def main(cls):
 
+        logging.basicConfig(level=logging.INFO,
+                            format="%(levelname)-5s: %(message)s")
+
+        bta.backend.import_all()
+        bta.formatters.import_all()
+        bta.miners.import_all()
+
+
         parser = argparse.ArgumentParser(add_help=False)
 
         parser.add_argument("-C", dest="connection",
@@ -53,7 +61,7 @@ class Miner(object):
         parser.add_argument("--live-output", dest="live_output", action="store_true",
                             help="Provides a live output")
         parser.add_argument("-t", "--output-type", dest="output_type",
-                            help="output document type (amongst: %s)" % (", ".join(Formatter._formatters_.keys())))
+                            help="output document type (amongst: %s)" % (", ".join(bta.formatters.Formatter._formatters_.keys())))
         parser.add_argument("-o", "--output-file", dest="output",
                             help="output file", metavar="FILENAME")
         parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",
@@ -65,8 +73,6 @@ class Miner(object):
 
         globaloptions,_ = parser.parse_known_args()
 
-        logging.basicConfig(level=logging.INFO,
-                            format="%(levelname)-5s: %(message)s")
 
         for m in globaloptions.module:
             imp = pkgutil.get_loader(m)
@@ -134,7 +140,7 @@ class Miner(object):
         doc.finish_stream()
 
         if options.output_type:
-            fmt = Formatter.get(options.output_type)()
+            fmt = bta.formatters.Formatter.get(options.output_type)()
             doc.format_doc(fmt)
             try:
                 fin = fmt.finalize(encoding=options.encoding)
