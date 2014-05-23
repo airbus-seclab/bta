@@ -2,6 +2,8 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
+import logging
+log = logging.getLogger("bta.miners.MailBoxRights")
 
 
 @Miner.register
@@ -50,8 +52,6 @@ class MailBoxRights(Miner):
         userMailboxCN = mailboxes['cn']
         userMailBoxSecurityDescriptor = mailboxes['msExchMailboxSecurityDescriptor']
         aces = self.getSecurityDescriptor(userMailBoxSecurityDescriptor)
-        if not aces:
-            continue
         for ace in aces:
             rules=[]
             for key,val in ace['AccessMask'].items():
