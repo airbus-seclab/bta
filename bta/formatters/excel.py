@@ -1,7 +1,7 @@
 # This file is part of the BTA toolset
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
-import openpyxle
+import openpyxl
 
 from bta.formatters import Formatter
 import StringIO
