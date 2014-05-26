@@ -287,7 +287,7 @@ def main():
                            + 'Ex: -C-from "::%%s" "basename rmext - '' replace upper"'), metavar="CNXFMT RPNPROG")
     
     parser.add_argument("--backend-class", "-B", default="mongo",
-                        help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+                        help="database backend", choices=bta.backend.Backend.backends.keys())
     parser.add_argument("--only", default="",
                         help="Restrict import to TABLENAME", metavar="TABLENAME")
 

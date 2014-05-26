@@ -4,7 +4,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 
-import bta.backend.mongo
+import bta.backend
 
 DEFAULT_IGNORE_LIST = {'whenChanged', 'replPropertyMetaData', 'dSCorePropagationData',
                        'nTSecurityDescriptor', 'dnsRecord', 'uSNChanged', 'Ancestors_col',
@@ -82,33 +82,36 @@ class TableDiff(object):
 
 
 def main():
-    import optparse
-    parser = optparse.OptionParser()
+    import argparse
 
-    parser.add_option("--CA", dest="connectionA",
-                      help="Backend A connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
-    parser.add_option("--CB", dest="connectionB",
-                      help="Backend B connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
+    bta.backend.import_all()
 
-    parser.add_option("--BA", dest="backend_classA", default="mongo",
-                      help="database A backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
-    parser.add_option("--BB", dest="backend_classB", default="mongo",
-                      help="database B backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("--CA", dest="connectionA",
+                        help="Backend A connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
+    parser.add_argument("--CB", dest="connectionB",
+                        help="Backend B connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
+    
+    parser.add_argument("--BA", dest="backend_classA", default="mongo",
+                        help="database A backend", choices=bta.backend.Backend.backends.keys())
+    parser.add_argument("--BB", dest="backend_classB", default="mongo",
+                        help="database B backend", choices=bta.backend.Backend.backends.keys())
 
-    parser.add_option("--only", dest="only", default="",
-                      help="Diff only TABLENAME", metavar="TABLENAME")
+    parser.add_argument("--only", dest="only", default="",
+                        help="Diff only TABLENAME", metavar="TABLENAME")
+    
+    parser.add_argument("-X", "--ignore-field", dest="ignore_list", action="append", default=[],
+                        help="Add a field name to be ignored", metavar="FIELD")
+    parser.add_argument("-A", "--consider-field", dest="consider_list", action="append", default=[],
+                        help="Add a field name to be considered even if present in default ignore list", metavar="FIELD")
+    parser.add_argument("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
+                        help="Ignore mismatch between stored data and this program's format versions")
+    parser.add_argument("--ignore-defaults", dest="ignore_defaults", action="store_true",
+                        help="Add %s to list of ignored fields" % ", ".join(DEFAULT_IGNORE_LIST))
 
-    parser.add_option("-X", "--ignore-field", dest="ignore_list", action="append", default=[],
-                      help="Add a field name to be ignored", metavar="FIELD")
-    parser.add_option("-A", "--consider-field", dest="consider_list", action="append", default=[],
-                      help="Add a field name to be considered even if present in default ignore list", metavar="FIELD")
-    parser.add_option("--ignore-version-mismatch", dest="ignore_version_mismatch", action="store_true",
-                      help="Ignore mismatch between stored data and this program's format versions")
-    parser.add_option("--ignore-defaults", dest="ignore_defaults", action="store_true",
-                      help="Add %s to list of ignored fields" % ", ".join(DEFAULT_IGNORE_LIST))
 
-
-    options, _args = parser.parse_args()
+    options = parser.parse_args()
 
     if options.connectionA is None:
         parser.error("Missing connection string A (--CA)")

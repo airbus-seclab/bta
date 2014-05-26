@@ -54,14 +54,16 @@ class Miner(object):
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
         parser.add_argument("-B", dest="backend_type", default="mongo",
-                            help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+                            choices=bta.backend.Backend.backends.keys(),
+                            help="database backend")
 
         parser.add_argument("--force-consistency", dest="force_consistency", action="store_true",
                             help="Do not run consistency checks")
         parser.add_argument("--live-output", dest="live_output", action="store_true",
                             help="Provides a live output")
         parser.add_argument("-t", "--output-type", dest="output_type",
-                            help="output document type (amongst: %s)" % (", ".join(bta.formatters.Formatter._formatters_.keys())))
+                            help="output document type",
+                            choices=bta.formatters.Formatter._formatters_.keys())
         parser.add_argument("-o", "--output-file", dest="output",
                             help="output file", metavar="FILENAME")
         parser.add_argument("-e", "--encoding", dest="encoding", default="utf8",

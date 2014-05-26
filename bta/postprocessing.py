@@ -3,7 +3,7 @@
 # This file is part of the BTA toolset
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
-import bta.backend.mongo
+import bta.backend
 import bta.dblog
 import bta.tools.registry
 import logging
@@ -156,19 +156,22 @@ class PostProcessing(object):
 
 
 def main():
-    import optparse
-    parser = optparse.OptionParser()
+    import argparse
+    
+    bta.backend.import_all()
 
-    parser.add_option("-C", dest="connection",
-                      help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
-    parser.add_option("-B", dest="backend_class", default="mongo",
-                      help="database backend (amongst: %s)" % (", ".join(bta.backend.Backend.backends.keys())))
+    parser = argparse.ArgumentParser()
 
-    parser.add_option("--only", dest="only", metavar="POSTPROC",
-                      help="Only run POSTPROC (amongst %s)" % (", ".join(PostProcessing.list_post_processors())))
-
-    parser.add_option("--overwrite", dest="overwrite", action="store_true",
-                      help="Delete tables that already exist in db")
+    parser.add_argument("-C", dest="connection",
+                        help="Backend connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
+    parser.add_argument("-B", dest="backend_class", default="mongo",
+                        help="database backend", choices=bta.backend.Backend.backends.keys())
+    
+    parser.add_argument("--only", dest="only",
+                        help="Only run POSTPROC", choices=PostProcessing.list_post_processors())
+    
+    parser.add_argument("--overwrite", dest="overwrite", action="store_true",
+                        help="Delete tables that already exist in db")
 
     options, _args = parser.parse_args()
 

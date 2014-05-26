@@ -6,7 +6,7 @@
 import argparse
 import logging
 from bta.tools.registry import Registry
-from bta.backend import Backend
+import bta.backend
 from bta.tools.ask import ask
 
 log = logging.getLogger("bta.manage")
@@ -28,7 +28,8 @@ class Command(object):
         parser = argparse.ArgumentParser()
         parser.add_argument("--connection", "-C", default="127.0.0.1:27017")
         parser.add_argument("--backend-type", "-B", default="mongo",
-                            help="database backend (amongst: %s)" % (", ".join(Backend.backends.keys())))
+                            help="database backend",
+                            choices=bta.backend.Backend.backends.keys())
 
         subparsers = parser.add_subparsers(dest="command_name", help="Commands")
         for cmd in CommandRegistry.itervalues():
@@ -93,13 +94,14 @@ class Remove(Command):
                 print "{0} removed".format(dbn)
 
 def main():
+    logging.basicConfig(level=logging.INFO,
+                        format="%(levelname)-5s: %(message)s")
+    bta.backend.import_all()
+
     parser = Command.create_arg_parser()
     options = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)-5s: %(message)s")
-
-    backend = Backend.get_backend(options.backend_type)
+    backend = bta.backend.Backend.get_backend(options.backend_type)
     options.cnx = backend.connect(options)
 
     cmd = CommandRegistry.get(options.command_name)
