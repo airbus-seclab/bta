@@ -103,7 +103,9 @@ def multi_native_type(flags, typ, val):
     if flags & ValueFlags.FLAG_0x10 == 0:
         try:
             first, = struct.unpack_from("<H", val)
+            first &= 0x7fff
             ofsb = list(struct.unpack_from("<%iH" % (first/2), val))
+            ofsb = [ x&0x7fff for x in ofsb ]
         except Exception,e:
             log.warning("ERROR decoding multivalue header: %s" % e)
             return [val]
