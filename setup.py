@@ -51,7 +51,7 @@ class PyTest(Command):
 
 setup(
     name = 'bta',
-    version = '0.3',
+    version = '0.4',
     packages=['bta', 'bta/tools', 'bta/backend', 'bta/miners', 'bta/formatters', 
               'libesedb'],
     scripts = ['bin/btaminer', 'bin/btaimport', 'bin/btadiff', 'bin/btamanage'],
@@ -60,6 +60,8 @@ setup(
     author = 'Philippe Biondi',
     author_email = 'phil@secdev.org',
     description = 'Active Directory Auditing tool',
+    install_requires = ["openpyxl>=2.0.2", "pymongo"],
+
 
     cmdclass = {
         'lint': PyLint,
