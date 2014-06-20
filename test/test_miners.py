@@ -30,6 +30,9 @@ def fake_backend(fake_options):
     return FakeBackend(fake_options, "")
 
 
+def test_all_miners_are_loaded():
+    loaded_miners_nb = len(bta.miner.MinerRegistry.get_all())
+    assert  loaded_miners_nb > 30
 
 def test_all_miners_create_subparser():
     parser = argparse.ArgumentParser()
