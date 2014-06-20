@@ -2,7 +2,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
-from bta.miners import ListGroup
+from bta.miners import list_group
 
 @Miner.register
 class AdminCountCheck(Miner):
@@ -42,7 +42,7 @@ class AdminCountCheck(Miner):
                 adminAccountsObjects.append(i)
 
         # Find all members of those account thanx to the miner ListGroup
-        LGMiner=ListGroup.ListGroup(self.backend)
+        LGMiner=list_group.ListGroup(self.backend)
         adminAccountsMembers=list()
         for account in adminAccountsObjects:
             adminAccountsMembers+=LGMiner.get_members_of(account['objectSid'], True)

@@ -2,7 +2,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
-from bta.miners import ListACE
+from bta.miners import list_ACE
 import re
 
 @Miner.register
@@ -60,7 +60,7 @@ class SDProp(Miner):
 
     def checkACE(self):
         secDesc = int(self.datatable.find_one({"cn": "AdminSDHolder"})['nTSecurityDescriptor'])
-        hdlACE = ListACE.ListACE(self.backend)
+        hdlACE = list_ACE.ListACE(self.backend)
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
 

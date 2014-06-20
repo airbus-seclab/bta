@@ -6,7 +6,7 @@ from bta.tools.WellKnownSID import SID2StringFull
 from datetime import datetime
 
 @Miner.register
-class Passwords(Miner):
+class Accounts(Miner):
     _name_ = "accounts"
     _desc_ = "Look for things on user passwords"
     _types_= ["Person", "Computer"]

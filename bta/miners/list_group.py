@@ -2,7 +2,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
-from bta.miners import ListACE
+from bta.miners import list_ACE
 from bta.miners.tools import Sid
 import datetime
 from bta.tools.WellKnownSID import SID2StringFull, SID2String
@@ -63,7 +63,7 @@ class ListGroup(Miner):
 
     def checkACE(self,membersid):
         secDesc = int(self.datatable.find_one({"objectSid": membersid })['nTSecurityDescriptor'])
-        hdlACE = ListACE.ListACE(self.backend)
+        hdlACE = list_ACE.ListACE(self.backend)
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
 

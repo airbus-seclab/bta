@@ -5,7 +5,7 @@ from bta.miner import Miner, MinerList
 
 
 @Miner.register
-class ExtendedRights_Audit(MinerList):
+class Audit_Passwords(MinerList):
     _name_ = "Audit_Passwords"
     _desc_ = "Run all analyses on passwords"
     _report_ = [

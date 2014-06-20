@@ -2,7 +2,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
-from bta.miners import ListACE
+from bta.miners import list_ACE
 import datetime
 
 @Miner.register
@@ -135,7 +135,7 @@ class Schema(Miner):
             table.add(["Name", "SID", "Number owned", "Schema type"])
             table.add()
             SchemaSecuDescriptor = self.owner()
-            hdlACE = ListACE.ListACE(self.backend)
+            hdlACE = list_ACE.ListACE(self.backend)
             for shema in SchemaSecuDescriptor:
                 numOwnShema = len(shema[1])
                 desc = hdlACE.getSecurityDescriptor(shema[0])
