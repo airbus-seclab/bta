@@ -8,6 +8,7 @@ from bta.tools.WellKnownSID import SID2StringFull
 class Membership(Miner):
     _name_ = "Membership"
     _desc_ = "List group membership"
+    _uses_ = [ "raw.datatable", "raw.category", "raw.link_table", "raw.guid" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

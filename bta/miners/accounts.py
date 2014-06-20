@@ -9,6 +9,8 @@ from datetime import datetime
 class Accounts(Miner):
     _name_ = "accounts"
     _desc_ = "Look for things on user passwords"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid" ]
+
     _types_= ["Person", "Computer"]
 
     @classmethod

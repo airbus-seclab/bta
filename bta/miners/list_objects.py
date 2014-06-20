@@ -8,6 +8,8 @@ import datetime
 class ListObject(Miner):
     _name_ = "ListObject"
     _desc_ = "ListObject, list Object by categorie and creation or modification date"
+    _uses_ = [ "raw.datatable", "raw.category" ]
+
 
     def getCategory(self, match):
         ret = self.category.find_one({"name": match})

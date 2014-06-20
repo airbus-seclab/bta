@@ -8,6 +8,7 @@ from bta.tools.mtools import Sid, Record
 class ListACE(Miner):
     _name_ = "ListACE"
     _desc_ = "List ACE matching criteria"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid", "raw.usersid", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

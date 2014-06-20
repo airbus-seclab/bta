@@ -8,6 +8,7 @@ from bta.tools.mtools import Family
 class Domains(Miner):
     _name_ = "Domains"
     _desc_ = "Display Informations about domains"
+    _uses_ = [ "raw.datatable" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

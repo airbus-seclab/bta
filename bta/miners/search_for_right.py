@@ -9,6 +9,8 @@ from bta.tools.mtools import Family
 class Search4Rights(Miner):
     _name_ = "Search4Rights"
     _desc_ = "This miner list all user who possess a certain right on User and Computer objects"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid" ]
+
     _rights_ = {'User-Force-Change-Password':['ADSRightDSControlAccess'],
                 'Send-As':['ADSRightDSControlAccess'],
                 'Receive-As':['ADSRightDSControlAccess'],

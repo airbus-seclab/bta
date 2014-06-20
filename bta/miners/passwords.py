@@ -16,6 +16,7 @@ def sane(o):
 class Passwords(Miner):
     _name_ = "passwords"
     _desc_ = "Look for things on user passwords"
+    _uses_ = [ "raw.datatable", "raw.guid" ]
     _types_= ["Person", "Computer"]
 
     @classmethod

@@ -9,6 +9,8 @@ import bson.binary
 class DNTree(Miner):
     _name_ = "DNTree"
     _desc_ = "DN Tree"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid", "raw.dnames" ]
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")

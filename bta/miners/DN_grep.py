@@ -7,6 +7,8 @@ from bta.miner import Miner
 class DNGrep(Miner):
     _name_ = "DNGrep"
     _desc_ = "DN grepper"
+    _uses_ = [ "raw.datatable" ]
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--cn", help="Look for objects with given CN and print their DN")

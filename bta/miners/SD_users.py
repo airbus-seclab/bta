@@ -17,6 +17,8 @@ class HRec: # wraps sd entries to make them hashable
 class SDusers(Miner):
     _name_ = "SDusers"
     _desc_ = "List users in SD"
+    _uses_ = [ "raw.datatable", "raw.sd_table" ]
+
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--match", help="Look only for users matching REGEX", metavar="REGEX")

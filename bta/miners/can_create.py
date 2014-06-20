@@ -9,6 +9,7 @@ from bta.tools.mtools import Family, ObjectClass
 class CanCreate(Miner):
     _name_ = "CanCreate"
     _desc_ = "This miner list all user who possess the right to create or delete objects"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

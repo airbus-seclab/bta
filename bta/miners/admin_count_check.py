@@ -8,6 +8,7 @@ from bta.miners import list_group
 class AdminCountCheck(Miner):
     _name_ = "AdminCountCheck"
     _desc_ = "list accounts that have admincount=1 but are not admin account"
+    _uses_ = [ "raw.datatable", "raw.guid", "special.categories" ]
 
     def get_group_of(self, account):
         return self.guid.find_one({"id":account.get('objectGUID')}).get('name')

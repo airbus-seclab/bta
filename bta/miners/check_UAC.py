@@ -8,6 +8,7 @@ from bta.datatable import UserAccountControl
 class CheckUAC(Miner):
     _name_ = "CheckUAC"
     _desc_ = "Weird paswword policy (No password or password never expire)"
+    _uses_ = [ "raw.datatable", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

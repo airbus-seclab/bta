@@ -8,6 +8,7 @@ import bson.binary
 class WhoIs(Miner):
     _name_ = "WhoIs"
     _desc_ = "Resolve SID"
+    _uses_ = [ "raw.datatable" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

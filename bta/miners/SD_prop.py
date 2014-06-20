@@ -9,6 +9,7 @@ import re
 class SDProp(Miner):
     _name_ = "SDProp"
     _desc_ = "check integrity of SDHolder and protected account"
+    _uses_ = [ "raw.datatable", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

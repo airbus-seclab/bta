@@ -9,6 +9,7 @@ import datetime
 class Schema(Miner):
     _name_ = "Schema"
     _desc_ = "Schema integrity: owner of category, big change in schema and so on"
+    _uses_ = [ "raw.datatable", "raw.category", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

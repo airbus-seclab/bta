@@ -7,6 +7,7 @@ from bta.miner import Miner
 class TrustLink(Miner):
     _name_ = "TrustLink"
     _desc_ = "Find all trusted domain object"
+    _uses_ = [ "raw.datatable", "special.categories" ]
 
     def run(self, options, doc):
         trusted = list()

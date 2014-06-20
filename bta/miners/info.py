@@ -8,6 +8,8 @@ from bta.miner import Miner
 class Info(Miner):
     _name_ = "info"
     _desc_ = "Informations about AD tables"
+    _uses_ = [ "raw.metadata", "raw.datatable", "raw.datatable_meta", "raw.sd_table", 
+               "raw.link_table", "raw.category" ]
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("-v", "--verbose", help="verbose output", action="store_true")

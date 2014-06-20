@@ -12,7 +12,9 @@ bta.miners.import_all(stop_on_error=True)
 
 
 class FakeBackend(bta.backend.Backend):
-    def open_table(self, name):
+    def open_raw_table(self, name):
+        return FakeTable(self.options, None, name)
+    def open_virtual_table(self, name):
         return FakeTable(self.options, None, name)
 
 class FakeTable(bta.backend.BackendTable):

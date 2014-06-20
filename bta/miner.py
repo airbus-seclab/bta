@@ -27,7 +27,9 @@ class MinerRegistry(Registry):
 
 
 class Miner(object):
+    _name_ = "N/A"
     _desc_ = "N/A"
+    _uses_ = [ ]
 
     @staticmethod
     def register(f):
@@ -156,29 +158,40 @@ class Miner(object):
 
     def __init__(self, backend):
         self.backend = backend
-        self.metadata = backend.open_table("metadata")
-        self.datatable = backend.open_table("datatable")
-        self.datatable_meta = backend.open_table("datatable_meta")
-        self.link_table = backend.open_table("link_table")
-        self.sd_table = backend.open_table("sd_table")
-        self.category = backend.open_table("category")
-        self.usersid = backend.open_table("usersid")
-        self.domain = backend.open_table("domains")
-        self.guid = backend.open_table("guid")
-        self.dnames = backend.open_table("dnames")
-        self.categories = categories(self.category)
-
+        self.raw_tables = []
+        self.virtual_tables = []
+        self.special_tables = []
+        for tblname in self._uses_:
+            t = None
+            if tblname.startswith("raw."):
+                n = tblname[4:]
+                t = backend.open_raw_table(n)
+                self.raw_tables.append(t)
+            elif tblname.startswith("virtual."):
+                n = tblname[8:]
+                t = backend.open_virtual_table(n)
+                self.virtual_tables.append(t)
+            elif tblname.startswith("special."):
+                n = tblname[8:]
+                if n == "categories":
+                    t = categories(backend.open_table("category"))
+                if t is not None:
+                    self.special_tables.append(t)
+            if t is None:
+                raise ValueError("Table name [%s] in miner [%s] (attribute %s._uses_) is unknown" %
+                                 (tblname, self._name_, self.__class__.__name__))
+            setattr(self, n, t)
+                
     def run(self, options, doc):
         raise NotImplementedError("run")
 
     def assert_consistency(self):
-        assert self.datatable.count() > 0, "datatable is empty"
-        assert self.datatable_meta.count() > 0, "datatable_meta is empty"
-        assert self.link_table.count() > 0, "link_table is empty"
-        assert self.sd_table.count() > 0, "sd_table is empty"
-        assert self.category.count() > 0, "category table is empty"
-        assert self.usersid.count() > 0, "usersid table is empty"
-        assert self.domain.count() > 0, "domain table is empty"
+        for rt in self.raw_tables:
+            assert rt.count() > 0, ("%s is empty" % rt.name)
+        for vt in self.virtual_tables:
+            vt.assert_consistency()
+        for st in self.virtual_tables:
+            st.assert_consistency()
 
     @classmethod
     def assert_field_exists(cls, table, field):

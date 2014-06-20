@@ -317,7 +317,7 @@ Using --ignore-version-mismatch might lead to incorrect results." %
         return True
 
 
-    def open_table(self, name):
+    def open_raw_table(self, name):
         return MongoTable(self.options, self.db, name)
     def list_tables(self):
         return self.db.collection_names()

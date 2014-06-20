@@ -11,6 +11,7 @@ from bta.tools.WellKnownSID import SID2StringFull, SID2String
 class ListGroup(Miner):
     _name_ = "ListGroup"
     _desc_ = "List group membership"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid" ]
     groups_already_saw={}
 
     @classmethod

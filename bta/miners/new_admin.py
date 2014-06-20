@@ -9,6 +9,7 @@ import datetime
 class NewAdmin(Miner):
     _name_ = "NewAdmin"
     _desc_ = "NewAdmin, list new administrator"
+    _uses_ = [ "raw.datatable", "raw.guid", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

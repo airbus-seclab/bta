@@ -9,6 +9,7 @@ from bta.tools.WellKnownSID import SID2StringFull
 class SchemaModifs(Miner):
     _name_ = "SchemaModifs"
     _desc_ = "Display all schema modification over the time"
+    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.guid" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):

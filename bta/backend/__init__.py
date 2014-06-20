@@ -31,8 +31,14 @@ class Backend(object):
 
     def create_table(self):
         raise NotImplementedError("Backend.create_table()")
-    def open_table(self):
-        raise NotImplementedError("Backend.open_table()")
+    def open_table(self, name):
+        return self.open_raw_table(name)
+    def open_raw_table(self, name):
+        raise NotImplementedError("Backend.open_raw_table()")
+    def open_virtual_table(self, name):
+        raise NotImplementedError("Backend.open_virtual_table()")
+    def open_special_table(self, name):
+        raise NotImplementedError("Backend.open_special_table()")
     def list_tables(self):
         raise NotImplementedError("Backend.list_tables()")
 
@@ -66,4 +72,17 @@ class BackendTable(object):
     def update(self, *args, **kargs):
         raise NotImplementedError("Table.update()")
 
+
+
+class VirtualTable(object):
+    def __init__(self, options, backend, name):
+        self.options = options
+        self.backend = backend
+        self.name = name
+    def count(self):
+        raise NotImplementedError("VirtualTable.count()")
+    def find(self, request, projection=None):
+        raise NotImplementedError("VirtualTable.find()")
+    def assert_consistency(self):
+        raise NotImplementedError("VirtualTable.find()")
 
