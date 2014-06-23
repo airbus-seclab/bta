@@ -3,8 +3,7 @@
 
 from bta.miner import Miner
 from bta.tools.WellKnownSID import SID2StringFull
-from bta.miners.tools import Family
-from bta.miners.tools import ObjectClass
+from bta.tools.mtools import Family, ObjectClass
 
 @Miner.register
 class CanCreate(Miner):

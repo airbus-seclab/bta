@@ -3,8 +3,8 @@
 
 from bta.miner import Miner
 from bta.miners import list_ACE
-from bta.miners.tools import Sid
 import datetime
+from bta.tools.mtools import Sid
 from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
 @Miner.register

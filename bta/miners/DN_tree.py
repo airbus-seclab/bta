@@ -2,7 +2,7 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 from bta.miner import Miner
-from bta.miners.tools import Family
+from bta.tools.mtools import Family
 import bson.binary
 
 @Miner.register

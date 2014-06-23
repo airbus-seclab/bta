@@ -3,7 +3,7 @@
 
 from bta.miner import Miner
 from bta.tools.WellKnownSID import SID2StringFull, Strings2SID
-from bta.miners.tools import Family
+from bta.tools.mtools import Family
 
 @Miner.register
 class Search4Rights(Miner):
