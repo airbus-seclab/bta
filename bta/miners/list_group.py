@@ -127,7 +127,7 @@ class ListGroup(Miner):
             sec = doc.create_subsection("Group %s" % name)
             sec.add("sid = %s" % groupSid)
             sec.add("guid = %s" % guid)
-            sec.add("cn = %s" % self.find_dn(info))
+            sec.add("dn = %s" % self.find_dn(info))
             table = sec.create_table("Members of %s" % name)
             table.add(headers)
             table.add()
