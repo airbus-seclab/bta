@@ -14,7 +14,6 @@ class CheckUAC(Miner):
         parser.add_argument('--check', help='List weird user access control Possible values to be checked (comma separated list): %s'%(", ".join(UserAccountControl._flags_.keys())))
 
     def findRogue(self, flags):
-        result = list()
         req = {'$and': [ {'$or':[{"objectCategory" : self.categories.person},
                                  {"objectCategory" : self.categories.computer}]},
                          { "userAccountControl": {'$exists': 1}},
@@ -22,10 +21,9 @@ class CheckUAC(Miner):
                          }]
               }
 
+        result = [["cn","SID", "Flags"]]
         for subject in self.datatable.find(req):
             result.append([subject['name'], subject['objectSid'], ", ".join([a for a,b in subject['userAccountControl']['flags'].items() if b])])
-        result.insert(0, ["cn","SID", "Flags"])
-
         return result
 
     def run(self, options, doc):
