@@ -18,9 +18,13 @@ class Backend(object):
     def get_backend(cls, name):
         return cls.backends[name.lower()]
 
-    def __init__(self, options, connection=None):
+    def __init__(self, options, connection=None, database=None):
         self.options = options
-        self.connection = connection if connection is not None else options.connection
+        self.db = database
+        if database is None:
+            self.connection = connection if connection is not None else options.connection
+        else:
+            self.connection = None
 
     def commit(self):
         pass

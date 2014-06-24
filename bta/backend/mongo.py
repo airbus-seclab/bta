@@ -269,14 +269,18 @@ class Mongo(Backend):
         port = int(port) if port else 27017
         return pymongo.Connection(ip, port)
 
-    def __init__(self, options, connection=None):
-        Backend.__init__(self, options, connection)
-        ip, port, self.dbname, _ = (self.connection+":::").split(":", 3)
-        ip = ip if ip else "127.0.0.1"
-        port = int(port) if port else 27017
-        self.cnxstr = (ip, port)
-        self.cnx = pymongo.Connection(*self.cnxstr)
-        self.db = self.cnx[self.dbname]
+    def __init__(self, options, connection=None, database=None):
+        Backend.__init__(self, options, connection, database)
+        if self.db is None:
+            ip, port, self.dbname, _ = (self.connection+":::").split(":", 3)
+            ip = ip if ip else "127.0.0.1"
+            port = int(port) if port else 27017
+            self.cnxstr = (ip, port)
+            self.cnx = pymongo.Connection(*self.cnxstr)
+            self.db = self.cnx[self.dbname]
+        else:
+            self.cnx = self.db.connection
+
         self.dbmetaentry = bta.dbmeta.DBMetadataEntry(self)
         if self.isFormatMismatch():
             raise Exception("Data format version mismatch.")
