@@ -61,6 +61,33 @@ def normal_db():
     db.category.insert({"id" : 1369, "name" : "Person"  })
     db.category.insert({"id" : 1363, "name" : "Computer" })
 
+    db.guid.insert({ "id" : "bf967aa3-0de6-11d0-a285-00aa003049e2", "name" : "Organization" })
+    db.guid.insert({ "id" : "f0f8ffab-1191-11d0-a060-00aa006c33ed", "name" : "NTDS-DSA" })
+    db.guid.insert({ "id" : "bf967a8f-0de6-11d0-a285-00aa003049e2", "name" : "DMD" })
+    db.guid.insert({ "id" : "5a8b3261-c38d-11d1-bbc9-0080c76670c0", "name" : "SubSchema" })
+
+    db.domains.insert({"domain" : ".intra.secu.labz", "sid" : "S-1-5-21-1154669122-758131934-2550385761" })
+
+    db.dnames.insert({ "DName" : "", "name" : "$ROOT_OBJECT$", "DNT_col" : 2 })
+    db.dnames.insert({ "DName" : "CN=Organization,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "Organization", "DNT_col" : 6 })
+    db.dnames.insert({ "DName" : "CN=Aggregate,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "Aggregate", "DNT_col" : 11 })
+    db.dnames.insert({ "DName" : "DC=intra", "name" : "intra", "DNT_col" : 1787 })
+    db.dnames.insert({ "DName" : "DC=secu,DC=intra", "name" : "secu", "DNT_col" : 1788 })
+    db.dnames.insert({ "DName" : "CN=NTDS-DSA,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "NTDS-DSA", "DNT_col" : 8 })
+    db.dnames.insert({ "DName" : "CN=DMD,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "DMD", "DNT_col" : 10 })
+    db.dnames.insert({ "DName" : "CN=SubSchema,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "SubSchema", "DNT_col" : 12 })
+    db.dnames.insert({ "DName" : "CN=Account-Expires,CN=Schema,CN=Configuration,DC=labz,DC=secu,DC=intra", "name" : "Account-Expires", "DNT_col" : 13 })
+
+    db.usersid.insert({ "account" : "Administrateur", "name" : "Administrateur", "sid" : "S-1-5-21-1154669122-758131934-2550385761-500" })
+    db.usersid.insert({ "account" : "Invité", "name" : "Invité", "sid" : "S-1-5-21-1154669122-758131934-2550385761-501" })
+    db.usersid.insert({ "account" : "intru", "name" : "intru", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1000" })
+    db.usersid.insert({ "account" : "krbtgt", "name" : "krbtgt", "sid" : "S-1-5-21-1154669122-758131934-2550385761-502" })
+    db.usersid.insert({ "account" : "SM_58dd3f44226c42659", "name" : "SystemMailbox{1f05a927-e4d0-4452-9fd0-0201e96809a7}", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1121" })
+    db.usersid.insert({ "account" : "SM_a071a1d498164d9ba", "name" : "SystemMailbox{e0dc1c29-89c3-4034-b678-e6c29d823ed9}", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1122" })
+    db.usersid.insert({ "account" : "SM_2054380de59c4bfe9", "name" : "DiscoverySearchMailbox {D919BA05-46A6-415f-80AD-7E09334BB852}", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1123" })
+    db.usersid.insert({ "account" : "SM_142594fac6dc446f9", "name" : "FederatedEmail.4c1f4d8b-8179-4148-93bf-00a95fa1e042", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1125" })
+    db.usersid.insert({ "account" : "auditor", "name" : "auditor", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1151" })
+    db.usersid.insert({ "account" : "jdupond", "name" : "jean dupond", "sid" : "S-1-5-21-1154669122-758131934-2550385761-1153" })
 
     db.datatable.insert({
 	"_id" : ObjectId("53849cefe64f050c8f16960c"),
