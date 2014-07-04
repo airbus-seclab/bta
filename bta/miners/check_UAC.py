@@ -3,27 +3,27 @@
 
 from bta.miner import Miner
 from bta.datatable import UserAccountControl
+from bta.tools.expr import Field
 
 @Miner.register
 class CheckUAC(Miner):
     _name_ = "CheckUAC"
     _desc_ = "Weird paswword policy (No password or password never expire)"
-    _uses_ = [ "raw.datatable", "special.categories" ]
+    _uses_ = [ "virtual.datasd", "special.categories" ]
 
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument('--check', help='List weird user access control Possible values to be checked (comma separated list): %s'%(", ".join(UserAccountControl._flags_.keys())))
 
     def findRogue(self, flags):
-        req = {'$and': [ {'$or':[{"objectCategory" : self.categories.person},
-                                 {"objectCategory" : self.categories.computer}]},
-                         { "userAccountControl": {'$exists': 1}},
-                         {'$and': flags
-                         }]
-              }
+        req =  (((Field("objectCategory") == self.categories.person) 
+                 | (Field("objectCategory") == self.categories.computer))
+                & (Field("userAccountControl") != None))
+        for f in flags:
+            req &= Field(f) == True
 
         result = [["cn","SID", "Flags"]]
-        for subject in self.datatable.find(req):
+        for subject in self.datasd.find(req):
             result.append([subject['name'], subject['objectSid'], ", ".join([a for a,b in subject['userAccountControl']['flags'].items() if b])])
         return result
 
@@ -32,7 +32,7 @@ class CheckUAC(Miner):
         try:
             for f in options.check.split(","):
                 if f in UserAccountControl._flags_.keys():
-                    flags.append({"userAccountControl.flags.%s"%f:True})
+                    flags.append("userAccountControl.flags.%s"%f)
 
         except:
             print 'Invalid \'check\' argument: %s\nUse $btaminer %s -h for more information'%(options.check if options.check else "", self._name_)
@@ -45,8 +45,3 @@ class CheckUAC(Miner):
         t.flush()
         t.finished()
 
-    def assert_consistency(self):
-        Miner.assert_consistency(self)
-        self.assert_field_type(self.datatable, "name", str, unicode)
-        self.assert_field_type(self.datatable, "userAccountControl", dict)
-        self.assert_field_type(self.datatable, "cn", str, unicode)
