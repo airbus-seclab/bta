@@ -13,7 +13,7 @@ class CheckUAC(Miner):
 
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('--check', help='List weird user access control Possible values to be checked (comma separated list): %s'%(", ".join(UserAccountControl._flags_.keys())))
+        parser.add_argument('check', help='List weird user access control', nargs="+", choices=UserAccountControl._flags_.keys())
 
     def findRogue(self, flags):
         req =  (((Field("objectCategory") == self.categories.person) 
@@ -30,7 +30,7 @@ class CheckUAC(Miner):
     def run(self, options, doc):
         flags=list()
         try:
-            for f in options.check.split(","):
+            for f in options.check:
                 if f in UserAccountControl._flags_.keys():
                     flags.append("userAccountControl.flags.%s"%f)
 
@@ -39,7 +39,7 @@ class CheckUAC(Miner):
             exit(1)
 
         rogues = self.findRogue(flags)
-        t = doc.create_table("Weird account rights with all flags:%s"%options.check)
+        t = doc.create_table("Weird account rights with all flags: %s"% ", ".join(options.check))
         for disp in rogues:
             t.add(disp)
         t.flush()

@@ -10,7 +10,7 @@ from miner_helpers import run_miner, normal_db
 
 
 def test_miner_check_UAC_normal_account(normal_db):
-    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check="normalAccount")
+    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check=["normalAccount"])
     assert out.to_json() == {
         "content": [
             {
@@ -33,7 +33,7 @@ def test_miner_check_UAC_normal_account(normal_db):
                       "normalAccount, accountDisable" ]
                 ], 
                 "type": "table", 
-                "name": "Weird account rights with all flags:normalAccount"
+                "name": "Weird account rights with all flags: normalAccount"
             }
         ], 
         "type": "struct", 
@@ -42,7 +42,7 @@ def test_miner_check_UAC_normal_account(normal_db):
 
 
 def test_miner_check_UAC_account_disable(normal_db):
-    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check="accountDisable")
+    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check=["accountDisable"])
     assert out.to_json() == {
         "content": [
             {
@@ -61,7 +61,7 @@ def test_miner_check_UAC_account_disable(normal_db):
                       "normalAccount, accountDisable" ]
                 ], 
                 "type": "table", 
-                "name": "Weird account rights with all flags:accountDisable"
+                "name": "Weird account rights with all flags: accountDisable"
             }
         ], 
         "type": "struct", 
@@ -70,7 +70,7 @@ def test_miner_check_UAC_account_disable(normal_db):
 
 
 def test_miner_check_UAC_account_disable_password_not_requered(normal_db):
-    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check="accountDisable,passwdNotrequired")
+    out = run_miner(bta.miners.check_UAC.CheckUAC, normal_db, check=["accountDisable", "passwdNotrequired"])
     assert out.to_json() == {
         "content": [
             {
@@ -80,7 +80,7 @@ def test_miner_check_UAC_account_disable_password_not_requered(normal_db):
                       "normalAccount, dontExpirePassword, accountDisable, passwdNotrequired" ], 
                 ], 
                 "type": "table", 
-                "name": "Weird account rights with all flags:accountDisable,passwdNotrequired"
+                "name": "Weird account rights with all flags: accountDisable, passwdNotrequired"
             }
         ], 
         "type": "struct", 

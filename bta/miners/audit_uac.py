@@ -9,8 +9,8 @@ class UAC_Audit(MinerList):
     _name_ = "Audit_UAC"
     _desc_ = "Run all analyses on User Account Control"
     _report_ = [
-        ("CheckUAC", "--check", "accountDisable"),
-        ("CheckUAC", "--check", "passwdNotrequired"),
-        ("CheckUAC", "--check", "passwdCantChange"),
-        ("CheckUAC", "--check", "dontExpirePassword"),
+        ("CheckUAC", "accountDisable"),
+        ("CheckUAC", "passwdNotrequired"),
+        ("CheckUAC", "passwdCantChange"),
+        ("CheckUAC", "dontExpirePassword"),
     ]
