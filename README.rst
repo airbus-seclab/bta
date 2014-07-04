@@ -33,6 +33,15 @@ it can be used during all audits without doing the hard work again.
 Installing BTA
 ==============
 
+Quick install
+-------------
+
+``pip install bta``
+
+
+From sources
+------------
+
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server python-pymongo``)
