@@ -4,11 +4,12 @@
 import pymongo
 import struct
 from bta.normalization import TypeFactory, Normalizer
-from bta.backend import Backend, BackendTable
+from bta.backend import Backend, BackendTable, VirtualTable
 import bson.binary
 import bta.sd
 import bta.datatable
 import bta.tools.decoding
+import bta.tools.expr
 import bta.dbmeta
 import logging
 import functools
@@ -320,6 +321,66 @@ Using --ignore-version-mismatch might lead to incorrect results." %
 
     def open_raw_table(self, name):
         return MongoTable(self.options, self.db, name)
+    def open_virtual_table(self, name):
+        if name == "datasd":
+            return VirtualDataSD(self.options, self, name)
     def list_tables(self):
         return self.db.collection_names()
 
+
+class MongoReqBuilder(bta.tools.expr.Builder):
+    @classmethod
+    def _field_(cls, name):
+        return name
+    @classmethod
+    def _and_(cls, op1, op2):
+        d = op1.copy()
+        d.update(op2)
+        return d
+    @classmethod
+    def _or_(cls, op1, op2):
+        return { "$or": [ op1, op2 ]}
+    @classmethod
+    def _eq_(cls, op1, op2):
+        if op2 is None:
+            return {op1: {"$exists": False}}
+        return {op1: op2}
+    @classmethod
+    def _ne_(cls, op1, op2):
+        if op2 is None:
+            return {op1: {"$exists": True}}
+        return {op1: {"$ne":op2}}
+
+class VirtualDataSD(VirtualTable):
+    def __init__(self, options, backend, name):
+        VirtualTable.__init__(self, options, backend, name)
+        self.datatable = self.backend.open_raw_table("datatable")
+        self.sd_table = self.backend.open_raw_table("sd_table")
+
+    def find(self, req, proj={}):
+        dtreq = req.build(MongoReqBuilder)
+        sdreq = {}
+        for attr in ['sd_id', 'sd_value', 'sd_hash', 'sd_refcount']:
+            if attr in dtreq:
+                sdreq[attr] = dtreq.pop(attr)
+
+        if sdreq:
+            for sdres in self.sd_table.find(sdreq):
+                dtreq2 = dtreq.copy()
+                dtreq2["nTSecurityDescriptor"] = sdres["sd_id"]
+                for dtres in self.datatable.find(dtreq2):
+                    dtres.update(sdres)
+                    resp = dtres if not proj else {dtres[x] for x in proj}
+                    yield resp
+        elif dtreq:
+            for dtres in self.datatable.find(dtreq):
+                sdreq2 = sdreq.copy()
+                sdreq2["sd_id" ] = dtres["nTSecurityDescriptor"]
+                for sdres in self.sd_table.find(sdreq2):
+                    sdres.update(dtres)
+                    resp = sdres if not proj else {sdres[x] for x in proj}
+                    yield resp
+                    
+    def assert_consistency(self):
+        self.datatable.assert_consistency()
+        self.sd_table.assert_consistency()
