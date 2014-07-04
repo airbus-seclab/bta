@@ -71,6 +71,8 @@ class BackendTable(object):
         raise NotImplementedError("Table.insert()")
     def update(self, *args, **kargs):
         raise NotImplementedError("Table.update()")
+    def assert_consistency(self):
+        raise NotImplementedError("VirtualTable.find()")
 
 
 

@@ -253,7 +253,8 @@ class MongoTable(BackendTable):
         return self.col.find(*args, **kargs)
     def find_one(self, *args, **kargs):
         return self.col.find_one(*args, **kargs)
-
+    def assert_consistency(self):
+        assert self.col.count() > 0, ("%s is empty" % self.name)
 
 @Backend.register("mongo")
 class Mongo(Backend):

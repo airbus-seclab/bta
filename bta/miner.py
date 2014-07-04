@@ -18,8 +18,11 @@ log = logging.getLogger("bta.miner")
 
 class categories(object):
     def __init__(self, ct):
+        self._ct = ct
         for entry in ct.find():
             setattr(self, entry['name'].lower().replace('-', '_'), int(entry['id']))
+    def assert_consistency(self):
+        self._ct.assert_consistency()
 
 
 class MinerRegistry(Registry):
@@ -186,12 +189,8 @@ class Miner(object):
         raise NotImplementedError("run")
 
     def assert_consistency(self):
-        for rt in self.raw_tables:
-            assert rt.count() > 0, ("%s is empty" % rt.name)
-        for vt in self.virtual_tables:
-            vt.assert_consistency()
-        for st in self.virtual_tables:
-            st.assert_consistency()
+        for table in self.raw_tables+self.virtual_tables+self.special_tables:
+            table.assert_consistency()
 
     @classmethod
     def assert_field_exists(cls, table, field):
