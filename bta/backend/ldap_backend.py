@@ -43,6 +43,27 @@ class LDAPCategories(SpecialTable):
 #
 
 
+class LDAPReqBuilder(bta.tools.expr.Builder):
+    @classmethod
+    def _field_(cls, name):
+        return name
+    @classmethod
+    def _eq_(cls, op1, op2):
+        if op2 is None:
+            return "(!%s=*)" % op1
+        return "(%s=%s)" % (op1, op2)
+    @classmethod
+    def _ne_(cls, op1, op2):
+        if op2 is None:
+            return "(%s=*)" % op1
+        return "(!%s=%s)" % (op1, op2)
+    @classmethod
+    def _and_(cls, op1, op2):
+        return "(&%s%s)" % (op1, op2)
+    @classmethod
+    def _or_(cls, op1, op2):
+        return "(|%s%s)" % (op1, op2)
+
 
 class LDAPVirtualDataSD(VirtualTable):
     def __init__(self, options, backend, name):
