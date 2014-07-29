@@ -53,11 +53,11 @@ class TableDiff(object):
                 break
 
             if icB is None or icA is not None and icA < icB:
-                print "A, %i: [%s]" % (icA, rA.get("name", ""))
+                print (u"A, %i: [%s]" % (icA, rA.get("name", u""))).encode('utf-8')
                 icA = None
                 old += 1
             elif icA is None or icA > icB:
-                print "B, %i: [%s]" % (icB, rB.get("name", ""))
+                print (u"B, %i: [%s]" % (icB, rB.get("name", u""))).encode('utf-8')
                 icB = None
                 new += 1
             else:
@@ -66,11 +66,11 @@ class TableDiff(object):
                 AnotB = sA-sB
                 BnotA = sB-sA
                 ABdiff = [k for k in sA&sB if rA[k] != rB[k]]
-                nameA, nameB = rA.get("name", ""), rB.get("name", "")
+                nameA, nameB = rA.get("name", u""), rB.get("name", u"")
                 name = nameA if nameA == nameB else "A:[%s]/B:[%s]" % (nameA, nameB)
                 if AnotB or BnotA or ABdiff:
-                    descr = ["-%s" % k for k in AnotB]+["+%s" % k for k in BnotA]+["*%s[%r=>%r]" % (k, repr(rA[k])[:20], repr(rB[k])[:20]) for k in ABdiff]
-                    print "AB, %i: [%s] %s" % (icA, name, ", ".join(descr))
+                    descr = [u"-%s" % k for k in AnotB]+[u"+%s" % k for k in BnotA]+[u"*%s[%r=>%r]" % (k, repr(rA[k])[:20], repr(rB[k])[:20]) for k in ABdiff]
+                    print (u"AB, %i: [%s] %s" % (icA, name, u", ".join(descr))).encode('utf-8')
                     diff += 1
                 icA = icB = None
 
