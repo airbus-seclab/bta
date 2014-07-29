@@ -22,9 +22,9 @@ class SDProp(Miner):
         group = list()
         t = list()
         for r in self.datatable.find({"adminCount":{"$exists": True, "$ne":0}}):
-            if r["objectCategory"] == self.categories.person:
+            if u'1.2.840.113556.1.5.9' in r["objectClass"]:
                 user.append([r["cn"], 'User', r["objectSid"]])
-            elif r["objectCategory"] == self.categories.group:
+            elif u'1.2.840.113556.1.5.8' in r["objectClass"]:
                 group.append([r["cn"], 'Group', r["objectSid"]])
             else:
                 print '***** Unknown category (%d) for %s' % (r["objectCategory"], r["objectSid"])
