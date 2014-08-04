@@ -2,6 +2,14 @@
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
 class Flags(object):
+    class __metaclass__(type):
+        def __getattr__(self, attr):
+            if attr in self._flags_:
+                return self._flags_[attr]
+            return getattr(type, attr)
+        def __iter__(self):
+            return self._flags_.iteritems()
+
     _flags_ = {}
     def __init__(self, flags):
         self.flags = flags
