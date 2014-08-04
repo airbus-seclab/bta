@@ -13,9 +13,11 @@ bta.miners.import_all(stop_on_error=True)
 
 class FakeBackend(bta.backend.Backend):
     def open_raw_table(self, name):
-        return FakeTable(self.options, None, name)
+        return FakeTable()
     def open_virtual_table(self, name):
-        return FakeTable(self.options, None, name)
+        return FakeTable()
+    def open_special_table(self, name):
+        return FakeTable()
 
 class FakeTable(bta.backend.BackendTable):
     def count(self):

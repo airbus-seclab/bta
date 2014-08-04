@@ -4,7 +4,7 @@
 import pymongo
 import struct
 from bta.normalization import TypeFactory, Normalizer
-from bta.backend import Backend, BackendTable, VirtualTable
+from bta.backend import Backend, RawTable, VirtualTable
 import bson.binary
 import bta.sd
 import bta.datatable
@@ -199,9 +199,9 @@ class MongoTypeFactory(TypeFactory):
     def ReplPropMeta(self):
         return MongoReplPropMeta()
 
-class MongoTable(BackendTable):
+class MongoTable(RawTable):
     def __init__(self, options, db, name):
-        BackendTable.__init__(self, options, db, name)
+        RawTable.__init__(self, options, db, name)
         self.typefactory = MongoTypeFactory()
         self.col = db[name]
         self.fields = None

@@ -43,8 +43,12 @@ class Backend(object):
         raise NotImplementedError("Backend.list_tables()")
 
 
-
 class BackendTable(object):
+    def assert_consistency(self):
+        raise NotImplementedError("BackendTable.assert_consistency()")
+
+
+class RawTable(BackendTable):
     def __init__(self, options, db, name):
         self.options = options
         self.db = db
@@ -71,12 +75,10 @@ class BackendTable(object):
         raise NotImplementedError("Table.insert()")
     def update(self, *args, **kargs):
         raise NotImplementedError("Table.update()")
-    def assert_consistency(self):
-        raise NotImplementedError("VirtualTable.find()")
 
 
 
-class VirtualTable(object):
+class VirtualTable(BackendTable):
     def __init__(self, options, backend, name):
         self.options = options
         self.backend = backend
@@ -85,6 +87,7 @@ class VirtualTable(object):
         raise NotImplementedError("VirtualTable.count()")
     def find(self, request, projection=None):
         raise NotImplementedError("VirtualTable.find()")
-    def assert_consistency(self):
-        raise NotImplementedError("VirtualTable.find()")
 
+
+class SpecialTable(BackendTable):
+    pass
