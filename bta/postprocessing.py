@@ -63,7 +63,7 @@ class PostProcessing(object):
         guid.create()
         guid.create_index("id")
         guid.create_index("name")
-        # guid for shema
+        # guid for schema
         for id_ in self.dt.find({"schemaIDGUID": {"$exists": 1}}):
             guid.insert({"id":id_["schemaIDGUID"].lower(), "name":id_["name"]})
         # guid for object
@@ -154,6 +154,57 @@ class PostProcessing(object):
         for r in self.dt.find({"objectCategory":pers, "objectSid":{"$exists":True}}):
             usersid.insert({"name":r["name"], "account":r["sAMAccountName"], "sid": r["objectSid"]})
 
+    @PostProcRegistry.register()
+    def oid(self):
+        """
+        Cache class oid names
+        (ex. "1.2.840.113556.1.5.8" -> "group")
+        """
+        oid = self.options.backend.open_table("oid")
+        oid.create()
+        oid.create_index("oid")
+        oid.create_index("name")
+
+        ct = self.options.backend.open_table("category")
+        classSchRec = ct.find_one({"name": "Class-Schema"})
+        if classSchRec is None:
+            log.warning("No name=Class-Schema entry found in datatable for class OID processing")
+            return
+        classSch = classSchRec["id"]
+        for r in self.dt.find({"objectCategory": classSch, "governsID": {"$exists": True}}, {"cn": True, "governsID": True}):
+            oid.insert({"name": r["cn"], "oid": r["governsID"]})
+
+    @PostProcRegistry.register()
+    def linkID(self):
+        """
+        Cache link ID names
+        Link base can be obtained from linkID (linkID << 1 == link base)
+        even linkID are forward links, odd linkID are backlinks
+        back_link = forward_link + 1
+        base_link = (back_link << 1) == (forward_link << 1)
+
+        (ex. "1" -> "Member")
+        """
+        linkid = self.options.backend.open_table("linkid")
+        linkid.create()
+        linkid.create_index("linkid")
+        linkid.create_index("name")
+
+        ct = self.options.backend.open_table("category")
+        attrSchRec = ct.find_one({"name": "Attribute-Schema"})
+        if attrSchRec is None:
+            log.warning("No name=Class-Schema entry found in datatable for class OID processing")
+            return
+        attrSch = attrSchRec["id"]
+        cachedLinkIDs = set()
+        for r in self.dt.find({"objectCategory": attrSch, "linkID": {"$exists": True}}, {"linkID": True, "cn": True}):
+            cachedLinkIDs.add(r["linkID"])
+            linkid.insert({"name": r["cn"], "linkid": r["linkID"]})
+        for i in sorted(cachedLinkIDs):
+            if i^1 not in cachedLinkIDs:
+                # insert missing associated link
+                res = linkid.find_one({"linkid": i})
+                linkid.insert({"name": res["name"] + " (reverse link)", "linkid": i^1})
 
 def main():
     import argparse
