@@ -16,14 +16,6 @@ log = logging.getLogger("bta.miner")
 
 
 
-class categories(object):
-    def __init__(self, ct):
-        self._ct = ct
-        for entry in ct.find():
-            setattr(self, entry['name'].lower().replace('-', '_'), int(entry['id']))
-    def assert_consistency(self):
-        self._ct.assert_consistency()
-
 
 class MinerRegistry(Registry):
     pass
@@ -176,10 +168,8 @@ class Miner(object):
                 self.virtual_tables.append(t)
             elif tblname.startswith("special."):
                 n = tblname[8:]
-                if n == "categories":
-                    t = categories(backend.open_table("category"))
-                if t is not None:
-                    self.special_tables.append(t)
+                t = backend.open_special_table("categories")
+                self.special_tables.append(t)
             if t is None:
                 raise ValueError("Table name [%s] in miner [%s] (attribute %s._uses_) is unknown" %
                                  (tblname, self._name_, self.__class__.__name__))

@@ -257,6 +257,16 @@ class MongoTable(RawTable):
     def assert_consistency(self):
         assert self.col.count() > 0, ("%s is empty" % self.name)
 
+class categories(object):
+    def __init__(self, ct):
+        self._ct = ct
+        for entry in ct.find():
+            setattr(self, entry['name'].lower().replace('-', '_'), int(entry['id']))
+    def assert_consistency(self):
+        self._ct.assert_consistency()
+
+
+
 @Backend.register("mongo")
 class Mongo(Backend):
     # data format version.
@@ -324,6 +334,10 @@ Using --ignore-version-mismatch might lead to incorrect results." %
     def open_virtual_table(self, name):
         if name == "datasd":
             return VirtualDataSD(self.options, self, name)
+    def open_special_table(self, name):
+        if name == "categories":
+            return categories(self.open_raw_table("category"))
+        raise Exception("unknown special table [%s]" % name)
     def list_tables(self):
         return self.db.collection_names()
 
