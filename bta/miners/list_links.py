@@ -8,6 +8,7 @@ from bta.miner import Miner
 class ListLinks(Miner):
     _name_ = "ListLinks"
     _desc_ = "List links from link_table, from/to designated object(s)"
+    _uses_ = [ 'raw.datatable', 'raw.link_table', 'raw.linkid' ]
     @classmethod
     def create_arg_subparser(cls, parser):
         parser.add_argument("--name", help="object name", required=True)
