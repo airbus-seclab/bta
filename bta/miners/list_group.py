@@ -34,18 +34,18 @@ class ListGroup(Miner):
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
             sid = row['objectSid']
-            category = row['objectCategory']
-            if category == self.categories.group:
+            objectClass = row['objectClass']
+            if u'1.2.840.113556.1.5.8' in objectClass:
                 if sid not in self.groups_already_saw:
                     self.groups_already_saw[sid] = True
                     members.update(self.get_members_of(sid+":"+grpsid, recursive=True))
-            elif category == self.categories.person:
+            elif u'1.2.840.113556.1.5.9' in objectClass:
                 fromgrp = grpsid if recursive else ''
                 name=row['cn']
                 membership = (sid, deleted, fromgrp, name)
                 members.add(membership)
             else:
-                print '***** Unknown category (%d) for %s' % (category, sid)
+                print '***** Unmanaged objectClass (%s) for %s' % (str(objectClass), sid)
         if len(members)==0:
             members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.guid)))
         return members
@@ -104,7 +104,7 @@ class ListGroup(Miner):
 
         doc.add("List of groups matching [%s]" % options.match)
         if options.match:
-            match = {"$and": [{'objectCategory': self.categories.group},
+            match = {"$and": [{'objectClass': '1.2.840.113556.1.5.8'},
                               {"$or": [ { "name": { "$regex": options.match } },
                                        { "objectSid": { "$regex": options.match } }
                                      ]}]
