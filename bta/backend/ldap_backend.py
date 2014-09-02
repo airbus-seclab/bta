@@ -28,19 +28,11 @@ class LDAPBackend(Backend):
 
 
 class LDAPCategories(SpecialTable):
-    person = "CN=Person*"
-    computer = "CN=Computer*"
+    person = "person"
+    computer = "computer"
     def assert_consistency(self):
         pass
 
-#    def count(self, name):
-#        # XXX should be > 0 if cnx working. Being > 0 should be the only thing that counts
-#        return len(self.cnx.search_s('',ldap.SCOPE_SUBTREE, '(cn=subschema)',['*','+']))
-#    def find(self, name, *args, **kargs):
-#        return {}
-#    def find_one(self, name, *args, **kargs):
-#        return {}
-#
 
 
 class LDAPReqBuilder(bta.tools.expr.Builder):
