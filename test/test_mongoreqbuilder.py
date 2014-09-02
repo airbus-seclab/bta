@@ -13,13 +13,13 @@ def test_ne():
     mr = r.build(MongoReqBuilder)
     assert mr == { "toto":{"$ne":"tata" } }
 
-def test_exists():
-    r = Field("toto")!=None
+def test_present():
+    r = Field("toto").present()
     mr = r.build(MongoReqBuilder)
     assert mr == { "toto":{"$exists":True } }
 
-def test_does_not_exists():
-    r = Field("toto")==None
+def test_absent():
+    r = Field("toto").absent()
     mr = r.build(MongoReqBuilder)
     assert mr == { "toto":{"$exists":False } }
 
@@ -35,13 +35,30 @@ def test_and():
     assert mr == { "$or" : [ { "toto": "tata" },
                              { "titi":{"$ne":"tutu" } } ] }
 
+
+
+def test_flags():
+    r = Field("userAccountControl").flag_on("normalAccount")
+    mr = r.build(MongoReqBuilder)
+    assert mr == { "userAccountControl.flags.normalAccount" : True }
+    r = Field("userAccountControl").flag_off("passwordExpired")
+    mr = r.build(MongoReqBuilder)
+    assert mr == { "userAccountControl.flags.passwordExpired" : False }
+
+
 def test_all():
     r = (Field("toto")=="tata") | (Field("titi")!="tutu")
     r &= Field("foo") == "bar"
+    r |= Field("userAccountControl").flag_on("smartcardRequired")
     mr = r.build(MongoReqBuilder)
-    assert mr == { "foo": "bar",
-                   "$or" : [ { "toto": "tata" },
-                             { "titi":{"$ne":"tutu" } } ] }
+    assert mr == { 
+        "$or" : [
+            { "foo": "bar",
+              "$or" : [ { "toto": "tata" },
+                        { "titi":{"$ne":"tutu" } } ] },
+            { "userAccountControl.flags.smartcardRequired" : True }
+        ]
+    }
     
 
 
