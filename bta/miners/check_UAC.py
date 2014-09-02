@@ -13,14 +13,14 @@ class CheckUAC(Miner):
 
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('check', help='List weird user access control', nargs="+", choices=UserAccountControl._flags_.keys())
+        parser.add_argument('flags', help='List weird user access control', nargs="+", choices=UserAccountControl._flags_.keys())
 
     def findRogue(self, flags):
         req =  (((Field("objectCategory") == self.categories.person) 
                  | (Field("objectCategory") == self.categories.computer))
-                & (Field("userAccountControl") != None))
+                & (Field("userAccountControl").present()))
         for f in flags:
-            req &= Field(f) == True
+            req &= Field("userAccountControl").flag_on(f)
 
         result = [["cn","SID", "Flags"]]
         for subject in self.datasd.find(req):
@@ -28,18 +28,9 @@ class CheckUAC(Miner):
         return result
 
     def run(self, options, doc):
-        flags=list()
-        try:
-            for f in options.check:
-                if f in UserAccountControl._flags_.keys():
-                    flags.append("userAccountControl.flags.%s"%f)
 
-        except:
-            print 'Invalid \'check\' argument: %s\nUse $btaminer %s -h for more information'%(options.check if options.check else "", self._name_)
-            exit(1)
-
-        rogues = self.findRogue(flags)
-        t = doc.create_table("Weird account rights with all flags: %s"% ", ".join(options.check))
+        rogues = self.findRogue(options.flags)
+        t = doc.create_table("Weird account rights with all flags: %s"% ", ".join(options.flags))
         for disp in rogues:
             t.add(disp)
         t.flush()
