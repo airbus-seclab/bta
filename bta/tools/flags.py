@@ -6,7 +6,9 @@ class Flags(object):
         def __getattr__(self, attr):
             if attr in self._flags_:
                 return self._flags_[attr]
-            return getattr(type, attr)
+            raise AttributeError(attr)
+        def __getitem__(self, attr):
+            return self._flags_[attr]
         def __iter__(self):
             return self._flags_.iteritems()
 
