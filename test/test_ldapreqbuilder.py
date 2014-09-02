@@ -13,13 +13,13 @@ def test_ne():
     lr = r.build(LDAPReqBuilder)
     assert lr == "(!toto=tata)"
 
-def test_exists():
-    r = Field("toto")!=None
+def test_present():
+    r = Field("toto").present()
     lr = r.build(LDAPReqBuilder)
     assert lr == "(toto=*)"
 
-def test_does_not_exists():
-    r = Field("toto")==None
+def test_absent():
+    r = Field("toto").absent()
     lr = r.build(LDAPReqBuilder)
     assert lr == "(!toto=*)"
 
@@ -40,5 +40,19 @@ def test_all():
     assert lr == "(&(|(toto=tata)(!titi=tutu))(foo=bar))"
 
 
+def test_flags():
+    r = Field("userAccountControl").flag_on("normalAccount")
+    lr = r.build(LDAPReqBuilder)
+    assert lr == "(userAccountControl:1.2.840.113556.1.4.803:=512)"
+    r = Field("userAccountControl").flag_off("passwordExpired")
+    lr = r.build(LDAPReqBuilder)
+    assert lr == "(!userAccountControl:1.2.840.113556.1.4.804:=8388608)"
 
+
+def test_all():
+    r = Field("toto").present()
+    r |= Field("userAccountControl").flag_on("smartcardRequired")
+    r &= Field("titi") == "tutu"
+    lr = r.build(LDAPReqBuilder)
+    assert lr == "(&(|(toto=*)(userAccountControl:1.2.840.113556.1.4.803:=262144))(titi=tutu))"
 
