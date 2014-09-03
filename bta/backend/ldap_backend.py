@@ -103,6 +103,13 @@ def normalize_ldap_entry(e):
             v = v[0]
         if k in LDAP_NORMALIZERS:
             v = LDAP_NORMALIZERS[k](v)
+        try:
+            if type(v) is str:
+                v = v.decode("utf8")
+            elif type(v) is list and len(v) > 0 and type(v[0]) is str:
+                v = [vv.decode("utf8") for vv in v]
+        except UnicodeDecodeError:
+            pass
         n[k] = v
     return n
 
