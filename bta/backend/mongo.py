@@ -244,7 +244,20 @@ class MongoTable(RawTable):
         return self.col.update(*args, **kargs)
 
     def insert_fields(self, values):
-        d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
+        try:
+            d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
+        except Exception,e:
+            # Do it again to find which field failed
+            for (name, norm), v in zip(self.fields, values):
+                if not norm.empty(v):
+                    try:
+                        norm.normal(v)
+                    except Exception,e2:
+                        log.error("Normalization failed on field %s (value=%r)" % (name,v))
+                        break
+            else:
+                raise
+            raise e
         return self.insert(d)
 
     def count(self):
