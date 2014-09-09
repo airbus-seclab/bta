@@ -12,7 +12,7 @@ from bta.tools.WellKnownSID import SID2StringFull, SID2String
 class ListGroup(Miner):
     _name_ = "ListGroup"
     _desc_ = "List group membership"
-    _uses_ = ["raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid"]
+    _uses_ = ["raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid", "raw.linkid"]
     groups_already_seen = {}
     class_cache = dict()
 
@@ -40,7 +40,12 @@ class ListGroup(Miner):
                 sid = row['objectSid']
                 if sid not in self.groups_already_seen:
                     self.groups_already_seen[sid] = True
-                    members.update(self.get_members_of(sid + ":" + grpsid, recursive=True))
+                    newmembers = self.get_members_of(sid + ":" + grpsid, recursive=True)
+                    if len(newmembers) > 0:
+                        members.update(newmembers)
+                    else:
+                        # A group may have a Member or ManagedBy relationship with another
+                        members.add(('Empty group', link['link_base'], sid, deleted, grpsid, SID2StringFull(sid, self.guid), row['sAMAccountName']))
             else:
                 # Not all relevant rows have an objectSid value - ex.
                 # ms-Exch-Dynamic-Distribution-List or Contact
@@ -49,10 +54,8 @@ class ListGroup(Miner):
                 fromgrp = grpsid if recursive else ''
                 name = row['name']
                 samAccountName = row.get('sAMAccountName', '(no SAM account name)')
-                membership = (objectType, sid, deleted, fromgrp, name, samAccountName)
+                membership = (objectType, link['link_base'], sid, deleted, fromgrp, name, samAccountName)
                 members.add(membership)
-        if len(members) == 0:
-            members.add(('Group', grpsid.split(":")[0], 'empty', '', SID2StringFull(grpsid.split(":")[0], self.guid), group['sAMAccountName']))
         return members
 
     def get_objectClass_name(self, oc):
@@ -130,37 +133,54 @@ class ListGroup(Miner):
         for group in self.datatable.find(match):
             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
-        headers = ['Object type', 'Name', 'SAM Account Name', 'Deletion', 'Flags', 'Recursive']
-
         listemptyGroup = []
         for groupSid, membership in groups.items():
             if len(membership) == 0:
                 listemptyGroup.append(groupSid)
                 continue
             info = self.getInfo_fromSid(groupSid)
-            name = info['cn']
+            groupCN = info['cn']
             guid = info['objectGUID']
-            sec = doc.create_subsection("Group %s" % name)
+            sec = doc.create_subsection("Group %s" % groupCN)
             sec.add("sid = %s" % groupSid)
             sec.add("guid = %s" % guid)
             sec.add("dn = %s" % self.find_dn(info))
-            table = sec.create_table("Members of %s" % name)
-            table.add(headers)
-            table.add()
-            for objectType, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
+
+            # 2 tables: 1 -> member users, 1 -> rest
+            memberUsersTable = list()
+            otherLinkedTable = list()
+            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
                 fromgrp = fromgrp.split(":")[0]
                 sidobj = Sid(sid, self.datatable)
-                member = unicode(sidobj)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
-                flags = ''
-                if objectType == 'User':
+                if objectType == 'User' and linkBase == 1:  # member user
                     flags = sidobj.getUserAccountControl()
-                table.add((objectType, name, samAccountName, deleted or '', flags if flags != '' else 'emptygroup', fromgrp))
-            table.finished()
+                    memberUsersTable.append((name, samAccountName, deleted or '', flags, fromgrp))
+                else:
+                    linkType = self.linkid.find_one({'linkid': linkBase*2})['name']
+                    otherLinkedTable.append((objectType, linkType, name, samAccountName, deleted or '', fromgrp))
+
+            if len(memberUsersTable) != 0:
+                headers = ['Name', 'SAM Account Name', 'Deletion', 'Flags', 'Recursive']
+                table = sec.create_table("Members users of %s" % groupCN)
+                table.add(headers)
+                table.add()
+                for elem in memberUsersTable:
+                    table.add(elem)
+                table.finished()
+
+            if len(otherLinkedTable) != 0:
+                headers = ['Object Type', 'Link Type', 'Name', 'SAM Account Name', 'Deletion', 'Recursive']
+                table = sec.create_table("Other objects linked to group %s" % groupCN)
+                table.add(headers)
+                table.add()
+                for elem in otherLinkedTable:
+                    table.add(elem)
+                table.finished()
 
             # ACEs for users
-            for objectType, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
+            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
                 if objectType != 'User':
                     continue
                 sec.add("User %s (%s)" % (name, sid))
