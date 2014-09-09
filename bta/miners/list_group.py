@@ -7,12 +7,14 @@ import datetime
 from bta.tools.mtools import Sid
 from bta.tools.WellKnownSID import SID2StringFull, SID2String
 
+
 @Miner.register
 class ListGroup(Miner):
     _name_ = "ListGroup"
     _desc_ = "List group membership"
-    _uses_ = [ "raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid" ]
-    groups_already_saw={}
+    _uses_ = ["raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid"]
+    groups_already_seen = {}
+    class_cache = dict()
 
     @classmethod
     def create_arg_subparser(cls, parser):
@@ -24,31 +26,43 @@ class ListGroup(Miner):
         group = self.datatable.find_one({'objectSid': grpsid.split(":")[0]})
         if not group:
             return set()
-        members=set()
+        members = set()
         for link in self.link_table.find({'link_DNT': group['DNT_col']}):
-            deleted=False
+            deleted = False
             if 'link_deltime' in link and link['link_deltime'].year > 1970:
                 deleted = link['link_deltime']
             row = self.datatable.find_one({'DNT_col': link['backlink_DNT']})
             if not row:
                 members.add('[no entry %d found]' % link['backlink_DNT'])
                 continue
-            sid = row['objectSid']
             objectClass = row['objectClass']
             if u'1.2.840.113556.1.5.8' in objectClass:
-                if sid not in self.groups_already_saw:
-                    self.groups_already_saw[sid] = True
-                    members.update(self.get_members_of(sid+":"+grpsid, recursive=True))
-            elif u'1.2.840.113556.1.5.9' in objectClass:
-                fromgrp = grpsid if recursive else ''
-                name=row['cn']
-                membership = (sid, deleted, fromgrp, name)
-                members.add(membership)
+                sid = row['objectSid']
+                if sid not in self.groups_already_seen:
+                    self.groups_already_seen[sid] = True
+                    members.update(self.get_members_of(sid + ":" + grpsid, recursive=True))
             else:
-                print '***** Unmanaged objectClass (%s) for %s' % (str(objectClass), sid)
-        if len(members)==0:
-            members.add((grpsid.split(":")[0],'empty','',SID2StringFull(grpsid.split(":")[0], self.guid)))
+                # Not all relevant rows have an objectSid value - ex.
+                # ms-Exch-Dynamic-Distribution-List or Contact
+                sid = row.get('objectSid', '(no sid)')
+                objectType = self.get_objectClass_name(row['objectClass'][0])
+                fromgrp = grpsid if recursive else ''
+                name = row['name']
+                samAccountName = row.get('sAMAccountName', '(no SAM account name)')
+                membership = (objectType, sid, deleted, fromgrp, name, samAccountName)
+                members.add(membership)
+        if len(members) == 0:
+            members.add(('Group', grpsid.split(":")[0], 'empty', '', SID2StringFull(grpsid.split(":")[0], self.guid), group['sAMAccountName']))
         return members
+
+    def get_objectClass_name(self, oc):
+        """ Cache object class to class name mapping """
+        r = ListGroup.class_cache.get(oc)
+        if r:
+            return r
+        r = self.datatable.find_one({'governsID': oc})['name']
+        ListGroup.class_cache[oc] = r
+        return r
 
     def getInfo_fromSid(self, sid):
         return self.datatable.find_one({'objectSid': sid})
@@ -59,11 +73,11 @@ class ListGroup(Miner):
         cn = r.get("cn") or r.get("name")
         if cn is None or cn.startswith("$ROOT_OBJECT$"):
             return ""
-        r2 = self.datatable.find_one({"DNT_col":r["PDNT_col"]})
+        r2 = self.datatable.find_one({"DNT_col": r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
 
-    def checkACE(self,membersid):
-        secDesc = int(self.datatable.find_one({"objectSid": membersid })['nTSecurityDescriptor'])
+    def checkACE(self, membersid):
+        secDesc = int(self.datatable.find_one({"objectSid": membersid})['nTSecurityDescriptor'])
         hdlACE = list_ACE.ListACE(self.backend)
         securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
         aceList = hdlACE.extractACE(securitydescriptor)
@@ -75,11 +89,11 @@ class ListGroup(Miner):
                 trustee_cn = trustee_string = "NULLOBJECT-%s" % ace['SID']
             else:
                 if "cn" in info:
-                    trustee_cn=info['cn']
-                    trustee_string=SID2String(info['cn'])
+                    trustee_cn = info['cn']
+                    trustee_string = SID2String(info['cn'])
                 else:
                     trustee_string = trustee_cn = info['name']
-            trustee = trustee_cn if trustee_cn==trustee_string else "%s (%s)"%(trustee_cn, trustee_string)
+            trustee = trustee_cn if trustee_cn == trustee_string else "%s (%s)" % (trustee_cn, trustee_string)
             info2 = self.getInfo_fromSid(membersid)
             subject = info2['cn']
             if ace['ObjectType']:
@@ -91,35 +105,36 @@ class ListGroup(Miner):
 
     def run(self, options, doc):
         def deleted_last(l):
-            deleteditems=[]
+            deleteditems = []
             for i in l:
-                if not i[1]:
+                if not i[2]:
                     yield i
                 else:
                     deleteditems.append(i)
             for i in deleteditems:
                 yield i
 
-        match = None
+        match = {'objectClass': '1.2.840.113556.1.5.8'}
 
-        doc.add("List of groups matching [%s]" % options.match)
+        doc.add("List of groups matching [%s]" % (options.match if options.match else 'any group'))
         if options.match:
             match = {"$and": [{'objectClass': '1.2.840.113556.1.5.8'},
-                              {"$or": [ { "name": { "$regex": options.match } },
-                                       { "objectSid": { "$regex": options.match } }
-                                     ]}]
-            }
+                              {"$or": [{"name": {"$regex": options.match}},
+                                       {"objectSid": {"$regex": options.match}}
+                                      ]
+                              }]
+                    }
 
-        groups={}
+        groups = {}
+        # Recursively find members of matching groups.
         for group in self.datatable.find(match):
-            groups[group['objectSid']] = set()
             groups[group['objectSid']] = self.get_members_of(group['objectSid'])
 
-        headers=['User', 'Deletion', 'Flags', 'Recursive']
+        headers = ['Object type', 'Name', 'SAM Account Name', 'Deletion', 'Flags', 'Recursive']
 
-        listemptyGroup=[]
-        for groupSid,membership in groups.items():
-            if len(membership)==0:
+        listemptyGroup = []
+        for groupSid, membership in groups.items():
+            if len(membership) == 0:
                 listemptyGroup.append(groupSid)
                 continue
             info = self.getInfo_fromSid(groupSid)
@@ -132,33 +147,37 @@ class ListGroup(Miner):
             table = sec.create_table("Members of %s" % name)
             table.add(headers)
             table.add()
-            for sid,deleted,fromgrp,name in deleted_last(membership):
+            for objectType, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
                 fromgrp = fromgrp.split(":")[0]
                 sidobj = Sid(sid, self.datatable)
                 member = unicode(sidobj)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
-                flags = sidobj.getUserAccountControl()
-                table.add((member, deleted or '', flags if flags!='' else 'emptygroup', fromgrp))
+                flags = ''
+                if objectType == 'User':
+                    flags = sidobj.getUserAccountControl()
+                table.add((objectType, name, samAccountName, deleted or '', flags if flags != '' else 'emptygroup', fromgrp))
             table.finished()
 
-            for sid,deleted,fromgrp,name in deleted_last(membership):
+            # ACEs for users
+            for objectType, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
+                if objectType != 'User':
+                    continue
                 sec.add("User %s (%s)" % (name, sid))
                 table = sec.create_table("ACE")
                 table.add(["Trustee", "Member", "ACE Type", "Object type"])
                 table.add()
-                listACE=self.checkACE(sid)
+                listACE = self.checkACE(sid)
                 for ace in listACE:
                     table.add(ace)
                 table.finished()
             sec.finished()
 
         if len(listemptyGroup) > 0:
-            headers=['Group', 'SID', 'Guid']
+            headers = ['Group', 'SID', 'Guid']
             table = doc.create_table("Empty groups")
             table.add(headers)
             table.add()
-            print "@@@",listemptyGroup
             for groupSid in listemptyGroup:
                 info = self.getInfo_fromSid(groupSid)
                 name = info['cn']
