@@ -73,12 +73,14 @@ class MongoNTSecDesc(MongoNormalizer):
         return struct.unpack("Q", val)[0]
 
 class MongoSID(MongoNormalizer):
+    @vectorize
     def normal(self, val):
         if val:
             return bta.tools.decoding.decode_sid(val, ">")
         return None
 
 class MongoGUID(MongoNormalizer):
+    @vectorize
     def normal(self, val):
         if val:
             return bta.tools.decoding.decode_guid(val)
