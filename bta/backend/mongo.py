@@ -246,7 +246,20 @@ class MongoTable(RawTable):
         return self.col.update(*args, **kargs)
 
     def insert_fields(self, values):
-        d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
+        try:
+            d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
+        except Exception,e:
+            # Do it again to find which field failed
+            for (name, norm), v in zip(self.fields, values):
+                if not norm.empty(v):
+                    try:
+                        norm.normal(v)
+                    except Exception,e2:
+                        log.error("Normalization failed on field %s (value=%r)" % (name,v))
+                        break
+            else:
+                raise
+            raise e
         return self.insert(d)
 
     def count(self):
@@ -358,14 +371,23 @@ class MongoReqBuilder(bta.tools.expr.Builder):
         return { "$or": [ op1, op2 ]}
     @classmethod
     def _eq_(cls, op1, op2):
-        if op2 is None:
-            return {op1: {"$exists": False}}
         return {op1: op2}
     @classmethod
     def _ne_(cls, op1, op2):
-        if op2 is None:
-            return {op1: {"$exists": True}}
         return {op1: {"$ne":op2}}
+    @classmethod
+    def _present_(cls, op1):
+        return {op1: {"$exists":True}}
+    @classmethod
+    def _absent_(cls, op1):
+        return {op1: {"$exists":False}}
+    @classmethod
+    def _flagon_(cls, op1, op2):
+        return {"%s.flags.%s" % (op1, op2) : True }
+    @classmethod
+    def _flagoff_(cls, op1, op2):
+        return {"%s.flags.%s" % (op1, op2) : False }
+
 
 class VirtualDataSD(VirtualTable):
     def __init__(self, options, backend, name):
@@ -375,6 +397,7 @@ class VirtualDataSD(VirtualTable):
 
     def find(self, req, proj={}):
         dtreq = req.build(MongoReqBuilder)
+        log.debug("Mongo Request: %r" % dtreq)
         sdreq = {}
         for attr in ['sd_id', 'sd_value', 'sd_hash', 'sd_refcount']:
             if attr in dtreq:

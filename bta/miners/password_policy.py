@@ -11,6 +11,7 @@ import re
 class PasswordPolicy(Miner):
     _name_ = "PasswordPolicy"
     _desc_ = "Describe all the password policy of a domain"
+    _uses_ = [ "raw.datatable", "raw.sd_table" ]
     _ListOfAttributes_=["pwdHistoryLength",
                         "maxPwdAge",
                         "lockoutDuration",

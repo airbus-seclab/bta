@@ -48,6 +48,9 @@ class Miner(object):
 
         parser = argparse.ArgumentParser(add_help=False)
 
+        parser.add_argument("--verbose", "-v", action="count", default=0,
+                            help="increase verbosity")
+
         parser.add_argument("-C", dest="connection",
                             help="DB connection string. Ex: 'dbname=test user=john' for PostgreSQL or '[ip]:[port]:dbname' for mongo)", metavar="CNX")
         parser.add_argument("-B", dest="backend_type", default="mongo",
@@ -72,6 +75,7 @@ class Miner(object):
 
         globaloptions,_ = parser.parse_known_args()
 
+        logging.root.setLevel(max(1,30-10*globaloptions.verbose))
 
         for m in globaloptions.module:
             imp = pkgutil.get_loader(m)
