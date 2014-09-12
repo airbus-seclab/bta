@@ -184,7 +184,7 @@ class ListGroup(Miner):
                 if objectType != 'User':
                     continue
                 sec.add("User %s (%s)" % (name, sid))
-                table = sec.create_table("ACE")
+                table = sec.create_table("ACE of %s" % name)
                 table.add(["Trustee", "Member", "ACE Type", "Object type"])
                 table.add()
                 listACE = self.checkACE(sid)
