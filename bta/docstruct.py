@@ -1,6 +1,7 @@
 # This file is part of the BTA toolset
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
+import StringIO
 
 class DocPart(object):
     _type_ = "struct"
@@ -25,7 +26,9 @@ class DocPart(object):
 
     def create_list(self, name):
         return self.create_subelement(List(self, name))
-
+    
+    def create_raw(self, name):
+        return self.create_subelement(Raw(self, name))
 
     def flush(self):
         self.parent.flush()
@@ -163,6 +166,25 @@ class List(DocPart):
         c = [ v for v in sublist.content if type(v) is bta.docstruct.List]
         for t in c:
             self.format_doc(formatter, lvl+1, sublist=t)
+
+
+class Raw(DocPart):
+    _type_ = "raw"
+    def __init__(self, parent, name):
+        DocPart.__init__(self, parent, name)
+        self.raw_content = StringIO.StringIO()
+    def add(self, content):
+        self.raw_content.write(content)
+    def format_doc(self, formatter, lvl=None):
+        formatter.add_raw(self.name, self.raw_content.getvalue())
+    def finished(self):
+        self.content = [self.raw_content.getvalue()]
+        DocPart.finished(self)
+    def to_json(self):
+        content = [ self.raw_content.getvalue() ]
+        return { "name":self.name, "type": self._type_, "content": content }
+
+
 
 def w():
     import time

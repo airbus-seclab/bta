@@ -3,6 +3,7 @@
 
 import pytest
 from bta.docstruct import *
+import bta.formatters.rest
 import StringIO
 
 def fill_doc(d):
@@ -19,12 +20,17 @@ def fill_doc(d):
     s2 = d.create_subsection("sub2")
     s2.add("foobar")
     s2.add("foobar")
+    r = s2.create_raw("raw part")
     s2.add("foobartrain!")
     t.add(["6","45648","2"])
     t.add("")
+    r.add("abc")
+    r.add("defg")
     t.add(["aze","az","aa"])
     t.finished()
+    r.add("hij\nklmnop")
     s1.finished()
+    r.finished()
     l = s2.create_list("list of things")
     l.add("thing 1")
     l.add("thing 2")
@@ -46,11 +52,12 @@ def test_docstruct_livestream():
     fill_doc(d)
     d.finish_stream()
 
-    result = ("eJytks8OgjAMh++/p5hXjSYbf/TiwwwcQkI2w8aF+PCWgR6gEg82JG2+Lu0Xt"
-              "s65gCsFUDmHQneA7wuJI0VkI5pSbAZdtEZIwEqxjqcoFYuD8SFZ0LhjFQeWfs"
-              "HgJGgdJ0F4aRAtzvzZjMc5N4KDdDbN8vTym9w//oUeDGehB1ZOa8YC8fYVd/t"
-              "zCp1u7A5oGx+Eq0SoG3v3wH6q6GW8K/WpkmksfVTRjPmlrRN6++h9bW6idDYY"
-              "GzeMQqeT3Oipjd64+wV4mZ3f").decode("base64").decode("zip")
+    result = ("eJytkk2OwjAMhffvFJktCKSWv9nMYdyS0jIlqRJXIyEOj5sCC2oQi7Ei2fps5"
+              "T0lDt4zfiSAynsU\nFIDYFxkWEokNaEypyVS01mSAy8w0LqbMVcw28uqJJo1J"
+              "zFX6AkMzIXKaCcHPDpKLnT670fFWu0KD\nMrvebNffn5n7j7egs9Vc0Fk1R6S"
+              "4QPr9XPt9INCf6SgwQEW5t9Whbo74bU/Od/dZDtS4L6BtIhtf\nGa4bd4jAbK"
+              "xkb+5V/qhWo6gcqeSO2x5OE3rX9bG2e1N6x9YlhcHucpm96eVveoP2Faiup8Q"
+              "=\n").decode("base64").decode("zip")
     
     assert (stream.getvalue() == result)
 
@@ -59,7 +66,6 @@ def test_docstruct():
     d = RootDoc("root")
     fill_doc(d)
 
-    print d.to_json()
     assert d.to_json() == {
         'content': [
             'foo', 
@@ -80,7 +86,9 @@ def test_docstruct():
                   'name': 'table 1'}], 
              'type': 'struct', 
              'name': 'sub1'}, 
-            {'content': [ 'foobar', 'foobar', 'foobartrain!', 
+            {'content': [ 'foobar', 'foobar',
+                          {'content': ['abcdefghij\nklmnop'], 'type': 'raw', 'name': 'raw part'},
+                          'foobartrain!', 
                           {'content': ['thing 1', 'thing 2', 'thing 3'], 'type': 'list', 'name': 'list of things'}, 
                           {'content': ['barfoo', 'barfoo', 'barfoo', 'barfoo'], 'type': 'struct', 'name': 'subsub3'}, 
                           'unpushed content of sub2..1', 
@@ -90,3 +98,17 @@ def test_docstruct():
              'name': 'sub2'}], 
         'type': 'struct', 
         'name': 'root'}
+
+
+def test_formatter_rest():
+    d = RootDoc("root")
+    fill_doc(d)
+    fmt = bta.formatters.rest.ReST()
+    d.format_doc(fmt)
+    output = fmt.finalize()
+    result = ("eJx9Ue2KwyAQ/D9Psfc7JGBs0yPQhzGpaXLXaomGwhHu2etqP2nJIjvOOLq7iNFaj20IoLMWjRoB"
+              "NzUCeYiosZSAdxnrecpPiJmMIJqpLYkYvXZe0oyM396m/ITBL6Iv2gPKhEHfRL6+6tVdryJfravV"
+              "9+PeQj/qTxPn9I5Sy34euvw0NFAUNKpzXQNEqml3utv3w08gv4ejsaeb349qMF9BzugwOE+2I98P"
+              "Zu9qcOk8MRIvrHxhMrYRlsR/CvCPXD/mHSZzmlyvd9Ra47WJNXmOohALZ+XCmbwAHi+NPA==").decode("base64").decode("zip")
+    assert output == result
+

@@ -77,6 +77,13 @@ class ReST(Formatter):
             self.doc.append(uline*len(section_name))
             self.doc.append("")
 
+    def add_raw(self, name, content):
+        self.doc.append("\n.. raw::\n")
+        safe_content = "  "+content.translate("........\x08.\x0a....................."
+                                              +" !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+                                              +"."*129).replace("\n", "\n  ")+"\n"
+        self.doc.append(safe_content)
+
     def add_content(self, content):
         self.doc.append(unicode(content))
 
