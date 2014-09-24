@@ -4,7 +4,10 @@
 import pytest
 from bta.docstruct import *
 import bta.formatters.rest
+import bta.formatters.raw
+import bta.formatters.rawzip
 import StringIO
+import zipfile
 
 def fill_doc(d):
     d.add("foo")
@@ -111,4 +114,23 @@ def test_formatter_rest():
               "9+PeQj/qTxPn9I5Sy34euvw0NFAUNKpzXQNEqml3utv3w08gv4ejsaeb349qMF9BzugwOE+2I98P"
               "Zu9qcOk8MRIvrHxhMrYRlsR/CvCPXD/mHSZzmlyvd9Ra47WJNXmOohALZ+XCmbwAHi+NPA==").decode("base64").decode("zip")
     assert output == result
+
+def test_formatter_raw():
+    d = RootDoc("root")
+    fill_doc(d)
+    fmt = bta.formatters.raw.Raw()
+    d.format_doc(fmt)
+    output = fmt.finalize()
+    assert output == "abcdefghij\nklmnop"
+
+
+def test_formatter_raw_noinput():
+    d = RootDoc("root")
+    s = d.create_subsection("s1")
+    s.add("qsd")
+    t = s.create_table("tab")
+    fmt = bta.formatters.raw.Raw()
+    d.format_doc(fmt)
+    output = fmt.finalize()
+    assert output == ""
 

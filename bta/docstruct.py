@@ -174,6 +174,8 @@ class Raw(DocPart):
         DocPart.__init__(self, parent, name)
         self.raw_content = StringIO.StringIO()
     def add(self, content):
+        if type(content) is unicode:
+            content = content.encode("utf8")
         self.raw_content.write(content)
     def format_doc(self, formatter, lvl=None):
         formatter.add_raw(self.name, self.raw_content.getvalue())
