@@ -24,14 +24,15 @@ class ListACE(Miner):
         r = self.guid.find_one({"id":objtype.lower()})
         return r["name"] if r else objtype
 
-    def formatACE(self, truste, subject, perm):
+    def formatACE(self, truste, subject, accesstype, perm):
         def r(x):
             if type(x) is set:
                 if len(x) > 3:
                     return '%d items' % len(x)
                 return ', '.join(map(lambda s: unicode(Sid(s, self.datatable)), x))
             return unicode(Sid(x, self.datatable))
-        return (r(truste), r(subject), self.type2human(perm))
+        #return (r(truste), r(subject), self.type2human(perm))
+        return (r(truste), r(subject), accesstype, self.type2human(perm))
 
     def summarize_ace(self, trustee, securitydescriptor, aceList):
         perms=[]
@@ -81,10 +82,10 @@ class ListACE(Miner):
         desc = []
         if options.subject:
             users = self.datatable.find({'objectSid': options.subject})
-            desc.append("trustee=%s" % options.subject)
+            desc.append("Subject=%s" % options.subject)
 
             table = doc.create_table(desc)
-            table.add(["Trustee", "Subject", "Object type"])
+            table.add(["Trustee", "Subject", "Acces Type", "Object type"])
             table.add()
 
             for raw_user in users:
@@ -96,14 +97,14 @@ class ListACE(Miner):
                         continue
                     if options.trustee and ace.SID != options.trustee:
                         continue
-                    aceobj = self.formatACE(ace.SID, options.subject, ace.ObjectType)
+                    aceobj = self.formatACE(ace.SID, options.subject, ace.Type, ace.ObjectType)
                     table.add(aceobj)
             table.finished()
         else:
             query = {}
             if options.type:
                 query.update({'ObjectType': options.type.lower()})
-                desc.append("type=%s" % options.type)
+                desc.append("type=%s" % self.type2human(options.type))
             if options.trustee:
                 query.update({'SID': options.trustee.upper()})
                 desc.append("trustee=%s" % options.trustee)
@@ -115,7 +116,7 @@ class ListACE(Miner):
 
             desct = ("List ACE where "+ " and ".join(desc)) if desc else "List all ACE"
             table = doc.create_table(desct)
-            table.add(["Trustee", "Subjects", "Object type"])
+            table.add(["Trustee", "Subjects", "Access Type", "Object type"])
             table.add()
 
             for raw_sd in self.sd_table.find(bigquery):
@@ -138,7 +139,7 @@ class ListACE(Miner):
                     if options.trustee and ace.SID != options.trustee:
                         continue
 
-                    aceobj = self.formatACE(ace.SID, subjects, ace.ObjectType)
+                    aceobj = self.formatACE(ace.SID, subjects, ace.Type, ace.ObjectType)
                     table.add(aceobj)
 
             table.finished()
