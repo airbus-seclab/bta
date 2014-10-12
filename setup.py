@@ -51,7 +51,7 @@ class PyTest(Command):
 
 setup(
     name = 'bta',
-    version = '0.4',
+    version = '0.5',
     packages=['bta', 'bta/tools', 'bta/backend', 'bta/miners', 'bta/formatters', 
               'libesedb'],
     scripts = ['bin/btaminer', 'bin/btaimport', 'bin/btadiff', 'bin/btamanage'],
