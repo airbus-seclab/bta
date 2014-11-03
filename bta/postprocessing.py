@@ -134,7 +134,8 @@ class PostProcessing(object):
                     dn.append("DC=%s"%p['name'])
             dn.reverse()
             dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
-        print "NB ERRORS : %r" % error
+        if error:
+            log.warning("Encoutered %i errors during distinguished name resolution")
 
 
     @PostProcRegistry.register()
