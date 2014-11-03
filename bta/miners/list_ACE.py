@@ -83,14 +83,16 @@ class ListACE(Miner):
         if options.subject:
             users = self.datatable.find({'objectSid': options.subject})
             desc.append("Subject=%s" % options.subject)
-
-            table = doc.create_table(desc)
+            info = doc.create_list("Owner")
+            table = doc.create_table(desc[0])
             table.add(["Trustee", "Subject", "Acces Type", "Object type"])
             table.add()
 
             for raw_user in users:
                 user = Record(**raw_user)
                 securitydescriptor = self.getSecurityDescriptor(user.nTSecurityDescriptor)
+                nameowner = self.datatable.find({'objectSid': securitydescriptor.sd_value['Owner']})[0]
+                info.add("%s (%s)" % (nameowner["name"] , securitydescriptor.sd_value['Owner']))
                 aceList = self.extractACE(securitydescriptor)
                 for ace in aceList:
                     if options.type and ace.ObjectType != options.type:
@@ -100,6 +102,7 @@ class ListACE(Miner):
                     aceobj = self.formatACE(ace.SID, options.subject, ace.Type, ace.ObjectType)
                     table.add(aceobj)
             table.finished()
+
         else:
             query = {}
             if options.type:
