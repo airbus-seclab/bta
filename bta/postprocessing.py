@@ -3,6 +3,7 @@
 # This file is part of the BTA toolset
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
+from collections import defaultdict
 import bta.backend
 import bta.dblog
 import bta.tools.registry
@@ -136,6 +137,38 @@ class PostProcessing(object):
             dnames.insert({"name":r["name"], "DNT_col":r["DNT_col"], "DName":",".join(dn)})
         if error:
             log.warning("Encoutered %i errors during distinguished name resolution")
+
+
+    @PostProcRegistry.register(depends={"dnames"})
+    def memberOf(self):
+        memberOf = self.options.backend.open_table("memberOf")
+        memberOf.create()
+        memberOf.create_index("member_DNT")
+        memberOf.create_index("member_name")
+        memberOf.create_index("member_dn")
+        memberOf.create_index("group_DNT")
+        memberOf.create_index("group_names")
+        memberOf.create_index("group_dn")
+
+        dt = self.options.backend.open_table("datatable")
+        lt = self.options.backend.open_table("link_table")
+        dnames = self.options.backend.open_table("dnames")
+
+        def get_group_name(DNT):
+            return
+
+        members = defaultdict(list)
+        for res in lt.find({}, {"link_DNT":True, "backlink_DNT":True}):
+            members[res["backlink_DNT"]].append(res["link_DNT"])
+
+        for member_DNT,groups_DNT in members.iteritems():
+            member_name_dn = dnames.find_one({"DNT_col": member_DNT})
+            group_names_dn = [ dnames.find_one({"DNT_col": DNT}) for DNT in groups_DNT ]
+            group_dn = [x["DName"] for x in group_names_dn]
+            group_names = [x["name"] for x in group_names_dn]
+            memberOf.insert({"member_DNT": member_DNT, "member_name": member_name_dn["name"], 
+                               "member_dn":member_name_dn["DName"], 
+                               "groups": groups_DNT, "group_dn": group_dn, "group_names": group_names})
 
 
     @PostProcRegistry.register()
