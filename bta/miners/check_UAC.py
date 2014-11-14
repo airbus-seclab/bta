@@ -13,7 +13,7 @@ class CheckUAC(Miner):
 
     @classmethod
     def create_arg_subparser(cls, parser):
-        parser.add_argument('flags', help='List weird user access control', nargs="+", choices=UserAccountControl._flags_.keys())
+        parser.add_argument('flags', help='List weird user access control', nargs="*", choices=UserAccountControl._flags_.keys()+[[]])
 
     def findRogue(self, flags):
         req =  (((Field("objectCategory") == self.categories.person) 
