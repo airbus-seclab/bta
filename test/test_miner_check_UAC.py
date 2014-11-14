@@ -16,6 +16,7 @@ def test_miner_check_UAC_normal_account(normal_db):
             {
                 "content": [
                     [ "cn",  "SID",  "Flags" ], 
+                    [], 
                     [ "FederatedEmail.4c1f4d8b-8179-4148-93bf-00a95fa1e042", "S-1-5-21-1154669122-758131934-2550385761-1125", 
                       "normalAccount, accountDisable" ], 
                     [ "krbtgt", "S-1-5-21-1154669122-758131934-2550385761-502", "normalAccount, accountDisable" ], 
@@ -48,6 +49,7 @@ def test_miner_check_UAC_account_disable(normal_db):
             {
                 "content": [
                     [ "cn",  "SID",  "Flags" ], 
+                    [], 
                     [ "FederatedEmail.4c1f4d8b-8179-4148-93bf-00a95fa1e042", "S-1-5-21-1154669122-758131934-2550385761-1125", 
                       "normalAccount, accountDisable" ], 
                     [ "krbtgt", "S-1-5-21-1154669122-758131934-2550385761-502", "normalAccount, accountDisable" ], 
@@ -76,6 +78,7 @@ def test_miner_check_UAC_account_disable_password_not_requered(normal_db):
             {
                 "content": [
                     [ "cn",  "SID",  "Flags" ], 
+                    [], 
                     [ "Invité", "S-1-5-21-1154669122-758131934-2550385761-501", 
                       "normalAccount, dontExpirePassword, accountDisable, passwdNotrequired" ], 
                 ], 

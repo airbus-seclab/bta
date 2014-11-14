@@ -22,7 +22,7 @@ class CheckUAC(Miner):
         for f in flags:
             req &= Field("userAccountControl").flag_on(f)
 
-        result = [["cn","SID", "Flags"]]
+        result = [["cn","SID", "Flags"],[]]
         for subject in self.datasd.find(req):
             result.append([subject['name'], subject['objectSid'], ", ".join([a for a,b in subject['userAccountControl']['flags'].items() if b])])
         return result
