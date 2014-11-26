@@ -134,3 +134,24 @@ def test_formatter_raw_noinput():
     output = fmt.finalize()
     assert output == ""
 
+def test_formatter_rawzip_multiple_input():
+    d = RootDoc("root")
+    s = d.create_subsection("s1")
+    s.add("qsd")
+    t = s.create_table("tab")
+    r = s.create_raw("raw1")
+    r.add("abc")
+    r.add("de\nfgh")
+    r2 = s.create_raw("raw2")
+    r2.add("ABC")
+    r2.add("DE\nFGH")
+    fmt = bta.formatters.rawzip.RawZip()
+    d.format_doc(fmt)
+    output = fmt.finalize()
+    z = zipfile.ZipFile(StringIO.StringIO(output))
+    assert len(z.infolist()) == 2
+    f1,f2 = z.infolist()
+    assert f1.filename == "raw1"
+    assert f2.filename == "raw2"
+    assert z.open(f1.filename).read() == "abcde\nfgh"
+    assert z.open(f2.filename).read() == "ABCDE\nFGH"
