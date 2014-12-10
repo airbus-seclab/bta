@@ -4,23 +4,18 @@
 """ Test DBMetadataEntry class """
 
 from bta import dbmeta
-from bta.backend import mongo
+import bta.backend.mongo
 import collections
 import pytest
+import argparse
+from miner_helpers import normal_db
 
 
 @pytest.fixture(scope="module")
-def dbmetaentry(request):
-    optdict = {"overwrite": True}
-    backend_class = collections.namedtuple('Options', optdict.keys())
-    options = backend_class(*optdict.values())
-    backend = mongo.Backend.get_backend("mongo")(options, "::test")
-    # Drop & create table
-    backend.open_table("metadata").create()
+def dbmetaentry(normal_db):
+    options = argparse.Namespace(verbose=0)
+    backend = bta.backend.mongo.Mongo(options, database=normal_db)
     dbmetaentry = dbmeta.DBMetadataEntry(backend)
-    def tear_down():
-        backend.cnx.drop_database(backend.db)
-    request.addfinalizer(tear_down)
     return dbmetaentry
 
 def test_00_read_absent_value(dbmetaentry):
