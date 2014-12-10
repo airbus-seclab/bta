@@ -3,7 +3,7 @@ import pytest
 from bta.backend.mongo import *
 from bta.tools.expr import Field
 import argparse
-from miner_helpers import run_miner, normal_db
+from miner_helpers import normal_db
 
 
 @pytest.fixture
