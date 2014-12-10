@@ -25,7 +25,7 @@ def test_mongo_datasd(backend, normal_db):
     assert res[0]["PDNT_col"] == 7263
     assert "sd_id" in res[0]
     sdid = res[0]["sd_id"]
-    res = list(datasd.find(Field("sd_id")==7263))
+    res = list(datasd.find(Field("sd_id")==0xdead))
     assert len(res) == 0
     res = list(datasd.find(Field("sd_id")==sdid))
     assert len(res) > 0
