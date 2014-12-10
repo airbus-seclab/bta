@@ -358,35 +358,48 @@ Using --ignore-version-mismatch might lead to incorrect results." %
 
 
 class MongoReqBuilder(bta.tools.expr.Builder):
-    @classmethod
-    def _field_(cls, name):
-        return name
-    @classmethod
-    def _and_(cls, op1, op2):
-        d = op1.copy()
-        d.update(op2)
-        return d
-    @classmethod
-    def _or_(cls, op1, op2):
-        return { "$or": [ op1, op2 ]}
-    @classmethod
-    def _eq_(cls, op1, op2):
-        return {op1: op2}
-    @classmethod
-    def _ne_(cls, op1, op2):
-        return {op1: {"$ne":op2}}
-    @classmethod
-    def _present_(cls, op1):
-        return {op1: {"$exists":True}}
-    @classmethod
-    def _absent_(cls, op1):
-        return {op1: {"$exists":False}}
-    @classmethod
-    def _flagon_(cls, op1, op2):
-        return {"%s.flags.%s" % (op1, op2) : True }
-    @classmethod
-    def _flagoff_(cls, op1, op2):
-        return {"%s.flags.%s" % (op1, op2) : False }
+    def __init__(self, only=None, remove=[], replace={}):
+        self.only = only
+        self.remove = remove
+        self.replace_data = replace
+    def keep(self, fieldname):
+        fieldname = fieldname.split(".",1)[0]
+        if fieldname in self.remove:
+            return False
+        return not self.only or fieldname in self.only
+    def replace(self, fieldname):
+        return ".".join(self.replace_data.get(x,x) for x in fieldname.split("."))
+            
+    def _field_(self, name):
+        return self.replace(name)
+    def _and_(self, op1, op2):
+        if op1 and op2:
+            d = op1.copy()
+            d.update(op2)
+            return d
+        return op1 or op2
+    def _or_(self, op1, op2):
+        if op1 and  op2:
+            return { "$or": [ op1, op2 ]}
+        return op1 or op2
+    def _eq_(self, op1, op2):
+        if self.keep(op1):
+            return {op1: op2}
+    def _ne_(self, op1, op2):
+        if self.keep(op1):
+            return {op1: {"$ne":op2}}
+    def _present_(self, op1):
+        if self.keep(op1):
+            return {op1: {"$exists":True}}
+    def _absent_(self, op1):
+        if self.keep(op1):
+            return {op1: {"$exists":False}}
+    def _flagon_(self, op1, op2):
+        if self.keep(op1):
+            return {"%s.flags.%s" % (op1, op2) : True }
+    def _flagoff_(self, op1, op2):
+        if self.keep(op1):
+            return {"%s.flags.%s" % (op1, op2) : False }
 
 
 class VirtualDataSD(VirtualTable):
@@ -394,31 +407,66 @@ class VirtualDataSD(VirtualTable):
         VirtualTable.__init__(self, options, backend, name)
         self.datatable = self.backend.open_raw_table("datatable")
         self.sd_table = self.backend.open_raw_table("sd_table")
+        self.memberOf = self.backend.open_raw_table("memberOf")
+        self.dnames = self.backend.open_raw_table("dnames")
+
 
     def find(self, req, proj={}):
-        dtreq = req.build(MongoReqBuilder)
-        log.debug("Mongo Request: %r" % dtreq)
-        sdreq = {}
-        for attr in ['sd_id', 'sd_value', 'sd_hash', 'sd_refcount']:
-            if attr in dtreq:
-                sdreq[attr] = dtreq.pop(attr)
+        dtreq = req.build(MongoReqBuilder(remove=["sd_id","sd_hash", "sd_refcount", "sd_value", "memberOf", "distinguishedName"]))
+        sdreq = req.build(MongoReqBuilder(only=["sd_id","sd_hash", "sd_refcount", "sd_value"]))
+        mbreq = req.build(MongoReqBuilder(only=["group_dn"], replace={"memberOf":"group_dn"}))
+        dnreq = req.build(MongoReqBuilder(only=["distinguishedName"]))
 
-        if sdreq:
-            for sdres in self.sd_table.find(sdreq):
-                dtreq2 = dtreq.copy()
-                dtreq2["nTSecurityDescriptor"] = sdres["sd_id"]
-                for dtres in self.datatable.find(dtreq2):
+
+        log.debug("Original request: %r" % req)
+        log.debug("Mongo Request for sd_table: %r" % sdreq)
+        log.debug("Mongo Request for memberOf: %r" % mbreq)
+        log.debug("Mongo Request for dnames: %r" % dnreq)
+        log.debug("Mongo Request for datatable: %r" % dtreq)
+
+        join_constraints = {}
+        for tbl, req, jfld, ojfld in [ 
+                (self.sd_table, sdreq, "sd_id", "nTSecurityDescriptor"),
+                (self.memberOf, mbreq, "member_DNT", "DNT_col"),
+                (self.dnames, dnreq, "DNT_col", "DNT_col") ]:
+            if req:
+                joinval = [ res[jfld] for res in tbl.find(req, { jfld: True }) ]
+                if len(joinval) == 1:
+                    join_constraints[ojfld] = joinval[0]
+                elif joinval:
+                    join_constraints[ojfld] = { "$in": joinval }
+                else:
+                    log.debug("Empty result on table %s." % tbl.name)
+                    return
+
+
+        log.debug("Mongo Added constraints: %r" % join_constraints)
+        if join_constraints:
+            if dtreq:
+                dtreq = { "$and": [ dtreq, join_constraints ] }
+            else:
+                dtreq = join_constraints
+
+        log.debug("Mongo Final request: %r" % dtreq)
+
+        for dtres in self.datatable.find(dtreq):
+            if "nTSecurityDescriptor" in dtres:
+                sdres = self.sd_table.find_one({"sd_id": dtres["nTSecurityDescriptor"]})
+                if sdres:
                     dtres.update(sdres)
-                    resp = dtres if not proj else {dtres[x] for x in proj}
-                    yield resp
-        elif dtreq:
-            for dtres in self.datatable.find(dtreq):
-                sdreq2 = sdreq.copy()
-                sdreq2["sd_id" ] = dtres["nTSecurityDescriptor"]
-                for sdres in self.sd_table.find(sdreq2):
-                    sdres.update(dtres)
-                    resp = sdres if not proj else {sdres[x] for x in proj}
-                    yield resp
+            mores = self.memberOf.find_one({"member_DNT": dtres["DNT_col"]})
+            if mores:
+                dtres.update(mores)
+            dnres = self.dnames.find_one({"DNT_col": dtres["DNT_col"]})
+            if dnres:
+                dtres.update(dnres)
+                dtres["distinguishedName"] = dnres["DName"]
+            resp = dtres if not proj else { dtres[k]
+                                            for k,v in proj.iteritems()
+                                            if v and k in dtres }
+            yield resp
+
+
                     
     def assert_consistency(self):
         self.datatable.assert_consistency()
