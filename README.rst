@@ -36,7 +36,14 @@ Installing BTA
 Quick install
 -------------
 
-``pip install bta``
+Dependencies:
+
+* mongodb (``apt-get install mongodb-server``)
+* libesedb 2012 alpha version [1]_ (https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``)
+
+Installation:
+
+* ``pip install bta``
 
 
 From sources
@@ -45,12 +52,16 @@ From sources
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server python-pymongo``)
-* libesedb http://code.google.com/p/libesedb/
+* libesedb 2012 alpha version [1]_ (https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``)
 * openpyxl (>= 2.0.2)
 
 Installation:
 
 * ``python setup.py install`` 
+
+
+.. [1] support for so called long values is a work in progress in the latest versions and is not working well yet. It is working correctly with 2012 alpha version.
+
 
 Active Directory Security Analysis
 ==================================
