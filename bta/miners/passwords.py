@@ -30,6 +30,7 @@ class Passwords(Miner):
         parser.add_argument("--never-logged", action="store_true", help="List all account never used")
         parser.add_argument("--account-type", nargs='?', const=cls._types_[0], type=str, help="(%s)"%', '.join(cls._types_))
         parser.add_argument("--pso-details", action="store_true", help="Give details about all Passwords Settings Objects")
+        parser.add_argument("--lookingfor-password",  help="Find password strings in 'description' attribute")
 
     def get_line(self, record, line, flags=None):
         res = [record.get(x,"-") if type(record.get(x,"-")) in [unicode,int,datetime] else unicode(str(record.get(x,"-")), errors='ignore').encode('hex') for x in line]
@@ -89,7 +90,6 @@ class Passwords(Miner):
         t = doc.create_table("Dump of %s" % field)
         t.add(["name","userAccountControl"])
         t.add()
-
         for account in self.datatable.find({field:{"$exists":False},
                                             "objectCategory":{"$in":[account_type]},
                                             "$or":[{"isDeleted":False}, {"isDeleted":{"$exists":False}}]}):
@@ -116,6 +116,14 @@ class Passwords(Miner):
             t.flush()
             #t.add(obj["REVERSIBLE"])
             #t.add(obj["APPLIES TO"])
+
+    def lookingfor_password(self, doc, field, strings, account_type):
+        t = doc.create_table("Search strings %s in description attribute" % strings)
+        t.add(["name","description"])
+        t.add()
+        for r in self.datatable.find({field:{"$regex": strings }}):
+            t.add([r["name"],r["description"]])
+            t.flush()
 
     def run(self, options, doc):
         if options.pso_details:
@@ -149,8 +157,14 @@ class Passwords(Miner):
         if options.never_logged:
             self.never_logged(doc, "lastLogonTimestamp", account_type)
 
+        if options.lookingfor_password:
+            arg=options.lookingfor_password
+            self.lookingfor_password(doc, "description", arg, account_type)
+
     def assert_consistency(self):
         Miner.assert_consistency(self)
         self.assert_field_type(self.datatable, "badPwdCount", int)
         self.assert_field_type(self.datatable, "sAMAccountName", str, unicode)
         self.assert_field_type(self.datatable, "name", str, unicode)
+        self.assert_field_type(self.datatable, "description", str, unicode)
+
