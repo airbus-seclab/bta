@@ -36,7 +36,14 @@ Installing BTA
 Quick install
 -------------
 
-``pip install bta``
+Dependencies:
+
+* mongodb (``apt-get install mongodb-server``)
+* libesedb alpha version dated to 2012 ``libesedb-alpha-20120102.tar.gz`` 2aba34b1c9703a28b8913019044efa3ff53428fb 
+
+Installation:
+
+* ``pip install bta``
 
 
 From sources
@@ -45,7 +52,7 @@ From sources
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server python-pymongo``)
-* libesedb http://code.google.com/p/libesedb/
+* libesedb alpha version dated to 2012 ``libesedb-alpha-20120102.tar.gz`` 2aba34b1c9703a28b8913019044efa3ff53428fb 
 * openpyxl (>= 2.0.2)
 
 Installation:

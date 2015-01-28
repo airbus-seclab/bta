@@ -13,8 +13,11 @@ class ListGroup(Miner):
     _name_ = "ListGroup"
     _desc_ = "List group membership"
     _uses_ = ["raw.datatable", "raw.sd_table", "raw.link_table", "special.categories", "raw.guid", "raw.linkid"]
-    groups_already_seen = {}
+
+    """ Used to cache 'object class' to 'class name' mapping """
     class_cache = dict()
+    #Set of already seen group GUIDs
+    groups_already_seen = set()
 
     @classmethod
     def create_arg_subparser(cls, parser):
@@ -22,10 +25,7 @@ class ListGroup(Miner):
         parser.add_argument("--noresolve", help="Do not resolve SID", action="store_true")
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
-    def get_members_of(self, grpsid, recursive=False):
-        group = self.datatable.find_one({'objectSid': grpsid.split(":")[0]})
-        if not group:
-            return set()
+    def get_members_of(self, group, recursive=False):
         members = set()
         for link in self.link_table.find({'link_DNT': group['DNT_col']}):
             deleted = False
@@ -33,33 +33,41 @@ class ListGroup(Miner):
                 deleted = link['link_deltime']
             row = self.datatable.find_one({'DNT_col': link['backlink_DNT']})
             if not row:
-                members.add('[no entry %d found]' % link['backlink_DNT'])
-                continue
+                raise Exception('Backlinked object not found, DNT_col: %d' % link['backlink_DNT'])
+                # members.add('[no entry %d found]' % link['backlink_DNT'])
+                # continue
             objectClass = row['objectClass']
-            if u'1.2.840.113556.1.5.8' in objectClass:
-                sid = row['objectSid']
-                if sid not in self.groups_already_seen:
-                    self.groups_already_seen[sid] = True
-                    newmembers = self.get_members_of(sid + ":" + grpsid, recursive=True)
+            sid = row.get('objectSid', '(no sid)')
+            fromgrp = group['objectSid'] if recursive else ''
+            name = row['name']
+            samAccountName = row.get('sAMAccountName', '(no SAM account name)')
+            guid = row['objectGUID']
+            if u'1.2.840.113556.1.5.8' in objectClass:  # groups
+                if guid not in self.groups_already_seen:
+                    self.groups_already_seen.add(guid)
+                    newmembers = self.get_members_of(row, recursive=True)
                     if len(newmembers) > 0:
                         members.update(newmembers)
                     else:
                         # A group may have a Member or ManagedBy relationship with another
-                        members.add(('Empty group', link['link_base'], sid, deleted, grpsid, SID2StringFull(sid, self.guid), row['sAMAccountName']))
+                        members.add(('Empty group (may be foreign SID?)', link['link_base'], sid, deleted, fromgrp, name, samAccountName, guid))
+                else:
+                    # TODO Raise warning ?
+                    #
+                    #  SmallGroup -belongsTo- LargeGroup -belongsto- HugeGroup
+                    #            `----------------belongsTo-----------'
+                    # Two memberOf paths from SmallGroup to HugeGroup
+                    pass
             else:
                 # Not all relevant rows have an objectSid value - ex.
                 # ms-Exch-Dynamic-Distribution-List or Contact
-                sid = row.get('objectSid', '(no sid)')
                 objectType = self.get_objectClass_name(row['objectClass'][0])
-                fromgrp = grpsid if recursive else ''
-                name = row['name']
-                samAccountName = row.get('sAMAccountName', '(no SAM account name)')
-                membership = (objectType, link['link_base'], sid, deleted, fromgrp, name, samAccountName)
+                membership = (objectType, link['link_base'], sid, deleted, fromgrp, name, samAccountName, guid)
                 members.add(membership)
         return members
 
     def get_objectClass_name(self, oc):
-        """ Cache object class to class name mapping """
+        """ Cache 'object class' to 'class name mapping' """
         r = ListGroup.class_cache.get(oc)
         if r:
             return r
@@ -67,8 +75,19 @@ class ListGroup(Miner):
         ListGroup.class_cache[oc] = r
         return r
 
-    def getInfo_fromSid(self, sid):
+    def getInfo_fromSID(self, sid):
+        """
+        Returns one datatable entry matching sid parameter.
+        Warning: Several objects having the same sid value might be present in
+        the database (ex. when a global catalog has been imported)
+        """
         return self.datatable.find_one({'objectSid': sid})
+
+    def getInfo_fromGUID(self, guid):
+        """
+        Returns one datatable entry matching guid parameter.
+        """
+        return self.datatable.find_one({'objectGUID': guid})
 
     def find_dn(self, r):
         if not r:
@@ -79,32 +98,41 @@ class ListGroup(Miner):
         r2 = self.datatable.find_one({"DNT_col": r["PDNT_col"]})
         return self.find_dn(r2)+"."+cn
 
-    def checkACE(self, membersid):
-        secDesc = int(self.datatable.find_one({"objectSid": membersid})['nTSecurityDescriptor'])
+    def checkACE(self, memberguid):
+        """
+        Returns a list of ACE for memberguid
+        ["Trustee", "sid", "Member", "ACE Type", "Object type"]
+        """
+        member = self.getInfo_fromGUID(memberguid)
+        membercn = member['cn']
+        secDesc = int(member['nTSecurityDescriptor'])
         hdlACE = list_ACE.ListACE(self.backend)
-        securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
-        aceList = hdlACE.extractACE(securitydescriptor)
+        fullACE = hdlACE.getSecurityDescriptor(secDesc)
+        aceList = hdlACE.extractACE(fullACE)
+        nameowner = self.datatable.find({'objectSid': fullACE.sd_value['Owner']})[0]['name']
 
         Mylist = list()
         for ace in aceList:
-            info = self.getInfo_fromSid(ace['SID'])
+            info = self.getInfo_fromSID(ace['SID'])
             if info is None:
+                # May happen if trustee has been deleted - is not present in
+                # the datatable anymore
                 trustee_cn = trustee_string = "NULLOBJECT-%s" % ace['SID']
             else:
-                if "cn" in info:
-                    trustee_cn = info['cn']
-                    trustee_string = SID2String(info['cn'])
+                if 'cn' in info:
+                    trustee_string = info['cn']
                 else:
-                    trustee_string = trustee_cn = info['name']
-            trustee = trustee_cn if trustee_cn == trustee_string else "%s (%s)" % (trustee_cn, trustee_string)
-            info2 = self.getInfo_fromSid(membersid)
-            subject = info2['cn']
+                    trustee_string = info['name']
+                sid = ""
+                if 'objectSid' in info:
+                    sid = info['objectSid']
+            subject = membercn
             if ace['ObjectType']:
                 objtype = hdlACE.type2human(ace['ObjectType'])
             else:
                 objtype = '(none)'
-            Mylist.append([trustee, subject, ace['Type'], objtype])
-        return Mylist
+            Mylist.append([trustee_string, sid, subject, ace['Type'], objtype])
+        return Mylist,nameowner
 
     def run(self, options, doc):
         def deleted_last(l):
@@ -128,41 +156,42 @@ class ListGroup(Miner):
                               }]
                     }
 
-        groups = {}
+        # List of (sid, guid, name) of empty groups
+        listemptyGroup = []
+
         # Recursively find members of matching groups.
         for group in self.datatable.find(match):
-            groups[group['objectSid']] = self.get_members_of(group['objectSid'])
+            groupSid = group['objectSid']
+            self.groups_already_seen = set()
+            membership = self.get_members_of(group)
 
-        listemptyGroup = []
-        for groupSid, membership in groups.items():
             if len(membership) == 0:
-                listemptyGroup.append(groupSid)
+                listemptyGroup.append((groupSid, group['objectGUID'], group['name']))
                 continue
-            info = self.getInfo_fromSid(groupSid)
-            groupCN = info['cn']
-            guid = info['objectGUID']
+            groupCN = group['cn']
+            guid = group['objectGUID']
             sec = doc.create_subsection("Group %s" % groupCN)
             sec.add("sid = %s" % groupSid)
             sec.add("guid = %s" % guid)
-            sec.add("dn = %s" % self.find_dn(info))
+            sec.add("dn = %s" % self.find_dn(group))
 
             # 2 tables: 1 -> member users, 1 -> rest
             memberUsersTable = list()
             otherLinkedTable = list()
-            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
+            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName, guid in deleted_last(membership):
                 fromgrp = fromgrp.split(":")[0]
                 sidobj = Sid(sid, self.datatable)
                 if fromgrp:
                     fromgrp = Sid(fromgrp, self.datatable)
                 if objectType == 'User' and linkBase == 1:  # member user
                     flags = sidobj.getUserAccountControl()
-                    memberUsersTable.append((name, samAccountName, deleted or '', flags, fromgrp))
+                    memberUsersTable.append((name, samAccountName, sid, deleted or '', flags, fromgrp))
                 else:
                     linkType = self.linkid.find_one({'linkid': linkBase*2})['name']
-                    otherLinkedTable.append((objectType, linkType, name, samAccountName, deleted or '', fromgrp))
+                    otherLinkedTable.append((objectType, linkType, name, samAccountName, sid, deleted or '', fromgrp))
 
             if len(memberUsersTable) != 0:
-                headers = ['Name', 'SAM Account Name', 'Deletion', 'Flags', 'Recursive']
+                headers = ['Name', 'SAM Account Name', 'SID', 'Deletion', 'Flags', 'Recursive']
                 table = sec.create_table("Members users of %s" % groupCN)
                 table.add(headers)
                 table.add()
@@ -171,7 +200,7 @@ class ListGroup(Miner):
                 table.finished()
 
             if len(otherLinkedTable) != 0:
-                headers = ['Object Type', 'Link Type', 'Name', 'SAM Account Name', 'Deletion', 'Recursive']
+                headers = ['Object Type', 'Link Type', 'Name', 'SAM Account Name', 'SID', 'Deletion', 'Recursive']
                 table = sec.create_table("Other objects linked to group %s" % groupCN)
                 table.add(headers)
                 table.add()
@@ -180,14 +209,15 @@ class ListGroup(Miner):
                 table.finished()
 
             # ACEs for users
-            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName in deleted_last(membership):
+            for objectType, linkBase, sid, deleted, fromgrp, name, samAccountName, guid in deleted_last(membership):
                 if objectType != 'User':
                     continue
                 sec.add("User %s (%s)" % (name, sid))
+                listACE,nameowner = self.checkACE(guid)
+                sec.add("Owner %s" % nameowner)
                 table = sec.create_table("ACE of %s" % name)
-                table.add(["Trustee", "Member", "ACE Type", "Object type"])
+                table.add(["Trustee", "SID", "Member", "ACE Type", "Object type"])
                 table.add()
-                listACE = self.checkACE(sid)
                 for ace in listACE:
                     table.add(ace)
                 table.finished()
@@ -195,13 +225,10 @@ class ListGroup(Miner):
 
         if len(listemptyGroup) > 0:
             headers = ['Group', 'SID', 'Guid']
-            table = doc.create_table("Empty groups")
+            table = doc.create_table("Empty groups (may be foreign SID?)")
             table.add(headers)
             table.add()
-            for groupSid in listemptyGroup:
-                info = self.getInfo_fromSid(groupSid)
-                name = info['cn']
-                guid = info['objectGUID']
+            for name, groupSid, guid in listemptyGroup:
                 table.add((name, groupSid, guid))
             table.finished()
 
