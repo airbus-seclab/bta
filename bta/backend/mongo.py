@@ -245,21 +245,28 @@ class MongoTable(RawTable):
     def update(self, *args, **kargs):
         return self.col.update(*args, **kargs)
 
-    def insert_fields(self, values):
+    def insert_fields(self, values, ignore_normalization_errors=False):
         try:
             d = {name:norm.normal(v) for (name, norm), v in zip(self.fields, values) if not norm.empty(v)}
         except Exception,e:
             # Do it again to find which field failed
+            d = {}
+            found = False
             for (name, norm), v in zip(self.fields, values):
                 if not norm.empty(v):
                     try:
-                        norm.normal(v)
+                        d[name] = norm.normal(v)
                     except Exception,e2:
-                        log.error("Normalization failed on field %s (value=%r)" % (name,v))
-                        break
-            else:
+                        msg = "Normalization failed on field %s (value=%r)" % (name,v)
+                        if not ignore_normalization_errors:
+                            log.error(msg)
+                            raise
+                        msg = "IGNORED: %s" % msg
+                        log.warning(msg)
+                        self.options.dblog.update_entry(msg)
+                        found = True
+            if not found:
                 raise
-            raise e
         return self.insert(d)
 
     def count(self):

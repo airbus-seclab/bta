@@ -18,7 +18,9 @@ class LibESEDB(object):
     # keep references to those functions that are called in destructors
     byref = byref
     c_void_p = c_void_p
-    def __init__(self):
+    def __init__(self, ignore_errors=False, report_error=lambda x:None):
+        self.ignore_errors = ignore_errors
+        self.report_error = report_error
         if platform.startswith("linux"):
             self.lib = cdll.LoadLibrary("libesedb.so")
         elif platform.startswith("win32"):
@@ -34,7 +36,13 @@ class LibESEDB(object):
         def _call(*args):
             args += (self.error_p,)
             if func(*args) != 1:
-                raise ESEDB_Exception("%s: %s" % (funcname, self.get_error(self.error)))
+                errmsg = "%s: %s" % (funcname, self.get_error(self.error))
+                if self.ignore_errors:
+                    errmsg = "IGNORED: %s" % errmsg
+                    log.warning(errmsg)
+                    self.report_error(errmsg)
+                    return
+                raise ESEDB_Exception(errmsg)
         return _call
 
     def get_error(self, error):
@@ -129,8 +137,8 @@ class LibESEDB(object):
 
 
 class ESEDB(object):
-    def __init__(self, fname):
-        self.lib = LibESEDB()
+    def __init__(self, fname, ignore_errors=False, report_error=None):
+        self.lib = LibESEDB(ignore_errors=ignore_errors, report_error=report_error)
         self.file = self.lib.open(fname)
         self.tables = [ESETable(self, i) for i in range(self.lib.file_get_number_of_tables(self.file))]
         self.name2table = {t.name:t for t in self.tables}

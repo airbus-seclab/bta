@@ -62,7 +62,7 @@ class ESETable(object):
         next(pbar)
         try:
             for rec in self.esetable.iter_records():
-                dbtable.insert_fields([val.value for val in rec])
+                dbtable.insert_fields([val.value for val in rec], ignore_normalization_errors=self.options.ignore_import_errors)
                 next(pbar)
         except KeyboardInterrupt:
             log.info("Interrupted by user")
@@ -245,7 +245,7 @@ def import_file((options, fname, connection)):
         with bta.dblog.DBLogEntry.dblog_context(options.backend) as options.dblog:
             if not options.only_post_proc:
                 log.info("Opening [%s]" % fname)
-                options.esedb = libesedb.ESEDB(fname)
+                options.esedb = libesedb.ESEDB(fname, ignore_errors=options.ignore_import_errors, report_error=options.dblog.update_entry)
                 log.info("Opening done.")
 
                 options.dblog.update_entry("Opened ESEDB file [%s]" % fname)
@@ -297,6 +297,8 @@ def main():
                         help="Delete tables that already exist in db")
     parser.add_argument("--ignore-version-mismatch", action="store_true",
                         help="Ignore mismatch between stored data and this program's format versions")
+    parser.add_argument("--ignore-import-errors", "-f", action="store_true",
+                        help="Ignore ESE tables reading errors and import as much as possible")
     parser.add_argument("--no-post-processing", dest="no_post_proc", action="store_true",
                         help="Don't post-process imported data")
     parser.add_argument("--only-post-processing", dest="only_post_proc", action="store_true",
