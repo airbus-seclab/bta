@@ -39,7 +39,10 @@ Quick install
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server``)
-* libesedb 2012 alpha version [1]_ (https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``)
+* libesedb 2012 alpha version [1]_ 
+
+  + https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``
+  + Build it. Install it or have ``LD_LIBRARY_PATH`` point to it when using ``btaimport``  
 
 Installation:
 
@@ -52,7 +55,11 @@ From sources
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server python-pymongo``)
-* libesedb 2012 alpha version [1]_ (https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``)
+* libesedb 2012 alpha version [1]_
+
+  + https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``
+  + Build it. Install it or have ``LD_LIBRARY_PATH`` point to it when using ``btaimport``  
+
 * openpyxl (>= 2.0.2)
 
 Installation:
