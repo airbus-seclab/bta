@@ -268,7 +268,8 @@ def import_file((options, fname, connection)):
                 pp.post_process_all()
     except KeyboardInterrupt:
         log.info("Interrupted by user (Ctrl-C)")
-
+    except libesedb.libesedb.ESEDB_Error,e:
+        log.error(e)
 
 
 def main():

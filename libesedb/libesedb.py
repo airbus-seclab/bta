@@ -14,6 +14,9 @@ log = logging.getLogger("libesedb")
 class ESEDB_Exception(Exception):
     pass
 
+class ESEDB_Error(ESEDB_Exception):
+    pass
+
 class LibESEDB(object):
     # keep references to those functions that are called in destructors
     byref = byref
@@ -21,12 +24,19 @@ class LibESEDB(object):
     def __init__(self, ignore_errors=False, report_error=lambda x:None):
         self.ignore_errors = ignore_errors
         self.report_error = report_error
-        if platform.startswith("linux"):
-            self.lib = cdll.LoadLibrary("libesedb.so")
-        elif platform.startswith("win32"):
-            self.lib = cdll.LoadLibrary("libesedb.dll")
-        elif platform.startswith("darwin"):
-            self.lib = cdll.LoadLibrary("libesedb.dylib")
+        try:
+            if platform.startswith("linux"):
+                self.lib = cdll.LoadLibrary("libesedb.so")
+            elif platform.startswith("win32"):
+                self.lib = cdll.LoadLibrary("libesedb.dll")
+            elif platform.startswith("darwin"):
+                self.lib = cdll.LoadLibrary("libesedb.dylib")
+        except OSError,e:
+            if e.args[0].endswith("cannot open shared object file: No such file or directory"):
+                raise ESEDB_Error(
+                    "%s. Did you install it or did you use LD_LIBRARY_PATH correctly ?" 
+                    % e.message)
+            raise
         self.error = c_void_p()
         self.error_p = pointer(self.error)
 
