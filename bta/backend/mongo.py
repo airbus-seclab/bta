@@ -294,7 +294,7 @@ class Mongo(Backend):
         ip,port,_ = (options.connection+"::").split(":",2)
         ip = ip if ip else "127.0.0.1"
         port = int(port) if port else 27017
-        return pymongo.Connection(ip, port)
+        return pymongo.MongoClient(ip, port)
 
     def __init__(self, options, connection=None, database=None):
         Backend.__init__(self, options, connection, database)
@@ -303,7 +303,7 @@ class Mongo(Backend):
             ip = ip if ip else "127.0.0.1"
             port = int(port) if port else 27017
             self.cnxstr = (ip, port)
-            self.cnx = pymongo.Connection(*self.cnxstr)
+            self.cnx = pymongo.MongoClient(*self.cnxstr)
             self.db = self.cnx[self.dbname]
         else:
             self.cnx = self.db.connection
