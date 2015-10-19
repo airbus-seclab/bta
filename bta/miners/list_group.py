@@ -107,8 +107,9 @@ class ListGroup(Miner):
         membercn = member['cn']
         secDesc = int(member['nTSecurityDescriptor'])
         hdlACE = list_ACE.ListACE(self.backend)
-        securitydescriptor = hdlACE.getSecurityDescriptor(secDesc)
-        aceList = hdlACE.extractACE(securitydescriptor)
+        fullACE = hdlACE.getSecurityDescriptor(secDesc)
+        aceList = hdlACE.extractACE(fullACE)
+        nameowner = self.datatable.find({'objectSid': fullACE.sd_value['Owner']})[0]['name']
 
         Mylist = list()
         for ace in aceList:
@@ -131,7 +132,7 @@ class ListGroup(Miner):
             else:
                 objtype = '(none)'
             Mylist.append([trustee_string, sid, subject, ace['Type'], objtype])
-        return Mylist
+        return Mylist,nameowner
 
     def run(self, options, doc):
         def deleted_last(l):
@@ -212,10 +213,11 @@ class ListGroup(Miner):
                 if objectType != 'User':
                     continue
                 sec.add("User %s (%s)" % (name, sid))
+                listACE,nameowner = self.checkACE(guid)
+                sec.add("Owner %s" % nameowner)
                 table = sec.create_table("ACE of %s" % name)
                 table.add(["Trustee", "SID", "Member", "ACE Type", "Object type"])
                 table.add()
-                listACE = self.checkACE(guid)
                 for ace in listACE:
                     table.add(ace)
                 table.finished()
