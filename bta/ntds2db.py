@@ -343,7 +343,7 @@ def main():
     for fname, cnx in zip(options.ntds, options.connections):
         log.info("Going to import %-15s <- %s" % (cnx, fname))
     if not options.yes and len(options.connections) > 1:
-        if bta.tools.ask.ask("Can I carry on ?", "yn") == "n":
+        if bta.tools.ask.ask("Can I carry on?", "yn") == "n":
             log.error("Interrupted by user.")
             raise SystemExit
 
