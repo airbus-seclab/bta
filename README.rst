@@ -39,6 +39,7 @@ Quick install
 Dependencies:
 
 * mongodb (``apt-get install mongodb-server``)
+* python headers (``apt-get install python-dev``)
 * libesedb 2012 alpha version [1]_ 
 
   + https://bitbucket.org/iwseclabs/bta/downloads/libesedb-alpha-20120102.tar.gz SHA-1 ``2aba34b1c9703a28b8913019044efa3ff53428fb``
