@@ -39,18 +39,16 @@ class Excel(Formatter):
         self.wb = Workbook()
         self.wb.properties.title = "BTA report"
         self.wb.properties.creator = "BTA"
-        self.reportsheet = self.wb.get_active_sheet()
+        self.reportsheet = self.wb.active
         self.reportsheet.title = "BTA Report"
-        self.reportsheet.show_gridlines = False
+        self.reportsheet.sheet_view.showGridLines = False
         self.indent = 1
         self.sheetnames = set()
     def do_add_table(self, name, lvl, table):
         sht = self.wb.create_sheet()
-        shtname = self.reportsheet.bad_title_char_re.sub("", name)
-        shtname = shtname[:29]
+        # shtname = self.reportsheet.bad_title_char_re.sub("", name)
+        shtname = name[:29]
         sht.title = shtname
-        sht.default_column_dimension.bestFit = True
-        sht.default_column_dimension.auto_size = True
         self.reportsheet.append({self.indent:'=HYPERLINK("#\'%s\'!A1", "see %s")' % (shtname, name)})
 
         lengths=defaultdict(int)
@@ -72,9 +70,13 @@ class Excel(Formatter):
                 cell = sht.cell(row=row, column=col)
                 cell.style = styl
 
-        for coldim in sht.column_dimensions.itervalues():
-            col = openpyxl.worksheet.column_index_from_string(coldim.index)
-            coldim.width = lengths[col-1]
+        for colcontents in sht.columns:
+            colname = colcontents[0].column
+            colidx = colcontents[0].col_idx
+            coldim = sht.column_dimensions[colname]
+            coldim.auto_size = True
+            coldim.bestFit = True
+            coldim.width = lengths[colidx-1]
 
     def add_table(self, name, table):
         self.do_add_table(name, 0, table)
