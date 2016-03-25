@@ -1,8 +1,6 @@
 # This file is part of the BTA toolset
 # (c) Airbus Group CERT, Airbus Group Innovations and Airbus DS CyberSecurity
 
-import openpyxl
-
 from bta.formatters import Formatter
 import StringIO
 from collections import defaultdict
@@ -13,28 +11,33 @@ headcolor = Color(rgb="ff9dc5ff")
 oddcolor = Color(rgb="ffffefd4")
 evencolor = Color(rgb="ffffd794")
 hline = Border(bottom=Side(border_style=borders.BORDER_THICK))
-headstyle = Style(font=Font(name='Courier', size=11, bold=True),
-                  fill=PatternFill(fill_type=fills.FILL_SOLID,
-                                   start_color=headcolor,
-                                   end_color=headcolor),
-                  border=Border(top=Side(border_style=borders.BORDER_THICK),
-                                bottom=Side(border_style=borders.BORDER_THICK)),
-                  )
-oddstyle =  Style(font=Font(name='Courier', size=11),
-                  fill=PatternFill(fill_type=fills.FILL_SOLID,
-                                   start_color=oddcolor,
-                                   end_color=oddcolor),
-              )
-evenstyle = Style(font=Font(name='Courier', size=11),
-                  fill=PatternFill(fill_type=fills.FILL_SOLID,
-                                   start_color=evencolor,
-                                   end_color=evencolor),
-             )
+headstyle = Style(
+    font=Font(name='Courier', size=11, bold=True),
+    fill=PatternFill(fill_type=fills.FILL_SOLID,
+                     start_color=headcolor,
+                     end_color=headcolor),
+    border=Border(top=Side(border_style=borders.BORDER_THICK),
+                  bottom=Side(border_style=borders.BORDER_THICK)),
+)
+oddstyle = Style(
+    font=Font(name='Courier', size=11),
+    fill=PatternFill(fill_type=fills.FILL_SOLID,
+                     start_color=oddcolor,
+                     end_color=oddcolor),
+)
+evenstyle = Style(
+    font=Font(name='Courier', size=11),
+    fill=PatternFill(fill_type=fills.FILL_SOLID,
+                     start_color=evencolor,
+                     end_color=evencolor),
+)
 linestyle = [oddstyle, evenstyle]
+
 
 @Formatter.register
 class Excel(Formatter):
     _name_ = "excel"
+
     def __init__(self):
         self.wb = Workbook()
         self.wb.properties.title = "BTA report"
@@ -44,29 +47,32 @@ class Excel(Formatter):
         self.reportsheet.sheet_view.showGridLines = False
         self.indent = 1
         self.sheetnames = set()
+
     def do_add_table(self, name, lvl, table):
         sht = self.wb.create_sheet()
         # shtname = self.reportsheet.bad_title_char_re.sub("", name)
         shtname = name[:29]
         sht.title = shtname
-        self.reportsheet.append({self.indent:'=HYPERLINK("#\'%s\'!A1", "see %s")' % (shtname, name)})
+        self.reportsheet.append(
+            {self.indent:
+             '=HYPERLINK("#\'%s\'!A1", "see %s")' % (shtname, name)})
 
-        lengths=defaultdict(int)
+        lengths = defaultdict(int)
         hlines = []
-        for rownb,row in enumerate(table):
+        for rownb, row in enumerate(table):
             if row:
                 sht.append([""]*lvl+row)
-                for c,val in enumerate(row):
-                    lengths[c] = max(lengths[c],len(val))
+                for c, val in enumerate(row):
+                    lengths[c] = max(lengths[c], len(val))
             else:
                 hlines.append(rownb)
         hlines.append(sht.max_row)
 
         for col in range(1, sht.max_column+1):
             sht.cell(row=1, column=col).style = headstyle
-        for row in range(2,sht.max_row+1):
-            styl = [oddstyle,evenstyle][row%2]
-            for col in range(1,sht.max_column+1):
+        for row in range(2, sht.max_row+1):
+            styl = [oddstyle, evenstyle][row % 2]
+            for col in range(1, sht.max_column+1):
                 cell = sht.cell(row=row, column=col)
                 cell.style = styl
 
@@ -86,7 +92,7 @@ class Excel(Formatter):
 
     def add_section(self, section_name, lvl):
         self.reportsheet.append({lvl+1: section_name})
-        self.indent=lvl+2
+        self.indent = lvl+2
 
     def add_content(self, content):
         self.reportsheet.append({self.indent: content})
