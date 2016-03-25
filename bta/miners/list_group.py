@@ -26,6 +26,9 @@ class ListGroup(Miner):
         parser.add_argument("--verbose", help="Show also deleted users time and RID", action="store_true")
 
     def get_members_of(self, group, recursive=False):
+        """
+        :param group: is expected to contain 'DNT_col' and 'objectSid'
+        """
         members = set()
         for link in self.link_table.find({'link_DNT': group['DNT_col']}):
             deleted = False

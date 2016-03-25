@@ -3,7 +3,12 @@
 
 from bta.miner import Miner
 from bta.miners import list_group
+import logging
 
+log = logging.getLogger("bta.miner.admin_count_check")
+
+# You should probably use the SDProp miner, which lists all accounts who have
+# adminCount=1, then checks results manually
 @Miner.register
 class AdminCountCheck(Miner):
     _name_ = "AdminCountCheck"
@@ -17,6 +22,7 @@ class AdminCountCheck(Miner):
         return self.datatable.find_one({"objectSid":nodeSid}).get("name")
 
     def run(self, options, doc):
+        log.warn("You should probably use the SDProp miner, which lists all accounts who have adminCount=1, then checks results manually.")
         adminAccounts=["Schema Admins",
                        "Enterprise Admins",
                        "Domain Admins",
@@ -46,8 +52,8 @@ class AdminCountCheck(Miner):
         LGMiner=list_group.ListGroup(self.backend)
         adminAccountsMembers=list()
         for account in adminAccountsObjects:
-            adminAccountsMembers+=LGMiner.get_members_of(account['objectSid'], True)
-        adminAccountsMembersSid=[a for a,_,_,_ in adminAccountsMembers]
+            adminAccountsMembers+=LGMiner.get_members_of(account, True)
+        adminAccountsMembersSid=[a[3] for a in adminAccountsMembers]
         # Find all accounts with adminCount=1
         accountsWithAdminCount=list()
         for a in self.datatable.find({'$and': [{'objectCategory': self.categories.person},{"adminCount":1}]}):
