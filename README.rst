@@ -129,8 +129,8 @@ Examples:
 
 .. code-block ::
 
- ntds2db -C ::mydb /path/to/ntds.dit
- ntds2db /path/to/*.dit  --multi             \
+ btaimport -C ::mydb /path/to/ntds.dit
+ btaimport /path/to/*.dit  --multi             \
    --C-from-filename                         \ 
       "::%s" "basename rmext 'DB' swap plus"
 
